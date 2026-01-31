@@ -1,65 +1,49 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
+import LoginModal from "../components/LoginModal";
+import { getSupabaseClient } from "../lib/supabaseClient";
 
 export default function Home() {
+  const router = useRouter();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const role = session.user?.app_metadata?.role as string | undefined;
+        if (role === "Kasir") {
+          router.replace("/admin/penjualan");
+        } else {
+          router.replace("/dashboard");
+        }
+      }
+    });
+  }, [router]);
+
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
         <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
+          <p className={styles.welcome}>Welcome to</p>
+          <h1 className={styles.brand}>SIMATIK</h1>
           <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
+            Mulai dengan masuk untuk mengelola inventori dan penjualan.{" "}
+            <button
+              type="button"
+              className={styles.linkButton}
+              onClick={() => setShowLoginModal(true)}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+              Masuk
+            </button>
           </p>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        {showLoginModal && (
+          <LoginModal onClose={() => setShowLoginModal(false)} />
+        )}
       </main>
     </div>
   );

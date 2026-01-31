@@ -37,6 +37,25 @@
   gap: 24px;
 }
 
+.welcome {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.brand {
+  margin: 0;
+  max-width: 320px;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 48px;
+  letter-spacing: -2.4px;
+  text-wrap: balance;
+  color: var(--text-primary);
+}
+
 .intro h1 {
   max-width: 320px;
   font-size: 40px;
@@ -58,6 +77,17 @@
 .intro a {
   font-weight: 500;
   color: var(--text-primary);
+}
+
+.linkButton {
+  font: inherit;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .ctas {
@@ -115,7 +145,8 @@ a.secondary {
     gap: 16px;
   }
 
-  .intro h1 {
+  .intro h1,
+  .brand {
     font-size: 32px;
     line-height: 40px;
     letter-spacing: -1.92px;

@@ -1,0 +1,1480 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import DashboardLayout from "../../../../components/DashboardLayout";
+import { getSupabaseClient } from "../../../../lib/supabaseClient";
+
+interface ProductUnit {
+  id: string;
+  namaUnit: string;
+  hargaBeli: number;
+  hargaJual: number;
+  konversi: number;
+  isBaseUnit: boolean;
+  urutan?: number;
+}
+
+interface Product {
+  id: string;
+  kodeProduk: string;
+  namaProduk: string;
+  kategori: string;
+  satuan: string;
+  hargaBeli: number;
+  hargaJual: number;
+  units?: ProductUnit[];
+  stokAwal?: number;
+  stokPerApotik?: { [apotikId: string]: number };
+}
+
+interface RiwayatPerubahanHarga {
+  id: string;
+  noTransaksi?: string;
+  tanggalBerlaku: string;
+  produkId: string;
+  kodeProduk: string;
+  namaProduk: string;
+  hargaLama: number;
+  hargaBaru: number;
+  operator: string;
+  createdAt: string;
+}
+
+interface DetailPerubahanHarga {
+  id: string;
+  produkId: string;
+  kodeProduk: string;
+  namaProduk: string;
+  hargaSaatIni: number;
+  hargaBaru: string;
+}
+
+export default function PerubahanHargaJualPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [tanggal, setTanggal] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [tanggalBerlaku, setTanggalBerlaku] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
+  const [keterangan, setKeterangan] = useState<string>("");
+  const [detailHarga, setDetailHarga] = useState<DetailPerubahanHarga[]>([]);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [productModalDetailId, setProductModalDetailId] = useState<string | null>(null);
+  const [productModalPage, setProductModalPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 15;
+  const [loading, setLoading] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+  const [riwayatList, setRiwayatList] = useState<RiwayatPerubahanHarga[]>([]);
+  const [viewingBatch, setViewingBatch] = useState<RiwayatPerubahanHarga[] | null>(null);
+  const [pengajuanList, setPengajuanList] = useState<any[]>([]);
+  const [isPengajuanModalOpen, setIsPengajuanModalOpen] = useState(false);
+  const [pengajuanData, setPengajuanData] = useState<{ jenisPengajuan: string; alasanPengajuan: string }>({
+    jenisPengajuan: "",
+    alasanPengajuan: "",
+  });
+
+  useEffect(() => {
+    const loadUserEmail = async () => {
+      try {
+        const supabase = getSupabaseClient();
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.user?.email) {
+          setCurrentUserEmail(data.session.user.email);
+        }
+      } catch (err) {
+        console.error("Error loading user email:", err);
+      }
+    };
+    loadUserEmail();
+  }, []);
+
+  useEffect(() => {
+    const savedProducts = localStorage.getItem("products");
+    const savedRiwayat = localStorage.getItem("perubahanHargaJual");
+
+    if (savedProducts) {
+      try {
+        const parsed = JSON.parse(savedProducts);
+        setProducts(parsed);
+      } catch (err) {
+        console.error("Error loading products:", err);
+      }
+    }
+    if (savedRiwayat) {
+      try {
+        const parsed = JSON.parse(savedRiwayat);
+        setRiwayatList(parsed);
+      } catch (err) {
+        console.error("Error loading riwayat perubahan harga:", err);
+      }
+    }
+    const savedPengajuan = localStorage.getItem("pengajuanPerubahanHargaJual");
+    if (savedPengajuan) {
+      try {
+        setPengajuanList(JSON.parse(savedPengajuan));
+      } catch (err) {
+        console.error("Error loading pengajuan perubahan harga:", err);
+      }
+    }
+  }, []);
+
+  const handleOpenModal = () => {
+    const today = new Date().toISOString().split("T")[0];
+    setTanggal(today);
+    setTanggalBerlaku(today);
+    setKeterangan("");
+    setDetailHarga([]);
+    setShowProductModal(false);
+    setProductModalDetailId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleOpenPengajuanModal = () => {
+    setPengajuanData({ jenisPengajuan: "", alasanPengajuan: "" });
+    setIsPengajuanModalOpen(true);
+  };
+
+  const handleClosePengajuanModal = () => {
+    setIsPengajuanModalOpen(false);
+    setPengajuanData({ jenisPengajuan: "", alasanPengajuan: "" });
+  };
+
+  const handleSubmitPengajuan = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pengajuanData.jenisPengajuan) {
+      alert("Jenis pengajuan harus dipilih");
+      return;
+    }
+    if (!pengajuanData.alasanPengajuan.trim()) {
+      alert("Alasan pengajuan harus diisi");
+      return;
+    }
+    if (!viewingBatch || viewingBatch.length === 0) return;
+    const first = viewingBatch[0];
+    const noTransaksiKey = first.noTransaksi ?? first.createdAt + "|" + first.tanggalBerlaku;
+    const newPengajuan = {
+      id: Date.now().toString(),
+      noTransaksi: noTransaksiKey,
+      jenisPengajuan: pengajuanData.jenisPengajuan,
+      alasanPengajuan: pengajuanData.alasanPengajuan,
+      status: "Menunggu Persetujuan",
+      createdAt: new Date().toISOString(),
+      riwayatData: viewingBatch,
+      menuSystem: "Merchandise",
+    };
+    const updatedPengajuanList = [...pengajuanList, newPengajuan];
+    localStorage.setItem("pengajuanPerubahanHargaJual", JSON.stringify(updatedPengajuanList));
+    setPengajuanList(updatedPengajuanList);
+    handleClosePengajuanModal();
+    alert("Pengajuan perubahan berhasil dikirim! Tombol akan berubah menjadi Refresh.");
+  };
+
+  const getCurrentPengajuanForBatch = () => {
+    if (!viewingBatch || viewingBatch.length === 0) return null;
+    const first = viewingBatch[0];
+    const noTransaksiKey = first.noTransaksi ?? first.createdAt + "|" + first.tanggalBerlaku;
+    return pengajuanList.find((p: any) => p.noTransaksi === noTransaksiKey) ?? null;
+  };
+
+  const currentPengajuan = getCurrentPengajuanForBatch();
+  const pengajuanStatus = currentPengajuan?.status;
+
+  const handleRefreshPengajuan = () => {
+    const saved = localStorage.getItem("pengajuanPerubahanHargaJual");
+    if (saved) {
+      try {
+        setPengajuanList(JSON.parse(saved));
+      } catch (err) {
+        console.error("Error refreshing pengajuan:", err);
+      }
+    }
+  };
+
+  const handleBatalPengajuan = () => {
+    if (!currentPengajuan) return;
+    if (!confirm("Apakah Anda yakin ingin membatalkan pengajuan ini?")) return;
+    const updated = pengajuanList.filter((p: any) => p.id !== currentPengajuan.id);
+    localStorage.setItem("pengajuanPerubahanHargaJual", JSON.stringify(updated));
+    setPengajuanList(updated);
+  };
+
+  const handleSimpanSetujui = () => {
+    if (!currentPengajuan || currentPengajuan.jenisPengajuan !== "Edit Data") return;
+    const updated = pengajuanList.filter((p: any) => p.id !== currentPengajuan.id);
+    localStorage.setItem("pengajuanPerubahanHargaJual", JSON.stringify(updated));
+    setPengajuanList(updated);
+    alert("Pengajuan telah diterapkan. Tombol Ajukan perubahan akan tampil kembali.");
+  };
+
+  const handleHapusSetujui = () => {
+    if (!viewingBatch || viewingBatch.length === 0 || !currentPengajuan || currentPengajuan.jenisPengajuan !== "Hapus Data") return;
+    if (!confirm("Apakah Anda yakin ingin menghapus data perubahan harga ini? Harga produk akan dikembalikan ke harga lama.")) return;
+    let productsUpdated = [...products];
+    for (const r of viewingBatch) {
+      const product = productsUpdated.find((p) => p.id === r.produkId);
+      if (product) {
+        productsUpdated = productsUpdated.map((p) => {
+          if (p.id !== r.produkId) return p;
+          const next = { ...p, hargaJual: r.hargaLama };
+          if (next.units && next.units.length > 0) {
+            next.units = next.units.map((u) => ({ ...u, hargaJual: r.hargaLama }));
+          }
+          return next;
+        });
+      }
+    }
+    const idsToRemove = new Set(viewingBatch.map((r) => r.id));
+    const updatedRiwayatList = riwayatList.filter((r) => !idsToRemove.has(r.id));
+    localStorage.setItem("products", JSON.stringify(productsUpdated));
+    localStorage.setItem("perubahanHargaJual", JSON.stringify(updatedRiwayatList));
+    setProducts(productsUpdated);
+    setRiwayatList(updatedRiwayatList);
+    const updatedPengajuan = pengajuanList.filter((p: any) => p.id !== currentPengajuan.id);
+    localStorage.setItem("pengajuanPerubahanHargaJual", JSON.stringify(updatedPengajuan));
+    setPengajuanList(updatedPengajuan);
+    setViewingBatch(null);
+    alert("Data perubahan harga berhasil dihapus. Harga produk dikembalikan ke harga lama.");
+  };
+
+  const handleAddDetail = () => {
+    const newDetail: DetailPerubahanHarga = {
+      id: Date.now().toString(),
+      produkId: "",
+      kodeProduk: "",
+      namaProduk: "",
+      hargaSaatIni: 0,
+      hargaBaru: "",
+    };
+    setDetailHarga((prev) => [newDetail, ...prev]);
+  };
+
+  const handleRemoveDetail = (id: string) => {
+    setDetailHarga((prev) => prev.filter((d) => d.id !== id));
+    if (productModalDetailId === id) {
+      setShowProductModal(false);
+      setProductModalDetailId(null);
+    }
+  };
+
+  const handleDetailChange = (id: string, field: keyof DetailPerubahanHarga, value: string | number) => {
+    setDetailHarga((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, [field]: value } : d))
+    );
+  };
+
+  const handleSelectProductFromModal = (p: Product) => {
+    if (!productModalDetailId) return;
+    setDetailHarga((prev) =>
+      prev.map((d) =>
+        d.id === productModalDetailId
+          ? {
+              ...d,
+              produkId: p.id,
+              kodeProduk: p.kodeProduk,
+              namaProduk: p.namaProduk,
+              hargaSaatIni: p.hargaJual ?? 0,
+              hargaBaru: p.hargaJual > 0 ? p.hargaJual.toString() : "",
+            }
+          : d
+      )
+    );
+    setShowProductModal(false);
+    setProductModalDetailId(null);
+  };
+
+  const handleSubmit = () => {
+    if (!tanggalBerlaku) {
+      alert("Tanggal berlaku wajib diisi.");
+      return;
+    }
+    const validDetails = detailHarga.filter(
+      (d) => d.produkId && d.kodeProduk && d.namaProduk
+    );
+    if (validDetails.length === 0) {
+      alert("Tambahkan minimal satu produk. Klik Tambah Barang lalu pilih produk dan isi harga baru.");
+      return;
+    }
+    const invalid = validDetails.find((d) => {
+      const num = parseInt(String(d.hargaBaru).replace(/\D/g, ""), 10) || 0;
+      return num <= 0;
+    });
+    if (invalid) {
+      alert("Harga jual baru harus lebih dari 0 untuk semua item.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let productsUpdated = [...products];
+      const riwayatArr: RiwayatPerubahanHarga[] = [];
+      const savedRiwayat = localStorage.getItem("perubahanHargaJual");
+      const existingRiwayat: RiwayatPerubahanHarga[] = savedRiwayat
+        ? JSON.parse(savedRiwayat)
+        : [];
+      const createdAtIso = new Date().toISOString();
+      const noTransaksi = "PH-" + new Date().getTime();
+
+      for (const d of validDetails) {
+        const numHarga = parseInt(String(d.hargaBaru).replace(/\D/g, ""), 10) || 0;
+        if (numHarga <= 0) continue;
+        const product = productsUpdated.find((p) => p.id === d.produkId);
+        if (!product) continue;
+        const hargaLama = product.hargaJual ?? 0;
+
+        productsUpdated = productsUpdated.map((p) => {
+          if (p.id !== d.produkId) return p;
+          const next: Product = { ...p, hargaJual: numHarga };
+          if (next.units && next.units.length > 0) {
+            next.units = next.units.map((u) => ({ ...u, hargaJual: numHarga }));
+          }
+          return next;
+        });
+
+        riwayatArr.push({
+          id: Date.now().toString() + "-" + d.id,
+          noTransaksi,
+          tanggalBerlaku,
+          produkId: d.produkId,
+          kodeProduk: d.kodeProduk,
+          namaProduk: d.namaProduk,
+          hargaLama,
+          hargaBaru: numHarga,
+          operator: currentUserEmail || "System",
+          createdAt: createdAtIso,
+        });
+      }
+
+      localStorage.setItem("products", JSON.stringify(productsUpdated));
+      setProducts(productsUpdated);
+      const newRiwayatList = [...riwayatArr, ...existingRiwayat];
+      localStorage.setItem("perubahanHargaJual", JSON.stringify(newRiwayatList));
+      setRiwayatList(newRiwayatList);
+
+      alert("Perubahan harga jual berhasil disimpan. Berlaku untuk seluruh apotik.");
+      handleCloseModal();
+    } catch (err) {
+      alert("Terjadi kesalahan saat menyimpan perubahan harga jual.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTanggal = (iso: string) => {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return iso;
+    }
+  };
+
+  const formatRupiah = (n: number) =>
+    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n);
+
+  // Group riwayat by transaksi: noTransaksi jika ada, else createdAt + tanggalBerlaku
+  const riwayatByTransaksi = (() => {
+    const map = new Map<string, RiwayatPerubahanHarga[]>();
+    for (const r of riwayatList) {
+      const key = r.noTransaksi ?? r.createdAt + "|" + r.tanggalBerlaku;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(r);
+    }
+    return Array.from(map.entries()).map(([key, items]) => {
+      const sorted = [...items].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+      return {
+        key,
+        noTransaksi: first.noTransaksi ?? "-",
+        tanggalTransaksi: first.createdAt,
+        tanggalBerlaku: first.tanggalBerlaku,
+        operator: first.operator,
+        lastUpdate: last.createdAt,
+        items: sorted,
+      };
+    });
+  })();
+
+  return (
+    <DashboardLayout>
+      <div style={{ padding: "24px" }}>
+        <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "24px" }}>
+          Perubahan harga jual berlaku untuk seluruh apotik.
+        </p>
+
+        <div style={{ marginBottom: "24px" }}>
+          <button
+            type="button"
+            onClick={handleOpenModal}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#3b82f6",
+              color: "#fff",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            Tambah perubahan harga
+          </button>
+        </div>
+
+        <div>
+          <h2
+            style={{
+              fontSize: "18px",
+              fontWeight: 600,
+              marginBottom: "12px",
+              color: "#1e293b",
+            }}
+          >
+            Riwayat Perubahan harga jual
+          </h2>
+          {riwayatByTransaksi.length === 0 ? (
+            <p style={{ color: "#64748b", fontSize: "14px" }}>
+              Belum ada riwayat perubahan harga jual.
+            </p>
+          ) : (
+            <div
+              style={{
+                overflowX: "auto",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+              }}
+            >
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: "13px",
+                }}
+              >
+                <thead>
+                  <tr
+                    style={{
+                      backgroundColor: "#f8fafc",
+                      borderBottom: "1px solid #e2e8f0",
+                    }}
+                  >
+                    <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600 }}>No. Transaksi</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600 }}>Tanggal transaksi</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600 }}>Tanggal berlaku</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600 }}>Operator</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600 }}>Last update</th>
+                    <th style={{ padding: "10px 12px", textAlign: "center", fontWeight: 600, width: "72px" }}>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {riwayatByTransaksi.map((batch) => (
+                    <tr key={batch.key} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                      <td style={{ padding: "10px 12px" }}>{batch.noTransaksi}</td>
+                      <td style={{ padding: "10px 12px" }}>{formatTanggal(batch.tanggalTransaksi)}</td>
+                      <td style={{ padding: "10px 12px" }}>{batch.tanggalBerlaku}</td>
+                      <td style={{ padding: "10px 12px" }}>{batch.operator}</td>
+                      <td style={{ padding: "10px 12px" }}>{formatTanggal(batch.lastUpdate)}</td>
+                      <td style={{ padding: "10px 12px", textAlign: "center", verticalAlign: "middle" }}>
+                        <button
+                          type="button"
+                          onClick={() => setViewingBatch(batch.items)}
+                          title="Lihat detail"
+                          style={{
+                            padding: "6px",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            color: "#3b82f6",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#eff6ff";
+                            e.currentTarget.style.borderRadius = "4px";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "transparent";
+                          }}
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+        {/* Modal View Detail - layout seperti form input (Tambah perubahan harga) */}
+        {viewingBatch && viewingBatch.length > 0 && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000,
+            }}
+            onClick={() => setViewingBatch(null)}
+          >
+            <div
+              style={{
+                backgroundColor: "#ffffff",
+                borderRadius: "8px",
+                padding: "24px",
+                width: "95%",
+                maxWidth: "1200px",
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#1e293b" }}>
+                  Detail Perubahan harga jual
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setViewingBatch(null)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "24px",
+                    cursor: "pointer",
+                    color: "#64748b",
+                    padding: 0,
+                    width: "32px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Layout seperti modal form input: 2 side + outline group */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "16px" }}>
+                <div style={{ display: "flex", gap: "16px", alignItems: "stretch", flexWrap: "wrap" }}>
+                  {/* Side kiri - outline group */}
+                  <div
+                    style={{
+                      flex: "1",
+                      minWidth: "280px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      backgroundColor: "#f8fafc",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>No. Transaksi</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                        {viewingBatch[0].noTransaksi ?? "-"}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>Tanggal transaksi</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                        {formatTanggal(viewingBatch[0].createdAt)}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>Tanggal Berlaku</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                        {viewingBatch[0].tanggalBerlaku}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>Operator</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                        {viewingBatch[0].operator}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ width: "1px", backgroundColor: "#e2e8f0", alignSelf: "stretch", flexShrink: 0 }} />
+                  {/* Side kanan - Keterangan */}
+                  <div
+                    style={{
+                      flex: "1",
+                      minWidth: "280px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      backgroundColor: "#f8fafc",
+                    }}
+                  >
+                    <label style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Keterangan</label>
+                    <div style={{ flex: 1, minHeight: "96px", padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#64748b", boxSizing: "border-box" }}>
+                      -
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detail Perubahan Harga */}
+                <div style={{ display: "flex", flexDirection: "column", minHeight: "200px" }}>
+                  <h4 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 12px 0", color: "#1e293b" }}>Detail Perubahan Harga</h4>
+                  <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "600px", fontSize: "13px" }}>
+                      <thead>
+                        <tr style={{ backgroundColor: "#f8fafc" }}>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "160px" }}>Nama</th>
+                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Harga saat ini</th>
+                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Harga baru</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {viewingBatch.map((r) => (
+                          <tr key={r.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                            <td style={{ padding: "10px 12px" }}>{r.kodeProduk}</td>
+                            <td style={{ padding: "10px 12px" }}>{r.namaProduk}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right" }}>{formatRupiah(r.hargaLama)}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right" }}>{formatRupiah(r.hargaBaru)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {pengajuanStatus === "Menunggu Persetujuan" && (
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    backgroundColor: "#fef3c7",
+                    border: "1px solid #f59e0b",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    color: "#92400e",
+                    marginBottom: "16px",
+                  }}
+                >
+                  Pengajuan perubahan menunggu persetujuan. Klik Refresh untuk melihat status terbaru.
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                {pengajuanStatus === "Menunggu Persetujuan" ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleRefreshPengajuan}
+                      style={{
+                        padding: "8px 16px",
+                        backgroundColor: "#10b981",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontSize: "13px",
+                        fontWeight: 500,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Refresh
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBatalPengajuan}
+                      style={{
+                        padding: "8px 16px",
+                        backgroundColor: "#ef4444",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontSize: "13px",
+                        fontWeight: 500,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Batal ajukan
+                    </button>
+                  </>
+                ) : pengajuanStatus === "Disetujui" && currentPengajuan ? (
+                  <>
+                    {currentPengajuan.jenisPengajuan === "Edit Data" ? (
+                      <button
+                        type="button"
+                        onClick={handleSimpanSetujui}
+                        style={{
+                          padding: "8px 16px",
+                          backgroundColor: "#3b82f6",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "6px",
+                          fontSize: "13px",
+                          fontWeight: 500,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Simpan
+                      </button>
+                    ) : currentPengajuan.jenisPengajuan === "Hapus Data" ? (
+                      <button
+                        type="button"
+                        onClick={handleHapusSetujui}
+                        style={{
+                          padding: "8px 16px",
+                          backgroundColor: "#ef4444",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "6px",
+                          fontSize: "13px",
+                          fontWeight: 500,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Hapus
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={handleBatalPengajuan}
+                      style={{
+                        padding: "8px 16px",
+                        backgroundColor: "#f1f5f9",
+                        color: "#475569",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "6px",
+                        fontSize: "13px",
+                        fontWeight: 500,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Batal ajukan
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleOpenPengajuanModal}
+                    style={{
+                      padding: "8px 16px",
+                      backgroundColor: "#3b82f6",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Ajukan perubahan
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setViewingBatch(null)}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#f1f5f9",
+                    color: "#475569",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                  }}
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Ajukan Perubahan - seperti Penyesuaian stok */}
+        {isPengajuanModalOpen && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1002,
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "#ffffff",
+                borderRadius: "8px",
+                padding: "24px",
+                width: "90%",
+                maxWidth: "420px",
+                boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 20px 0", color: "#1e293b" }}>
+                Ajukan Perubahan
+              </h3>
+              <form onSubmit={handleSubmitPengajuan}>
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                    Jenis Pengajuan <span style={{ color: "#ef4444" }}>*</span>
+                  </label>
+                  <select
+                    value={pengajuanData.jenisPengajuan}
+                    onChange={(e) => setPengajuanData((prev) => ({ ...prev, jenisPengajuan: e.target.value }))}
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <option value="">Pilih Jenis Pengajuan</option>
+                    <option value="Edit Data">Edit Data</option>
+                    <option value="Hapus Data">Hapus Data</option>
+                  </select>
+                </div>
+                <div style={{ marginBottom: "20px" }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                    Alasan <span style={{ color: "#ef4444" }}>*</span>
+                  </label>
+                  <textarea
+                    value={pengajuanData.alasanPengajuan}
+                    onChange={(e) => setPengajuanData((prev) => ({ ...prev, alasanPengajuan: e.target.value }))}
+                    required
+                    rows={3}
+                    placeholder="Masukkan alasan pengajuan perubahan"
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      boxSizing: "border-box",
+                      resize: "vertical",
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                  <button
+                    type="button"
+                    onClick={handleClosePengajuanModal}
+                    style={{
+                      padding: "8px 16px",
+                      backgroundColor: "#f1f5f9",
+                      color: "#475569",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      padding: "8px 16px",
+                      backgroundColor: "#3b82f6",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Kirim Pengajuan
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        </div>
+
+        {isModalOpen && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000,
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "#ffffff",
+                borderRadius: "8px",
+                padding: "24px",
+                width: "95%",
+                maxWidth: "1200px",
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "24px",
+                }}
+              >
+                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#1e293b" }}>
+                  Tambah perubahan harga jual
+                </h2>
+                <button
+                  onClick={handleCloseModal}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "24px",
+                    cursor: "pointer",
+                    color: "#64748b",
+                    padding: 0,
+                    width: "32px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Layout: 2 side - No. Bukti, Tanggal, Tanggal Berlaku | Keterangan */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "16px" }}>
+                <div style={{ display: "flex", gap: "16px", alignItems: "stretch", flexWrap: "wrap" }}>
+                  {/* Side kiri - outline group */}
+                  <div
+                    style={{
+                      flex: "1",
+                      minWidth: "280px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      backgroundColor: "#f8fafc",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                        No. Bukti
+                      </label>
+                      <div
+                        style={{
+                          flex: 1,
+                          padding: "6px 8px",
+                          border: "1px solid #e5e7eb",
+                          borderRadius: "6px",
+                          fontSize: "13px",
+                          backgroundColor: "#f9fafb",
+                          color: "#64748b",
+                          boxSizing: "border-box",
+                        }}
+                      >
+                        -
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                        Tanggal
+                      </label>
+                      <input
+                        type="date"
+                        value={tanggal}
+                        onChange={(e) => setTanggal(e.target.value)}
+                        style={{
+                          flex: 1,
+                          padding: "6px 8px",
+                          border: "1px solid #d1d5db",
+                          borderRadius: "6px",
+                          fontSize: "13px",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                        Tanggal Berlaku <span style={{ color: "#ef4444" }}>*</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={tanggalBerlaku}
+                        onChange={(e) => setTanggalBerlaku(e.target.value)}
+                        style={{
+                          flex: 1,
+                          padding: "6px 8px",
+                          border: "1px solid #d1d5db",
+                          borderRadius: "6px",
+                          fontSize: "13px",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ width: "1px", backgroundColor: "#e2e8f0", alignSelf: "stretch", flexShrink: 0 }} />
+                  {/* Side kanan - Keterangan */}
+                  <div
+                    style={{
+                      flex: "1",
+                      minWidth: "280px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      backgroundColor: "#f8fafc",
+                    }}
+                  >
+                    <label style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Keterangan</label>
+                    <textarea
+                      value={keterangan}
+                      onChange={(e) => setKeterangan(e.target.value)}
+                      placeholder="Keterangan (opsional)"
+                      rows={4}
+                      style={{
+                        width: "100%",
+                        flex: 1,
+                        minHeight: "96px",
+                        padding: "6px 8px",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "6px",
+                        fontSize: "13px",
+                        boxSizing: "border-box",
+                        resize: "vertical",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Detail Perubahan Harga - seperti Detail Penyesuaian */}
+                <div style={{ display: "flex", flexDirection: "column", minHeight: "360px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <h4 style={{ fontSize: "16px", fontWeight: 600, margin: 0, color: "#1e293b" }}>
+                      Detail Perubahan Harga
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={handleAddDetail}
+                      style={{
+                        padding: "8px 16px",
+                        backgroundColor: "#3b82f6",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        fontWeight: 500,
+                      }}
+                    >
+                      + Tambah Barang
+                    </button>
+                  </div>
+                  {detailHarga.length > 0 ? (
+                    <div
+                      style={{
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "6px",
+                        overflowX: "auto",
+                        flex: 1,
+                        minHeight: "360px",
+                      }}
+                    >
+                      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px", fontSize: "13px" }}>
+                        <thead>
+                          <tr style={{ backgroundColor: "#f8fafc" }}>
+                            <th style={{ padding: "10px 12px", textAlign: "center", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", width: "56px" }}>Aksi</th>
+                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Produk</th>
+                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode</th>
+                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "160px" }}>Nama</th>
+                            <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Harga saat ini</th>
+                            <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", width: "120px" }}>Harga baru</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {detailHarga.map((d) => (
+                            <tr key={d.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                              <td style={{ padding: "10px 12px", textAlign: "center", verticalAlign: "middle" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveDetail(d.id)}
+                                  title="Hapus"
+                                  style={{
+                                    padding: "6px",
+                                    backgroundColor: "transparent",
+                                    color: "#ef4444",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#fef2f2"; }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                                >
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                    <line x1="10" y1="11" x2="10" y2="17" />
+                                    <line x1="14" y1="11" x2="14" y2="17" />
+                                  </svg>
+                                </button>
+                              </td>
+                              <td style={{ padding: "10px 12px", minWidth: "200px" }}>
+                                <input
+                                  type="text"
+                                  readOnly
+                                  value={d.namaProduk ? `${d.kodeProduk} - ${d.namaProduk}` : ""}
+                                  placeholder="Klik untuk pilih produk"
+                                  onClick={() => {
+                                    setProductModalDetailId(d.id);
+                                    setShowProductModal(true);
+                                    setProductModalPage(1);
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    padding: "8px 10px",
+                                    border: "1px solid #d1d5db",
+                                    borderRadius: "6px",
+                                    fontSize: "13px",
+                                    boxSizing: "border-box",
+                                    cursor: "pointer",
+                                    backgroundColor: "white",
+                                  }}
+                                />
+                              </td>
+                              <td style={{ padding: "10px 12px", color: "#64748b" }}>{d.kodeProduk || "-"}</td>
+                              <td style={{ padding: "10px 12px", color: "#64748b", minWidth: "160px" }}>{d.namaProduk || "-"}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: "#64748b" }}>
+                                {d.produkId ? formatRupiah(d.hargaSaatIni) : "-"}
+                              </td>
+                              <td style={{ padding: "8px 12px", verticalAlign: "middle", textAlign: "right" }}>
+                                <input
+                                  type="text"
+                                  value={d.hargaBaru}
+                                  onChange={(e) => handleDetailChange(d.id, "hargaBaru", e.target.value.replace(/\D/g, ""))}
+                                  placeholder="0"
+                                  style={{
+                                    width: "100px",
+                                    padding: "6px 8px",
+                                    border: "1px solid #d1d5db",
+                                    borderRadius: "4px",
+                                    fontSize: "13px",
+                                    boxSizing: "border-box",
+                                    textAlign: "right",
+                                  }}
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={handleAddDetail}
+                      style={{
+                        padding: "24px",
+                        textAlign: "center",
+                        border: "1px dashed #d1d5db",
+                        borderRadius: "6px",
+                        color: "#64748b",
+                        fontSize: "14px",
+                        flex: 1,
+                        minHeight: "360px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Belum ada item. Klik Tambah Barang untuk menambah.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#f1f5f9",
+                    color: "#475569",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: loading ? "#94a3b8" : "#3b82f6",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    cursor: loading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {loading ? "Menyimpan..." : "Simpan"}
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Pilih Produk - seperti Penyesuaian stok */}
+            {showProductModal && productModalDetailId && (
+              <div
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 1002,
+                }}
+                onClick={() => {
+                  setShowProductModal(false);
+                  setProductModalDetailId(null);
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: "#ffffff",
+                    borderRadius: "8px",
+                    padding: "24px",
+                    width: "90%",
+                    maxWidth: "800px",
+                    maxHeight: "85vh",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <div>
+                      <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "#1e293b" }}>Pilih Produk</h3>
+                      <p style={{ fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" }}>Pilih produk dari daftar di bawah ini</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowProductModal(false);
+                        setProductModalDetailId(null);
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        fontSize: "24px",
+                        cursor: "pointer",
+                        color: "#64748b",
+                        padding: 0,
+                        width: "32px",
+                        height: "32px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div style={{ overflow: "auto", flex: 1, border: "1px solid #e2e8f0", borderRadius: "6px" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+                      <thead>
+                        <tr style={{ backgroundColor: "#f8fafc", position: "sticky", top: 0 }}>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "200px" }}>Nama</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Satuan</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const usedProdukIds = detailHarga
+                            .filter((d) => d.id !== productModalDetailId && d.produkId)
+                            .map((d) => d.produkId);
+                          const availableProducts = products.filter(
+                            (p) =>
+                              detailHarga.some((d) => d.id === productModalDetailId && d.produkId === p.id) ||
+                              !usedProdukIds.includes(p.id)
+                          );
+                          const start = (productModalPage - 1) * PRODUCTS_PER_PAGE;
+                          const paginatedProducts = availableProducts.slice(start, start + PRODUCTS_PER_PAGE);
+                          return (
+                            <>
+                              {paginatedProducts.length === 0 ? (
+                                <tr>
+                                  <td colSpan={3} style={{ padding: "24px", textAlign: "center", color: "#64748b" }}>
+                                    Tidak ada produk
+                                  </td>
+                                </tr>
+                              ) : (
+                                paginatedProducts.map((p) => (
+                                  <tr
+                                    key={p.id}
+                                    onClick={() => handleSelectProductFromModal(p)}
+                                    style={{ borderBottom: "1px solid #e2e8f0", cursor: "pointer" }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor = "#f8fafc";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor = "white";
+                                    }}
+                                  >
+                                    <td style={{ padding: "10px 12px", color: "#1e293b" }}>{p.kodeProduk}</td>
+                                    <td style={{ padding: "10px 12px", color: "#1e293b" }}>{p.namaProduk}</td>
+                                    <td style={{ padding: "10px 12px", color: "#64748b" }}>{p.satuan || "-"}</td>
+                                  </tr>
+                                ))
+                              )}
+                            </>
+                          );
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                  {(() => {
+                    const usedProdukIds = detailHarga
+                      .filter((d) => d.id !== productModalDetailId && d.produkId)
+                      .map((d) => d.produkId);
+                    const availableProducts = products.filter(
+                      (p) =>
+                        detailHarga.some((d) => d.id === productModalDetailId && d.produkId === p.id) ||
+                        !usedProdukIds.includes(p.id)
+                    );
+                    const totalPages = Math.max(1, Math.ceil(availableProducts.length / PRODUCTS_PER_PAGE));
+                    const start = (productModalPage - 1) * PRODUCTS_PER_PAGE;
+                    const end = Math.min(start + PRODUCTS_PER_PAGE, availableProducts.length);
+                    return (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: "12px",
+                          paddingTop: "12px",
+                          borderTop: "1px solid #e2e8f0",
+                          fontSize: "13px",
+                          color: "#64748b",
+                        }}
+                      >
+                        <span>
+                          Menampilkan {availableProducts.length === 0 ? 0 : start + 1} - {end} dari {availableProducts.length} item
+                        </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <button
+                            type="button"
+                            onClick={() => setProductModalPage((prev) => Math.max(1, prev - 1))}
+                            disabled={productModalPage <= 1}
+                            style={{
+                              padding: "6px 12px",
+                              border: "1px solid #e2e8f0",
+                              borderRadius: "6px",
+                              backgroundColor: "white",
+                              cursor: productModalPage <= 1 ? "not-allowed" : "pointer",
+                              fontSize: "13px",
+                              opacity: productModalPage <= 1 ? 0.6 : 1,
+                            }}
+                          >
+                            ←
+                          </button>
+                          <span style={{ fontSize: "13px", color: "#475569" }}>
+                            Halaman {productModalPage} dari {totalPages}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setProductModalPage((prev) => Math.min(totalPages, prev + 1))}
+                            disabled={productModalPage >= totalPages}
+                            style={{
+                              padding: "6px 12px",
+                              border: "1px solid #e2e8f0",
+                              borderRadius: "6px",
+                              backgroundColor: "white",
+                              cursor: productModalPage >= totalPages ? "not-allowed" : "pointer",
+                              fontSize: "13px",
+                              opacity: productModalPage >= totalPages ? 0.6 : 1,
+                            }}
+                          >
+                            →
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
+  );
+}
