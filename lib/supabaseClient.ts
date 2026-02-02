@@ -7,7 +7,9 @@ export function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) {
-    throw new Error('Supabase env belum dikonfigurasi');
+    throw new Error(
+      'Supabase env belum dikonfigurasi. Tambahkan NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY di Vercel → Project Settings → Environment Variables, lalu redeploy.'
+    );
   }
   const isBrowser = typeof window !== 'undefined';
   client = createClient(url, anonKey, {

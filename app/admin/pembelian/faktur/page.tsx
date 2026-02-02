@@ -42,6 +42,7 @@ interface PenerimaanPembelian {
   createdAt: string;
   operator?: string;
   updatedAt?: string;
+  apotikId?: string;
 }
 
 interface FakturPembelian {
@@ -116,6 +117,7 @@ export default function FakturPembelianPage() {
   const [error, setError] = useState<string | null>(null);
   const [hargaBarang, setHargaBarang] = useState<{ [key: string]: number }>({});
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Load current user email
   useEffect(() => {
@@ -134,29 +136,52 @@ export default function FakturPembelianPage() {
   }, []);
 
   useEffect(() => {
-    // Load data from localStorage
-    const storedPenerimaan = localStorage.getItem("penerimaanPembelian");
-    const storedFaktur = localStorage.getItem("fakturPembelian");
-    const storedSuppliers = localStorage.getItem("suppliers");
-
-    if (storedPenerimaan) {
-      setPenerimaanList(JSON.parse(storedPenerimaan));
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const sp = localStorage.getItem("penerimaanPembelian"); if (sp) try { setPenerimaanList(JSON.parse(sp)); } catch (_) {}
+      const sf = localStorage.getItem("fakturPembelian"); if (sf) try { setFakturList(JSON.parse(sf)); } catch (_) {}
+      const ss = localStorage.getItem("suppliers"); if (ss) try { setSuppliers(JSON.parse(ss)); } catch (_) {}
     }
-    if (storedFaktur) {
-      setFakturList(JSON.parse(storedFaktur));
-    }
-    if (storedSuppliers) {
-      setSuppliers(JSON.parse(storedSuppliers));
-    }
-
-    // Set today's date
     const today = new Date().toISOString().split("T")[0];
-    setFormData((prev) => ({
-      ...prev,
-      tanggalFaktur: today,
-      tanggalJatuhTempo: today,
-    }));
+    setFormData((prev) => ({ ...prev, tanggalFaktur: today, tanggalJatuhTempo: today }));
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) { loadFromLocalStorage(); setIsLoadingData(false); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/penerimaanPembelian", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/fakturPembelian", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/suppliers", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([penerimaanData, fakturData, suppliersData]) => {
+        if (cancelled) return;
+        if (Array.isArray(penerimaanData) && penerimaanData.length > 0) { setPenerimaanList(penerimaanData); localStorage.setItem("penerimaanPembelian", JSON.stringify(penerimaanData)); }
+        else loadFromLocalStorage();
+        if (Array.isArray(fakturData) && fakturData.length > 0) { setFakturList(fakturData); localStorage.setItem("fakturPembelian", JSON.stringify(fakturData)); }
+        else { const sf = localStorage.getItem("fakturPembelian"); if (sf) try { setFakturList(JSON.parse(sf)); } catch (_) {} }
+        if (Array.isArray(suppliersData) && suppliersData.length > 0) { setSuppliers(suppliersData); localStorage.setItem("suppliers", JSON.stringify(suppliersData)); }
+        else { const ss = localStorage.getItem("suppliers"); if (ss) try { setSuppliers(JSON.parse(ss)); } catch (_) {} }
+        if (!cancelled) setIsLoadingData(false);
+      }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
+
+  // Sync faktur and penerimaan to API (guard: jangan POST saat initial load)
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        fetch("/api/data/fakturPembelian", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: fakturList }) }).catch(() => {});
+      }
+    });
+  }, [fakturList, isLoadingData]);
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        fetch("/api/data/penerimaanPembelian", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: penerimaanList }) }).catch(() => {});
+      }
+    });
+  }, [penerimaanList, isLoadingData]);
 
   // Get available penerimaan (yang belum dibuat faktur)
   const getAvailablePenerimaan = () => {
@@ -444,7 +469,7 @@ export default function FakturPembelianPage() {
           }}
         >
           <button
-            onClick={handleOpenModal}
+            onClick={() => handleOpenModal()}
             style={{
               padding: "10px 20px",
               backgroundColor: "#3b82f6",

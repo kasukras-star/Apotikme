@@ -66,34 +66,32 @@ export default function DataKategoriPage() {
     loadUserEmail();
   }, []);
 
-  // Load data from localStorage on mount
+  // Load data from API (Supabase) first, fallback to localStorage
   useEffect(() => {
-    const savedKategoris = localStorage.getItem("kategoris");
-    if (savedKategoris) {
-      try {
-        const parsed = JSON.parse(savedKategoris);
-        const kategorisWithDates = parsed.map((kategori: any) => ({
-          ...kategori,
-          createdAt: new Date(kategori.createdAt),
-          updatedAt: kategori.updatedAt ? new Date(kategori.updatedAt) : undefined,
-        }));
-        setKategoris(kategorisWithDates);
-      } catch (err) {
-        console.error("Error loading kategoris from localStorage:", err);
-      }
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem("kategoris");
+      if (saved) try { setKategoris(JSON.parse(saved).map((k: any) => ({ ...k, createdAt: new Date(k.createdAt), updatedAt: k.updatedAt ? new Date(k.updatedAt) : undefined }))); } catch (_) {}
+      const sp = localStorage.getItem("pengajuanKategori");
+      if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {}
     }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanKategori");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan kategori:", err);
-      }
-    }
-
-    setIsLoadingData(false);
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) { loadFromLocalStorage(); setIsLoadingData(false); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/kategoris", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/pengajuanKategori", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([arr, pengajuan]) => {
+        if (cancelled) return;
+        if (Array.isArray(arr) && arr.length > 0) {
+          setKategoris(arr.map((k: any) => ({ ...k, createdAt: k.createdAt ? new Date(k.createdAt) : new Date(), updatedAt: k.updatedAt ? new Date(k.updatedAt) : undefined })));
+          localStorage.setItem("kategoris", JSON.stringify(arr));
+        } else loadFromLocalStorage();
+        if (Array.isArray(pengajuan) && pengajuan.length > 0) { setPengajuanList(pengajuan); localStorage.setItem("pengajuanKategori", JSON.stringify(pengajuan)); }
+        else { const sp = localStorage.getItem("pengajuanKategori"); if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {} }
+      }).catch(() => { if (!cancelled) loadFromLocalStorage(); }).finally(() => { if (!cancelled) setIsLoadingData(false); });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
 
   // Check pengajuan status when editingKategori changes
@@ -230,12 +228,31 @@ export default function DataKategoriPage() {
     return () => clearInterval(interval);
   }, [isModalOpen, editingKategori]);
 
-  // Save to localStorage whenever kategoris change
+  // Save to localStorage and sync to API whenever kategoris or pengajuan change
   useEffect(() => {
     if (!isLoadingData) {
       localStorage.setItem("kategoris", JSON.stringify(kategoris));
     }
   }, [kategoris, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          const payload = kategoris.map((k) => ({ ...k, createdAt: k.createdAt instanceof Date ? k.createdAt.toISOString() : k.createdAt, updatedAt: k.updatedAt instanceof Date ? k.updatedAt.toISOString() : k.updatedAt }));
+          fetch("/api/data/kategoris", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: payload }) }).catch(() => {});
+        }
+      });
+    }
+  }, [kategoris, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanKategori", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
+        }
+      });
+    }
+  }, [pengajuanList, isLoadingData]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);

@@ -131,6 +131,7 @@ export default function TerimaPembelianPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Load current user email
   useEffect(() => {
@@ -158,67 +159,64 @@ export default function TerimaPembelianPage() {
   };
 
   useEffect(() => {
-    // Load pesanan list
-    const savedPesanan = localStorage.getItem("pesananPembelian");
-    if (savedPesanan) {
-      try {
-        setPesananList(JSON.parse(savedPesanan));
-      } catch (err) {
-        console.error("Error loading pesanan:", err);
-      }
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const spe = localStorage.getItem("pesananPembelian"); if (spe) try { setPesananList(JSON.parse(spe)); } catch (_) {}
+      const sp = localStorage.getItem("penerimaanPembelian"); if (sp) try { setPenerimaanList(JSON.parse(sp)); } catch (_) {}
+      const ss = localStorage.getItem("suppliers"); if (ss) try { setSuppliers(JSON.parse(ss)); } catch (_) {}
+      const spr = localStorage.getItem("products"); if (spr) try { setProducts(JSON.parse(spr)); } catch (_) {}
+      const sa = localStorage.getItem("apotiks"); if (sa) try { setApotiks(JSON.parse(sa).filter((a: any) => a.statusAktif)); } catch (_) {}
+      const spg = localStorage.getItem("pengajuanPenerimaanPembelian"); if (spg) try { setPengajuanList(JSON.parse(spg)); } catch (_) {}
     }
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) { loadFromLocalStorage(); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/pesananPembelian", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/penerimaanPembelian", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/suppliers", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/products", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/apotiks", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/pengajuanPenerimaanPembelian", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([pesananData, penerimaanData, suppliersData, productsData, apotiksData, pengajuanData]) => {
+        if (cancelled) return;
+        if (Array.isArray(pesananData) && pesananData.length > 0) { setPesananList(pesananData); localStorage.setItem("pesananPembelian", JSON.stringify(pesananData)); }
+        else { const spe = localStorage.getItem("pesananPembelian"); if (spe) try { setPesananList(JSON.parse(spe)); } catch (_) {} }
+        if (Array.isArray(penerimaanData) && penerimaanData.length > 0) { setPenerimaanList(penerimaanData); localStorage.setItem("penerimaanPembelian", JSON.stringify(penerimaanData)); }
+        else { const sp = localStorage.getItem("penerimaanPembelian"); if (sp) try { setPenerimaanList(JSON.parse(sp)); } catch (_) {} }
+        if (Array.isArray(suppliersData) && suppliersData.length > 0) { setSuppliers(suppliersData); localStorage.setItem("suppliers", JSON.stringify(suppliersData)); }
+        else { const ss = localStorage.getItem("suppliers"); if (ss) try { setSuppliers(JSON.parse(ss)); } catch (_) {} }
+        if (Array.isArray(productsData) && productsData.length > 0) { setProducts(productsData); localStorage.setItem("products", JSON.stringify(productsData)); }
+        else { const spr = localStorage.getItem("products"); if (spr) try { setProducts(JSON.parse(spr)); } catch (_) {} }
+        if (Array.isArray(apotiksData) && apotiksData.length > 0) { setApotiks(apotiksData.filter((a: any) => a.statusAktif)); localStorage.setItem("apotiks", JSON.stringify(apotiksData)); }
+        else { const sa = localStorage.getItem("apotiks"); if (sa) try { setApotiks(JSON.parse(sa).filter((a: any) => a.statusAktif)); } catch (_) {} }
+        if (Array.isArray(pengajuanData) && pengajuanData.length > 0) { setPengajuanList(pengajuanData); localStorage.setItem("pengajuanPenerimaanPembelian", JSON.stringify(pengajuanData)); }
+        else { const spg = localStorage.getItem("pengajuanPenerimaanPembelian"); if (spg) try { setPengajuanList(JSON.parse(spg)); } catch (_) {} }
+        if (!cancelled) setIsLoadingData(false);
+      }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
+  }, []);
 
-    // Load penerimaan list
-    const savedPenerimaan = localStorage.getItem("penerimaanPembelian");
-    if (savedPenerimaan) {
-      try {
-        setPenerimaanList(JSON.parse(savedPenerimaan));
-      } catch (err) {
-        console.error("Error loading penerimaan:", err);
+  // Sync penerimaanPembelian and pengajuanPenerimaanPembelian to API (guard: jangan POST saat initial load)
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        fetch("/api/data/penerimaanPembelian", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: penerimaanList }) }).catch(() => {});
       }
-    }
-
-    // Load suppliers
-    const savedSuppliers = localStorage.getItem("suppliers");
-    if (savedSuppliers) {
-      try {
-        setSuppliers(JSON.parse(savedSuppliers));
-      } catch (err) {
-        console.error("Error loading suppliers:", err);
+    });
+  }, [penerimaanList, isLoadingData]);
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        fetch("/api/data/pengajuanPenerimaanPembelian", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
       }
-    }
+    });
+  }, [pengajuanList, isLoadingData]);
 
-    // Load products
-    const savedProducts = localStorage.getItem("products");
-    if (savedProducts) {
-      try {
-        setProducts(JSON.parse(savedProducts));
-      } catch (err) {
-        console.error("Error loading products:", err);
-      }
-    }
-
-    // Load apotiks
-    const savedApotiks = localStorage.getItem("apotiks");
-    if (savedApotiks) {
-      try {
-        const parsed = JSON.parse(savedApotiks);
-        setApotiks(parsed.filter((apotik: any) => apotik.statusAktif));
-      } catch (err) {
-        console.error("Error loading apotiks:", err);
-      }
-    }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanPenerimaanPembelian");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan:", err);
-      }
-    }
-
+  useEffect(() => {
     // Fix existing penerimaan yang belum memiliki tujuanPengirimanId
     // dan update stok ke apotik yang benar berdasarkan PO
     const fixExistingPenerimaan = () => {

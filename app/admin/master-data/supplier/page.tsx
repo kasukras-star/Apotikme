@@ -87,34 +87,45 @@ export default function DataSupplierPage() {
     loadUserEmail();
   }, []);
 
-  // Load data from localStorage on mount
+  // Load data from API (Supabase) first, fallback to localStorage
   useEffect(() => {
-    const savedSuppliers = localStorage.getItem("suppliers");
-    if (savedSuppliers) {
-      try {
-        const parsed = JSON.parse(savedSuppliers);
-        const suppliersWithDates = parsed.map((supplier: any) => ({
-          ...supplier,
-          createdAt: new Date(supplier.createdAt),
-          updatedAt: supplier.updatedAt ? new Date(supplier.updatedAt) : undefined,
-        }));
-        setSuppliers(suppliersWithDates);
-      } catch (err) {
-        console.error("Error loading suppliers from localStorage:", err);
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem("suppliers");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setSuppliers(parsed.map((s: any) => ({ ...s, createdAt: new Date(s.createdAt), updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined })));
+        } catch (err) {
+          console.error("Error loading suppliers from localStorage:", err);
+        }
       }
+      const sp = localStorage.getItem("pengajuanSupplier");
+      if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {}
     }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanSupplier");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan supplier:", err);
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) {
+        loadFromLocalStorage();
+        setIsLoadingData(false);
+        return;
       }
-    }
-
-    setIsLoadingData(false);
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/suppliers", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/pengajuanSupplier", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([arr, pengajuan]) => {
+        if (cancelled) return;
+        if (Array.isArray(arr) && arr.length > 0) {
+          setSuppliers(arr.map((s: any) => ({ ...s, createdAt: s.createdAt ? new Date(s.createdAt) : new Date(), updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined })));
+          localStorage.setItem("suppliers", JSON.stringify(arr));
+        } else loadFromLocalStorage();
+        if (Array.isArray(pengajuan) && pengajuan.length > 0) {
+          setPengajuanList(pengajuan);
+          localStorage.setItem("pengajuanSupplier", JSON.stringify(pengajuan));
+        } else { const sp = localStorage.getItem("pengajuanSupplier"); if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {} }
+      }).catch(() => { if (!cancelled) loadFromLocalStorage(); }).finally(() => { if (!cancelled) setIsLoadingData(false); });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
 
   // Check pengajuan status when editingSupplier changes
@@ -251,12 +262,31 @@ export default function DataSupplierPage() {
     return () => clearInterval(interval);
   }, [isModalOpen, editingSupplier]);
 
-  // Save to localStorage whenever suppliers change
+  // Save to localStorage and sync to API whenever suppliers or pengajuan change
   useEffect(() => {
     if (!isLoadingData) {
       localStorage.setItem("suppliers", JSON.stringify(suppliers));
     }
   }, [suppliers, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          const payload = suppliers.map((s) => ({ ...s, createdAt: s.createdAt instanceof Date ? s.createdAt.toISOString() : s.createdAt, updatedAt: s.updatedAt instanceof Date ? s.updatedAt.toISOString() : s.updatedAt }));
+          fetch("/api/data/suppliers", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: payload }) }).catch(() => {});
+        }
+      });
+    }
+  }, [suppliers, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanSupplier", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
+        }
+      });
+    }
+  }, [pengajuanList, isLoadingData]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);

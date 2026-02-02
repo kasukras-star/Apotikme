@@ -23,7 +23,7 @@ async function checkAdminAuth(req: Request): Promise<boolean> {
   // Fallback to ADMIN_API_TOKEN
   const adminToken = process.env.ADMIN_API_TOKEN;
   const expected = adminToken ? `Bearer ${adminToken}` : '';
-  return adminToken && auth === expected;
+  return !!(adminToken && auth === expected);
 }
 
 export async function PATCH(req: Request) {

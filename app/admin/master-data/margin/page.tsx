@@ -139,52 +139,42 @@ export default function DataMarginPage() {
     loadUserEmail();
   }, []);
 
-  // Load types, kategoris, and margins from localStorage
+  // Load types, kategoris, margins, pengajuan from API first, fallback to localStorage
   useEffect(() => {
-    const savedTypes = localStorage.getItem("types");
-    if (savedTypes) {
-      try {
-        setTypes(JSON.parse(savedTypes));
-      } catch (err) {
-        console.error("Error loading types:", err);
-      }
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const st = localStorage.getItem("types");
+      if (st) try { setTypes(JSON.parse(st)); } catch (_) {}
+      const sk = localStorage.getItem("kategoris");
+      if (sk) try { setKategoris(JSON.parse(sk)); } catch (_) {}
+      const sm = localStorage.getItem("margins");
+      if (sm) try { setMargins(JSON.parse(sm).map((m: any) => ({ ...m, createdAt: new Date(m.createdAt), updatedAt: m.updatedAt ? new Date(m.updatedAt) : undefined }))); } catch (_) {}
+      const sp = localStorage.getItem("pengajuanMargin");
+      if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {}
     }
-
-    const savedKategoris = localStorage.getItem("kategoris");
-    if (savedKategoris) {
-      try {
-        setKategoris(JSON.parse(savedKategoris));
-      } catch (err) {
-        console.error("Error loading kategoris:", err);
-      }
-    }
-
-    const savedMargins = localStorage.getItem("margins");
-    if (savedMargins) {
-      try {
-        const parsed = JSON.parse(savedMargins);
-        const marginsWithDates = parsed.map((margin: any) => ({
-          ...margin,
-          createdAt: new Date(margin.createdAt),
-          updatedAt: margin.updatedAt ? new Date(margin.updatedAt) : undefined,
-        }));
-        setMargins(marginsWithDates);
-      } catch (err) {
-        console.error("Error loading margins from localStorage:", err);
-      }
-    }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanMargin");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan margin:", err);
-      }
-    }
-
-    setIsLoadingData(false);
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) { loadFromLocalStorage(); setIsLoadingData(false); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/types", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/kategoris", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/margins", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/pengajuanMargin", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([typesData, kategorisData, marginsData, pengajuanData]) => {
+        if (cancelled) return;
+        if (Array.isArray(typesData) && typesData.length > 0) { setTypes(typesData); localStorage.setItem("types", JSON.stringify(typesData)); }
+        else { const st = localStorage.getItem("types"); if (st) try { setTypes(JSON.parse(st)); } catch (_) {} }
+        if (Array.isArray(kategorisData) && kategorisData.length > 0) { setKategoris(kategorisData); localStorage.setItem("kategoris", JSON.stringify(kategorisData)); }
+        else { const sk = localStorage.getItem("kategoris"); if (sk) try { setKategoris(JSON.parse(sk)); } catch (_) {} }
+        if (Array.isArray(marginsData) && marginsData.length > 0) {
+          setMargins(marginsData.map((m: any) => ({ ...m, createdAt: m.createdAt ? new Date(m.createdAt) : new Date(), updatedAt: m.updatedAt ? new Date(m.updatedAt) : undefined })));
+          localStorage.setItem("margins", JSON.stringify(marginsData));
+        } else { const sm = localStorage.getItem("margins"); if (sm) try { setMargins(JSON.parse(sm).map((m: any) => ({ ...m, createdAt: new Date(m.createdAt), updatedAt: m.updatedAt ? new Date(m.updatedAt) : undefined }))); } catch (_) {} }
+        if (Array.isArray(pengajuanData) && pengajuanData.length > 0) { setPengajuanList(pengajuanData); localStorage.setItem("pengajuanMargin", JSON.stringify(pengajuanData)); }
+        else { const sp = localStorage.getItem("pengajuanMargin"); if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {} }
+      }).catch(() => { if (!cancelled) loadFromLocalStorage(); }).finally(() => { if (!cancelled) setIsLoadingData(false); });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
 
   // Check pengajuan status when editingMargin changes
@@ -321,12 +311,31 @@ export default function DataMarginPage() {
     return () => clearInterval(interval);
   }, [isModalOpen, editingMargin]);
 
-  // Save to localStorage whenever margins change
+  // Save to localStorage and sync to API whenever margins or pengajuan change
   useEffect(() => {
     if (!isLoadingData) {
       localStorage.setItem("margins", JSON.stringify(margins));
     }
   }, [margins, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          const payload = margins.map((m) => ({ ...m, createdAt: m.createdAt instanceof Date ? m.createdAt.toISOString() : m.createdAt, updatedAt: m.updatedAt instanceof Date ? m.updatedAt.toISOString() : m.updatedAt }));
+          fetch("/api/data/margins", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: payload }) }).catch(() => {});
+        }
+      });
+    }
+  }, [margins, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanMargin", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
+        }
+      });
+    }
+  }, [pengajuanList, isLoadingData]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);

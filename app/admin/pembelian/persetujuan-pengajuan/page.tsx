@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "../../../../components/DashboardLayout";
 import Link from "next/link";
+import { getSupabaseClient } from "../../../../lib/supabaseClient";
 
 interface Pengajuan {
   id: string;
@@ -360,6 +361,42 @@ export default function PersetujuanPengajuanPage() {
       }
     }
 
+    // Overwrite with API data when available (sinkron antar perangkat / URL)
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token) return;
+      const token = data.session.access_token;
+      const keys = ["pengajuanPembelian", "pengajuanPenerimaanPembelian", "penerimaanPembelian", "pesananPembelian", "suppliers", "pengajuanApotik", "pengajuanUnit", "pengajuanSupplier", "apotiks", "units", "pengajuanCustomer", "pengajuanKategori", "pengajuanProduk", "pengajuanType", "pengajuanJenis", "pengajuanMargin", "pengajuanRacikan", "pengajuanPenyesuaianStok", "customers", "kategoris", "products"];
+      Promise.all(keys.map((k) => fetch("/api/data/" + k, { headers: { Authorization: `Bearer ${token}` } }).then((r) => (r.ok ? r.json() : null)).then((v) => ({ key: k, value: v })))).then((results) => {
+        results.forEach(({ key, value }) => {
+          if (!Array.isArray(value) || value.length === 0) return;
+          localStorage.setItem(key, JSON.stringify(value));
+          const withMenu = (arr: any[], menu: string) => arr.map((p: any) => ({ ...p, menuSystem: p.menuSystem || menu }));
+          switch (key) {
+            case "pengajuanPembelian": setPengajuanList(value); break;
+            case "pengajuanPenerimaanPembelian": setPengajuanPenerimaanList(value); break;
+            case "penerimaanPembelian": setPenerimaanList(value); break;
+            case "pesananPembelian": setPesananList(value); break;
+            case "suppliers": setSuppliers(value); break;
+            case "pengajuanApotik": setPengajuanApotikList(withMenu(value, "Data Master")); break;
+            case "pengajuanUnit": setPengajuanUnitList(withMenu(value, "Data Master")); break;
+            case "pengajuanSupplier": setPengajuanSupplierList(withMenu(value, "Data Master")); break;
+            case "apotiks": setApotiks(value); break;
+            case "units": setUnits(value); break;
+            case "pengajuanCustomer": setPengajuanCustomerList(withMenu(value, "Data Master")); break;
+            case "pengajuanKategori": setPengajuanKategoriList(withMenu(value, "Data Master")); break;
+            case "pengajuanProduk": setPengajuanProdukList(withMenu(value, "Data Master")); break;
+            case "pengajuanType": setPengajuanTypeList(withMenu(value, "Data Master")); break;
+            case "pengajuanJenis": setPengajuanJenisList(withMenu(value, "Data Master")); break;
+            case "pengajuanMargin": setPengajuanMarginList(withMenu(value, "Data Master")); break;
+            case "pengajuanRacikan": setPengajuanRacikanList(withMenu(value, "Data Master")); break;
+            case "pengajuanPenyesuaianStok": setPengajuanPenyesuaianStokList(withMenu(Array.isArray(value) ? value : [value], "Merchandise")); break;
+            case "customers": setCustomers(value); break;
+            case "kategoris": setKategoris(value); break;
+            case "products": setProducts(value); break;
+          }
+        });
+      }).catch(() => {});
+    });
   }, []);
 
   // Re-load all pengajuan from localStorage when window gains focus (e.g. user returns to tab)

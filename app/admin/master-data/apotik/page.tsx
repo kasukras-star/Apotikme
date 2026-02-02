@@ -54,6 +54,7 @@ export default function DataApotikPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [apiLoadError, setApiLoadError] = useState<string | null>(null);
   const [apotiks, setApotiks] = useState<Apotik[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
@@ -69,34 +70,81 @@ export default function DataApotikPage() {
   const [showNotification, setShowNotification] = useState(false);
   const [hasRefreshed, setHasRefreshed] = useState(false);
 
-  // Load data from localStorage on mount
+  // Load data from API (Supabase) first, fallback to localStorage
   useEffect(() => {
-    const savedApotiks = localStorage.getItem("apotiks");
-    if (savedApotiks) {
-      try {
-        const parsed = JSON.parse(savedApotiks);
-        // Convert createdAt string back to Date
-        const apotiksWithDates = parsed.map((apotik: any) => ({
-          ...apotik,
-          createdAt: new Date(apotik.createdAt),
-        }));
-        setApotiks(apotiksWithDates);
-      } catch (err) {
-        console.error("Error loading apotiks from localStorage:", err);
+    let cancelled = false;
+    function loadFromLocalStorageApotiks() {
+      const saved = localStorage.getItem("apotiks");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const withDates = parsed.map((a: any) => ({ ...a, createdAt: new Date(a.createdAt) }));
+          setApotiks(withDates);
+        } catch (err) {
+          console.error("Error loading apotiks from localStorage:", err);
+        }
       }
     }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanApotik");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan apotik:", err);
+    function loadFromLocalStoragePengajuan() {
+      const saved = localStorage.getItem("pengajuanApotik");
+      if (saved) {
+        try {
+          setPengajuanList(JSON.parse(saved));
+        } catch (err) {
+          console.error("Error loading pengajuan apotik:", err);
+        }
       }
     }
-
-    setIsLoadingData(false);
+    function loadFromLocalStorage() {
+      loadFromLocalStorageApotiks();
+      loadFromLocalStoragePengajuan();
+    }
+    getSupabaseClient()
+      .auth.getSession()
+      .then(({ data }) => {
+        if (!data.session?.access_token || cancelled) {
+          loadFromLocalStorage();
+          setIsLoadingData(false);
+          return;
+        }
+        const token = data.session.access_token;
+        setApiLoadError(null);
+        const handleRes = (r: Response, key: string): Promise<unknown> => {
+          if (r.status === 401 && !cancelled) setApiLoadError("Sesi habis, silakan login lagi.");
+          else if (r.status === 500 && !cancelled) setApiLoadError("Gagal memuat dari server. Cek koneksi dan env Vercel.");
+          if (r.ok) return r.json();
+          return Promise.resolve(key === "apotiks" ? [] : []);
+        };
+        Promise.all([
+          fetch("/api/data/apotiks", { headers: { Authorization: `Bearer ${token}` } }).then((r) => handleRes(r, "apotiks")),
+          fetch("/api/data/pengajuanApotik", { headers: { Authorization: `Bearer ${token}` } }).then((r) => handleRes(r, "pengajuan")),
+        ])
+          .then(([apotiksData, pengajuanData]) => {
+            if (cancelled) return;
+            if (Array.isArray(apotiksData) && apotiksData.length > 0) {
+              const withDates = apotiksData.map((a: any) => ({ ...a, createdAt: a.createdAt ? new Date(a.createdAt) : new Date() }));
+              setApotiks(withDates);
+              localStorage.setItem("apotiks", JSON.stringify(apotiksData));
+            } else {
+              loadFromLocalStorageApotiks();
+            }
+            if (Array.isArray(pengajuanData) && pengajuanData.length > 0) {
+              setPengajuanList(pengajuanData);
+              localStorage.setItem("pengajuanApotik", JSON.stringify(pengajuanData));
+            } else {
+              loadFromLocalStoragePengajuan();
+            }
+          })
+          .catch(() => { if (!cancelled) loadFromLocalStorage(); })
+          .finally(() => { if (!cancelled) setIsLoadingData(false); });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          loadFromLocalStorage();
+          setIsLoadingData(false);
+        }
+      });
+    return () => { cancelled = true; };
   }, []);
 
   // Check if there's edit parameter in URL (from persetujuan pengajuan)
@@ -315,7 +363,7 @@ export default function DataApotikPage() {
     }
   }, [apotiks, isLoadingData]);
 
-  // Sync apotiks ke server agar POS bisa load saat localStorage kosong (Incognito / perangkat lain)
+  // Sync apotiks ke server agar data sinkron antar perangkat dan via URL
   useEffect(() => {
     if (!isLoadingData && apotiks.length >= 0) {
       getSupabaseClient()
@@ -338,6 +386,26 @@ export default function DataApotikPage() {
         });
     }
   }, [apotiks, isLoadingData]);
+
+  // Sync pengajuanApotik ke server
+  useEffect(() => {
+    if (!isLoadingData && pengajuanList.length >= 0) {
+      getSupabaseClient()
+        .auth.getSession()
+        .then(({ data }) => {
+          if (data.session?.access_token) {
+            fetch("/api/data/pengajuanApotik", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${data.session.access_token}`,
+              },
+              body: JSON.stringify({ value: pengajuanList }),
+            }).catch(() => {});
+          }
+        });
+    }
+  }, [pengajuanList, isLoadingData]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -776,6 +844,21 @@ export default function DataApotikPage() {
   return (
     <DashboardLayout>
       <div>
+        {apiLoadError && (
+          <div
+            style={{
+              padding: "12px",
+              backgroundColor: "#fef2f2",
+              border: "1px solid #fecaca",
+              borderRadius: "6px",
+              marginBottom: "16px",
+              color: "#dc2626",
+              fontSize: "14px",
+            }}
+          >
+            {apiLoadError}
+          </div>
+        )}
         <div
           style={{
             display: "flex",

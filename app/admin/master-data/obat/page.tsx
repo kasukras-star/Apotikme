@@ -151,34 +151,35 @@ export default function DataProductPage() {
     }
   }, []);
 
-  // Load data from localStorage on mount
+  // Load products and pengajuan from API (Supabase) first, fallback to localStorage
   useEffect(() => {
-    const savedProducts = localStorage.getItem("products");
-    if (savedProducts) {
-      try {
-        const parsed = JSON.parse(savedProducts);
-        const productsWithDates = parsed.map((product: any) => ({
-          ...product,
-          createdAt: new Date(product.createdAt),
-          updatedAt: product.updatedAt ? new Date(product.updatedAt) : undefined,
-        }));
-        setProducts(productsWithDates);
-      } catch (err) {
-        console.error("Error loading products from localStorage:", err);
-      }
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem("products");
+      if (saved) try {
+        const parsed = JSON.parse(saved);
+        setProducts(parsed.map((p: any) => ({ ...p, createdAt: new Date(p.createdAt), updatedAt: p.updatedAt ? new Date(p.updatedAt) : undefined })));
+      } catch (_) {}
+      const sp = localStorage.getItem("pengajuanProduk");
+      if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {}
     }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanProduk");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan produk:", err);
-      }
-    }
-
-    setIsLoadingData(false);
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) { loadFromLocalStorage(); setIsLoadingData(false); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/products", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/pengajuanProduk", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([arr, pengajuan]) => {
+        if (cancelled) return;
+        if (Array.isArray(arr) && arr.length > 0) {
+          setProducts(arr.map((p: any) => ({ ...p, createdAt: p.createdAt ? new Date(p.createdAt) : new Date(), updatedAt: p.updatedAt ? new Date(p.updatedAt) : undefined })));
+          localStorage.setItem("products", JSON.stringify(arr));
+        } else loadFromLocalStorage();
+        if (Array.isArray(pengajuan) && pengajuan.length > 0) { setPengajuanList(pengajuan); localStorage.setItem("pengajuanProduk", JSON.stringify(pengajuan)); }
+        else { const sp = localStorage.getItem("pengajuanProduk"); if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {} }
+      }).catch(() => { if (!cancelled) loadFromLocalStorage(); }).finally(() => { if (!cancelled) setIsLoadingData(false); });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
 
   // Check pengajuan status when editingProduct changes
@@ -321,12 +322,31 @@ export default function DataProductPage() {
     return () => clearInterval(interval);
   }, [isModalOpen, editingProduct]);
 
-  // Save to localStorage whenever products change
+  // Save to localStorage and sync to API whenever products or pengajuan change
   useEffect(() => {
     if (!isLoadingData) {
       localStorage.setItem("products", JSON.stringify(products));
     }
   }, [products, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          const payload = products.map((p) => ({ ...p, createdAt: p.createdAt instanceof Date ? p.createdAt.toISOString() : p.createdAt, updatedAt: p.updatedAt instanceof Date ? p.updatedAt.toISOString() : p.updatedAt }));
+          fetch("/api/data/products", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: payload }) }).catch(() => {});
+        }
+      });
+    }
+  }, [products, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanProduk", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
+        }
+      });
+    }
+  }, [pengajuanList, isLoadingData]);
 
   // Generate kode produk otomatis
   const generateKodeProduk = (): string => {

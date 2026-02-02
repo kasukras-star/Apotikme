@@ -81,6 +81,7 @@ export default function StokOpnamePage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Load current user email
   useEffect(() => {
@@ -99,38 +100,42 @@ export default function StokOpnamePage() {
   }, []);
 
   useEffect(() => {
-    const savedOpname = localStorage.getItem("stokOpname");
-    const savedProducts = localStorage.getItem("products");
-    const savedApotiks = localStorage.getItem("apotiks");
-
-    if (savedOpname) {
-      try {
-        const parsed = JSON.parse(savedOpname);
-        setOpnameList(parsed);
-      } catch (err) {
-        console.error("Error loading stok opname:", err);
-      }
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const so = localStorage.getItem("stokOpname"); if (so) try { setOpnameList(JSON.parse(so)); } catch (_) {}
+      const sp = localStorage.getItem("products"); if (sp) try { setProducts(JSON.parse(sp)); } catch (_) {}
+      const sa = localStorage.getItem("apotiks"); if (sa) try { setApotiks(JSON.parse(sa).filter((a: Apotik) => a.statusAktif)); } catch (_) {}
     }
-
-    if (savedProducts) {
-      try {
-        const parsed = JSON.parse(savedProducts);
-        setProducts(parsed);
-      } catch (err) {
-        console.error("Error loading products:", err);
-      }
-    }
-
-    if (savedApotiks) {
-      try {
-        const parsed = JSON.parse(savedApotiks);
-        const activeApotiks = parsed.filter((a: Apotik) => a.statusAktif);
-        setApotiks(activeApotiks);
-      } catch (err) {
-        console.error("Error loading apotiks:", err);
-      }
-    }
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) { loadFromLocalStorage(); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/stokOpname", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/products", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/apotiks", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([opnameData, productsData, apotiksData]) => {
+        if (cancelled) return;
+        if (Array.isArray(opnameData) && opnameData.length > 0) { setOpnameList(opnameData); localStorage.setItem("stokOpname", JSON.stringify(opnameData)); }
+        else { const so = localStorage.getItem("stokOpname"); if (so) try { setOpnameList(JSON.parse(so)); } catch (_) {} }
+        if (Array.isArray(productsData) && productsData.length > 0) { setProducts(productsData); localStorage.setItem("products", JSON.stringify(productsData)); }
+        else { const sp = localStorage.getItem("products"); if (sp) try { setProducts(JSON.parse(sp)); } catch (_) {} }
+        if (Array.isArray(apotiksData) && apotiksData.length > 0) { setApotiks(apotiksData.filter((a: Apotik) => a.statusAktif)); localStorage.setItem("apotiks", JSON.stringify(apotiksData)); }
+        else { const sa = localStorage.getItem("apotiks"); if (sa) try { setApotiks(JSON.parse(sa).filter((a: Apotik) => a.statusAktif)); } catch (_) {} }
+        if (!cancelled) setIsLoadingData(false);
+      }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
+
+  // Sync stokOpname to API (guard: jangan POST saat initial load agar tidak menimpa data server)
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        fetch("/api/data/stokOpname", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: opnameList }) }).catch(() => {});
+      }
+    });
+  }, [opnameList, isLoadingData]);
 
   const getTodayDateInput = () => {
     return new Date().toISOString().split("T")[0];

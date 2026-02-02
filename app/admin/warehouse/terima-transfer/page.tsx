@@ -106,6 +106,7 @@ export default function TerimaTransferPage() {
     alasanPengajuan: "",
   });
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Load current user email
   useEffect(() => {
@@ -231,6 +232,26 @@ export default function TerimaTransferPage() {
         console.error("Error loading products:", err);
       }
     }
+
+    // Overwrite with API data when available (sinkron antar perangkat / URL)
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token) { setIsLoadingData(false); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/terimaTransfer", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : null),
+        fetch("/api/data/transferBarang", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : null),
+        fetch("/api/data/apotiks", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : null),
+        fetch("/api/data/products", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : null),
+        fetch("/api/data/pengajuanTerimaTransfer", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : null),
+      ]).then(([terimaData, transfersData, apotiksData, productsData, pengajuanData]) => {
+        if (Array.isArray(terimaData) && terimaData.length > 0) { setTerimaList(terimaData); localStorage.setItem("terimaTransfer", JSON.stringify(terimaData)); }
+        if (Array.isArray(transfersData) && transfersData.length > 0) { setTransferList(transfersData.map((t: any) => ({ ...t, createdAt: t.createdAt ? new Date(t.createdAt) : new Date(), updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date() }))); localStorage.setItem("transferBarang", JSON.stringify(transfersData)); }
+        if (Array.isArray(apotiksData) && apotiksData.length > 0) { setApotiks(apotiksData.filter((a: Apotik) => a.statusAktif)); localStorage.setItem("apotiks", JSON.stringify(apotiksData)); }
+        if (Array.isArray(productsData) && productsData.length > 0) { setProducts(productsData); localStorage.setItem("products", JSON.stringify(productsData)); }
+        if (Array.isArray(pengajuanData) && pengajuanData.length > 0) { setPengajuanList(pengajuanData); localStorage.setItem("pengajuanTerimaTransfer", JSON.stringify(pengajuanData)); }
+        setIsLoadingData(false);
+      }).catch(() => { setIsLoadingData(false); });
+    });
   }, []);
 
   // Reload transfer list when terimaList changes or when component mounts
@@ -250,6 +271,24 @@ export default function TerimaTransferPage() {
       }
     }
   }, [terimaList]);
+
+  // Sync terimaTransfer and pengajuanTerimaTransfer to API (guard: jangan POST saat initial load)
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        fetch("/api/data/terimaTransfer", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: terimaList }) }).catch(() => {});
+      }
+    });
+  }, [terimaList, isLoadingData]);
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        fetch("/api/data/pengajuanTerimaTransfer", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
+      }
+    });
+  }, [pengajuanList, isLoadingData]);
 
   // Get transfers that are sent and not yet received
   // For transfer antar apotik, tidak perlu filter berdasarkan apotik tertentu

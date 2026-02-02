@@ -87,12 +87,12 @@ export default function LoginModal({ onClose }: Props) {
         }
       }
       const supabase = getSupabaseClient();
-      const { data, err } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
-      if (err) {
-        setError(err.message);
+      if (authError) {
+        setError(authError.message);
         return;
       }
       if (data?.session) {

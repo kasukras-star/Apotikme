@@ -1,5 +1,5 @@
 -- Jalankan sekali di Supabase Dashboard > SQL Editor
--- Agar POS bisa load daftar apotik dari server saat localStorage kosong (Incognito / perangkat lain)
+-- Wajib agar data (Data Master, Merchandise, Warehouse, POS) sinkron di URL dan antar perangkat
 
 create table if not exists app_config (
   key text primary key,

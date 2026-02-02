@@ -63,35 +63,69 @@ export default function DataUnitPage() {
     loadUserEmail();
   }, []);
 
-  // Load data from localStorage on mount
+  // Load data from API (Supabase) first, fallback to localStorage
   useEffect(() => {
-    const savedUnits = localStorage.getItem("units");
-    if (savedUnits) {
-      try {
-        const parsed = JSON.parse(savedUnits);
-        // Convert createdAt string back to Date
-        const unitsWithDates = parsed.map((unit: any) => ({
-          ...unit,
-          createdAt: new Date(unit.createdAt),
-          updatedAt: unit.updatedAt ? new Date(unit.updatedAt) : undefined,
-        }));
-        setUnits(unitsWithDates);
-      } catch (err) {
-        console.error("Error loading units from localStorage:", err);
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem("units");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const withDates = parsed.map((u: any) => ({
+            ...u,
+            createdAt: new Date(u.createdAt),
+            updatedAt: u.updatedAt ? new Date(u.updatedAt) : undefined,
+          }));
+          setUnits(withDates);
+        } catch (err) {
+          console.error("Error loading units from localStorage:", err);
+        }
+      }
+      const savedPengajuan = localStorage.getItem("pengajuanUnit");
+      if (savedPengajuan) {
+        try {
+          setPengajuanList(JSON.parse(savedPengajuan));
+        } catch (err) {
+          console.error("Error loading pengajuan unit:", err);
+        }
       }
     }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanUnit");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan unit:", err);
-      }
-    }
-
-    setIsLoadingData(false);
+    getSupabaseClient()
+      .auth.getSession()
+      .then(({ data }) => {
+        if (!data.session?.access_token || cancelled) {
+          loadFromLocalStorage();
+          setIsLoadingData(false);
+          return;
+        }
+        const token = data.session.access_token;
+        Promise.all([
+          fetch("/api/data/units", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+          fetch("/api/data/pengajuanUnit", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        ])
+          .then(([unitsData, pengajuanData]) => {
+            if (cancelled) return;
+            if (Array.isArray(unitsData) && unitsData.length > 0) {
+              const withDates = unitsData.map((u: any) => ({ ...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date(), updatedAt: u.updatedAt ? new Date(u.updatedAt) : undefined }));
+              setUnits(withDates);
+              localStorage.setItem("units", JSON.stringify(unitsData));
+            } else {
+              const saved = localStorage.getItem("units");
+              if (saved) try { const p = JSON.parse(saved); setUnits(p.map((u: any) => ({ ...u, createdAt: new Date(u.createdAt), updatedAt: u.updatedAt ? new Date(u.updatedAt) : undefined }))); } catch (_) {}
+            }
+            if (Array.isArray(pengajuanData) && pengajuanData.length > 0) {
+              setPengajuanList(pengajuanData);
+              localStorage.setItem("pengajuanUnit", JSON.stringify(pengajuanData));
+            } else {
+              const sp = localStorage.getItem("pengajuanUnit");
+              if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {}
+            }
+          })
+          .catch(() => { if (!cancelled) loadFromLocalStorage(); })
+          .finally(() => { if (!cancelled) setIsLoadingData(false); });
+      })
+      .catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
 
   // Check pengajuan status when editingUnit changes
@@ -228,12 +262,39 @@ export default function DataUnitPage() {
     return () => clearInterval(interval);
   }, [isModalOpen, editingUnit]);
 
-  // Save to localStorage whenever units change
+  // Save to localStorage and sync to API whenever units or pengajuan change
   useEffect(() => {
     if (!isLoadingData) {
       localStorage.setItem("units", JSON.stringify(units));
     }
   }, [units, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          const token = data.session.access_token;
+          fetch("/api/data/units", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ value: units.map((u) => ({ ...u, createdAt: u.createdAt instanceof Date ? u.createdAt.toISOString() : u.createdAt, updatedAt: u.updatedAt instanceof Date ? u.updatedAt.toISOString() : u.updatedAt })) }),
+          }).catch(() => {});
+        }
+      });
+    }
+  }, [units, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanUnit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+            body: JSON.stringify({ value: pengajuanList }),
+          }).catch(() => {});
+        }
+      });
+    }
+  }, [pengajuanList, isLoadingData]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);

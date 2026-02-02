@@ -66,34 +66,32 @@ export default function DataJenisPage() {
     loadUserEmail();
   }, []);
 
-  // Load data from localStorage on mount
+  // Load data from API (Supabase) first, fallback to localStorage
   useEffect(() => {
-    const savedJenis = localStorage.getItem("jenis");
-    if (savedJenis) {
-      try {
-        const parsed = JSON.parse(savedJenis);
-        const jenisListWithDates = parsed.map((jenis: any) => ({
-          ...jenis,
-          createdAt: new Date(jenis.createdAt),
-          updatedAt: jenis.updatedAt ? new Date(jenis.updatedAt) : undefined,
-        }));
-        setJenisList(jenisListWithDates);
-      } catch (err) {
-        console.error("Error loading jenis from localStorage:", err);
-      }
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem("jenis");
+      if (saved) try { setJenisList(JSON.parse(saved).map((j: any) => ({ ...j, createdAt: new Date(j.createdAt), updatedAt: j.updatedAt ? new Date(j.updatedAt) : undefined }))); } catch (_) {}
+      const sp = localStorage.getItem("pengajuanJenis");
+      if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {}
     }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanJenis");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan Jenis:", err);
-      }
-    }
-
-    setIsLoadingData(false);
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) { loadFromLocalStorage(); setIsLoadingData(false); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/jenis", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/pengajuanJenis", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([arr, pengajuan]) => {
+        if (cancelled) return;
+        if (Array.isArray(arr) && arr.length > 0) {
+          setJenisList(arr.map((j: any) => ({ ...j, createdAt: j.createdAt ? new Date(j.createdAt) : new Date(), updatedAt: j.updatedAt ? new Date(j.updatedAt) : undefined })));
+          localStorage.setItem("jenis", JSON.stringify(arr));
+        } else loadFromLocalStorage();
+        if (Array.isArray(pengajuan) && pengajuan.length > 0) { setPengajuanList(pengajuan); localStorage.setItem("pengajuanJenis", JSON.stringify(pengajuan)); }
+        else { const sp = localStorage.getItem("pengajuanJenis"); if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {} }
+      }).catch(() => { if (!cancelled) loadFromLocalStorage(); }).finally(() => { if (!cancelled) setIsLoadingData(false); });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
 
   // Check pengajuan status when editingJenis changes
@@ -230,12 +228,31 @@ export default function DataJenisPage() {
     return () => clearInterval(interval);
   }, [isModalOpen, editingJenis]);
 
-  // Save to localStorage whenever jenisList change
+  // Save to localStorage and sync to API whenever jenisList or pengajuan change
   useEffect(() => {
     if (!isLoadingData) {
       localStorage.setItem("jenis", JSON.stringify(jenisList));
     }
   }, [jenisList, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          const payload = jenisList.map((j) => ({ ...j, createdAt: j.createdAt instanceof Date ? j.createdAt.toISOString() : j.createdAt, updatedAt: j.updatedAt instanceof Date ? j.updatedAt.toISOString() : j.updatedAt }));
+          fetch("/api/data/jenis", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: payload }) }).catch(() => {});
+        }
+      });
+    }
+  }, [jenisList, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanJenis", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
+        }
+      });
+    }
+  }, [pengajuanList, isLoadingData]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);

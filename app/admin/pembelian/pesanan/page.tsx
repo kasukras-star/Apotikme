@@ -112,6 +112,12 @@ export default function PesananPembelianPage() {
   });
   const [pengajuanList, setPengajuanList] = useState<any[]>([]);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [productModalDetailId, setProductModalDetailId] = useState<string | null>(null);
+  const [productModalPage, setProductModalPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 15;
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [apiLoadError, setApiLoadError] = useState<string | null>(null);
 
   // Load current user email
   useEffect(() => {
@@ -154,57 +160,50 @@ export default function PesananPembelianPage() {
     }
   };
 
-  // Load suppliers, apotiks, and products from localStorage
+  // Load suppliers, apotiks, products, pesanan, pengajuan from API first, fallback to localStorage
   useEffect(() => {
-    const savedSuppliers = localStorage.getItem("suppliers");
-    const savedApotiks = localStorage.getItem("apotiks");
-    const savedProducts = localStorage.getItem("products");
-    
-    if (savedSuppliers) {
-      try {
-        setSuppliers(JSON.parse(savedSuppliers));
-      } catch (err) {
-        console.error("Error loading suppliers:", err);
-      }
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const ss = localStorage.getItem("suppliers"); if (ss) try { setSuppliers(JSON.parse(ss)); } catch (_) {}
+      const sa = localStorage.getItem("apotiks"); if (sa) try { setApotiks(JSON.parse(sa).filter((a: Apotik) => a.statusAktif)); } catch (_) {}
+      const sp = localStorage.getItem("products"); if (sp) try { setProducts(JSON.parse(sp)); } catch (_) {}
+      const spe = localStorage.getItem("pesananPembelian"); if (spe) try { setPesananList(JSON.parse(spe)); } catch (_) {}
+      const spg = localStorage.getItem("pengajuanPembelian"); if (spg) try { setPengajuanList(JSON.parse(spg)); } catch (_) {}
     }
-    
-    if (savedApotiks) {
-      try {
-        const parsed = JSON.parse(savedApotiks);
-        // Filter only active apotiks
-        setApotiks(parsed.filter((apotik: Apotik) => apotik.statusAktif));
-      } catch (err) {
-        console.error("Error loading apotiks:", err);
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) {
+        loadFromLocalStorage();
+        setIsLoadingData(false);
+        return;
       }
-    }
-    
-    if (savedProducts) {
-      try {
-        setProducts(JSON.parse(savedProducts));
-      } catch (err) {
-        console.error("Error loading products:", err);
-      }
-    }
-
-    // Load pesanan list
-    const savedPesanan = localStorage.getItem("pesananPembelian");
-    if (savedPesanan) {
-      try {
-        setPesananList(JSON.parse(savedPesanan));
-      } catch (err) {
-        console.error("Error loading pesanan:", err);
-      }
-    }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanPembelian");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan:", err);
-      }
-    }
+      const token = data.session.access_token;
+      setApiLoadError(null);
+      const handleRes = (r: Response): Promise<unknown> => {
+        if (r.status === 401) setApiLoadError("Sesi habis, silakan login lagi.");
+        else if (r.status === 500) setApiLoadError("Gagal memuat dari server. Cek koneksi dan env Vercel.");
+        return r.ok ? r.json() : Promise.resolve([]);
+      };
+      Promise.all([
+        fetch("/api/data/suppliers", { headers: { Authorization: `Bearer ${token}` } }).then(handleRes),
+        fetch("/api/data/apotiks", { headers: { Authorization: `Bearer ${token}` } }).then(handleRes),
+        fetch("/api/data/products", { headers: { Authorization: `Bearer ${token}` } }).then(handleRes),
+        fetch("/api/data/pesananPembelian", { headers: { Authorization: `Bearer ${token}` } }).then(handleRes),
+        fetch("/api/data/pengajuanPembelian", { headers: { Authorization: `Bearer ${token}` } }).then(handleRes),
+      ]).then(([suppliersData, apotiksData, productsData, pesananData, pengajuanData]) => {
+        if (cancelled) return;
+        if (Array.isArray(suppliersData) && suppliersData.length > 0) { setSuppliers(suppliersData); localStorage.setItem("suppliers", JSON.stringify(suppliersData)); }
+        else { const ss = localStorage.getItem("suppliers"); if (ss) try { setSuppliers(JSON.parse(ss)); } catch (_) {} }
+        if (Array.isArray(apotiksData) && apotiksData.length > 0) { setApotiks(apotiksData.filter((a: Apotik) => a.statusAktif)); localStorage.setItem("apotiks", JSON.stringify(apotiksData)); }
+        else { const sa = localStorage.getItem("apotiks"); if (sa) try { setApotiks(JSON.parse(sa).filter((a: Apotik) => a.statusAktif)); } catch (_) {} }
+        if (Array.isArray(productsData) && productsData.length > 0) { setProducts(productsData); localStorage.setItem("products", JSON.stringify(productsData)); }
+        else { const sp = localStorage.getItem("products"); if (sp) try { setProducts(JSON.parse(sp)); } catch (_) {} }
+        if (Array.isArray(pesananData) && pesananData.length > 0) { setPesananList(pesananData); localStorage.setItem("pesananPembelian", JSON.stringify(pesananData)); }
+        else { const spe = localStorage.getItem("pesananPembelian"); if (spe) try { setPesananList(JSON.parse(spe)); } catch (_) {} }
+        if (Array.isArray(pengajuanData) && pengajuanData.length > 0) { setPengajuanList(pengajuanData); localStorage.setItem("pengajuanPembelian", JSON.stringify(pengajuanData)); }
+        else { const spg = localStorage.getItem("pengajuanPembelian"); if (spg) try { setPengajuanList(JSON.parse(spg)); } catch (_) {} }
+      }).catch(() => { if (!cancelled) loadFromLocalStorage(); }).finally(() => { if (!cancelled) setIsLoadingData(false); });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
 
   // Generate nomor pesanan and set default tanggal
@@ -222,6 +221,27 @@ export default function PesananPembelianPage() {
       }));
     }
   }, [isModalOpen, pesananList.length]);
+
+  // Sync pesanan and pengajuan to API (only after initial load, so we do not overwrite Supabase with [])
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          const token = data.session.access_token;
+          fetch("/api/data/pesananPembelian", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ value: pesananList }) }).catch(() => {});
+        }
+      });
+    }
+  }, [pesananList, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanPembelian", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
+        }
+      });
+    }
+  }, [pengajuanList, isLoadingData]);
 
   // Check if there's edit parameter in URL (from persetujuan pengajuan)
   useEffect(() => {
@@ -281,6 +301,8 @@ export default function PesananPembelianPage() {
     setIsModalOpen(false);
     setEditingPesanan(null);
     setError(null);
+    setShowProductModal(false);
+    setProductModalDetailId(null);
   };
 
   const handleEditPesanan = (pesanan: any) => {
@@ -696,6 +718,21 @@ export default function PesananPembelianPage() {
   return (
     <DashboardLayout>
       <div>
+        {apiLoadError && (
+          <div
+            style={{
+              padding: "12px",
+              backgroundColor: "#fef2f2",
+              border: "1px solid #fecaca",
+              borderRadius: "6px",
+              marginBottom: "16px",
+              color: "#dc2626",
+              fontSize: "14px",
+            }}
+          >
+            {apiLoadError}
+          </div>
+        )}
         <div
           style={{
             display: "flex",
@@ -1739,14 +1776,17 @@ export default function PesananPembelianPage() {
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveDetail(detail.id)}
+                                    title="Hapus"
                                     style={{
-                                      padding: "6px 12px",
+                                      padding: "6px 8px",
                                       backgroundColor: "#ef4444",
                                       color: "white",
                                       border: "none",
                                       borderRadius: "4px",
                                       cursor: "pointer",
-                                      fontSize: "12px",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
                                       transition: "background-color 0.2s",
                                     }}
                                     onMouseEnter={(e) => {
@@ -1756,16 +1796,31 @@ export default function PesananPembelianPage() {
                                       e.currentTarget.style.backgroundColor = "#ef4444";
                                     }}
                                   >
-                                    Delete
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="3 6 5 6 21 6" />
+                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                      <line x1="10" y1="11" x2="10" y2="17" />
+                                      <line x1="14" y1="11" x2="14" y2="17" />
+                                    </svg>
                                   </button>
                                 </td>
                                 <td style={{ padding: "12px" }}>
-                                  <select
-                                    value={detail.produkId}
-                                    onChange={(e) =>
-                                      handleDetailChange(detail.id, "produkId", e.target.value)
-                                    }
-                                    required
+                                  <div
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => {
+                                      setProductModalDetailId(detail.id);
+                                      setShowProductModal(true);
+                                      setProductModalPage(1);
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        setProductModalDetailId(detail.id);
+                                        setShowProductModal(true);
+                                        setProductModalPage(1);
+                                      }
+                                    }}
                                     style={{
                                       width: "100%",
                                       padding: "8px",
@@ -1773,15 +1828,17 @@ export default function PesananPembelianPage() {
                                       borderRadius: "4px",
                                       fontSize: "13px",
                                       boxSizing: "border-box",
+                                      cursor: "pointer",
+                                      backgroundColor: "#fff",
+                                      minHeight: "36px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      color: detail.namaProduk ? "#1e293b" : "#64748b",
                                     }}
                                   >
-                                    <option value="">Select Product</option>
-                                    {products.map((product) => (
-                                      <option key={product.id} value={product.id}>
-                                        {product.namaProduk}
-                                      </option>
-                                    ))}
-                                  </select>
+                                    <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{detail.namaProduk || "Select Product"}</span>
+                                    <span style={{ marginLeft: "8px", flexShrink: 0, fontSize: "12px", color: "#94a3b8" }}>▼</span>
+                                  </div>
                                 </td>
                                 <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>
                                   {detail.kodeProduk || "-"}
@@ -1928,7 +1985,7 @@ export default function PesananPembelianPage() {
                       Summary
                     </h4>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "10% 10%", gap: "16px", marginBottom: "20px" }}>
                       <div>
                         <label
                           htmlFor="diskonGlobal"
@@ -1939,7 +1996,7 @@ export default function PesananPembelianPage() {
                             fontWeight: "500",
                             color: "#374151",
                             width: "fit-content",
-                            maxWidth: "200px",
+                            maxWidth: "100%",
                           }}
                         >
                           Global Discount (%)
@@ -1973,7 +2030,7 @@ export default function PesananPembelianPage() {
                             fontWeight: "500",
                             color: "#374151",
                             width: "fit-content",
-                            maxWidth: "200px",
+                            maxWidth: "100%",
                           }}
                         >
                           PPN (%) <span style={{ color: "#ef4444" }}>*</span>
@@ -2313,6 +2370,119 @@ export default function PesananPembelianPage() {
                 </div>
               </form>
             </div>
+
+            {/* Modal Pilih Produk */}
+            {showProductModal && productModalDetailId && (
+              <div
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 1002,
+                }}
+                onClick={() => { setShowProductModal(false); setProductModalDetailId(null); }}
+              >
+                <div
+                  style={{
+                    backgroundColor: "#ffffff",
+                    borderRadius: "8px",
+                    padding: "24px",
+                    width: "90%",
+                    maxWidth: "800px",
+                    maxHeight: "85vh",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <div>
+                      <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "#1e293b" }}>Pilih Produk</h3>
+                      <p style={{ fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" }}>Pilih produk dari daftar di bawah ini</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setShowProductModal(false); setProductModalDetailId(null); }}
+                      style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#64748b", padding: 0, width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div style={{ overflow: "auto", flex: 1, border: "1px solid #e2e8f0", borderRadius: "6px" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+                      <thead>
+                        <tr style={{ backgroundColor: "#f8fafc", position: "sticky", top: 0 }}>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "200px" }}>Nama</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Satuan</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const usedProdukIds = formData.detailBarang.filter((d) => d.id !== productModalDetailId && d.produkId).map((d) => d.produkId);
+                          const availableProducts = products.filter((p) => formData.detailBarang.some((d) => d.id === productModalDetailId && d.produkId === p.id) || !usedProdukIds.includes(p.id));
+                          const start = (productModalPage - 1) * PRODUCTS_PER_PAGE;
+                          const paginatedProducts = availableProducts.slice(start, start + PRODUCTS_PER_PAGE);
+                          const totalPages = Math.max(1, Math.ceil(availableProducts.length / PRODUCTS_PER_PAGE));
+                          return (
+                            <>
+                              {paginatedProducts.length === 0 ? (
+                                <tr><td colSpan={3} style={{ padding: "24px", textAlign: "center", color: "#64748b" }}>Tidak ada produk</td></tr>
+                              ) : (
+                                paginatedProducts.map((p) => (
+                                  <tr
+                                    key={p.id}
+                                    onClick={() => {
+                                      if (productModalDetailId) {
+                                        handleDetailChange(productModalDetailId, "produkId", p.id);
+                                        setShowProductModal(false);
+                                        setProductModalDetailId(null);
+                                      }
+                                    }}
+                                    style={{ borderBottom: "1px solid #e2e8f0", cursor: "pointer" }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
+                                  >
+                                    <td style={{ padding: "10px 12px", color: "#1e293b" }}>{p.kodeProduk}</td>
+                                    <td style={{ padding: "10px 12px", color: "#1e293b" }}>{p.namaProduk}</td>
+                                    <td style={{ padding: "10px 12px", color: "#64748b" }}>{p.satuan || "-"}</td>
+                                  </tr>
+                                ))
+                              )}
+                            </>
+                          );
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                  {(() => {
+                    const usedProdukIds = formData.detailBarang.filter((d) => d.id !== productModalDetailId && d.produkId).map((d) => d.produkId);
+                    const availableProducts = products.filter((p) => formData.detailBarang.some((d) => d.id === productModalDetailId && d.produkId === p.id) || !usedProdukIds.includes(p.id));
+                    const totalPages = Math.max(1, Math.ceil(availableProducts.length / PRODUCTS_PER_PAGE));
+                    const start = (productModalPage - 1) * PRODUCTS_PER_PAGE;
+                    const end = Math.min(start + PRODUCTS_PER_PAGE, availableProducts.length);
+                    return (
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #e2e8f0", fontSize: "13px", color: "#64748b" }}>
+                        <span>Menampilkan {availableProducts.length === 0 ? 0 : start + 1} - {end} dari {availableProducts.length} item</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <button type="button" onClick={() => setProductModalPage((prev) => Math.max(1, prev - 1))} disabled={productModalPage <= 1} style={{ padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: "6px", backgroundColor: "white", cursor: productModalPage <= 1 ? "not-allowed" : "pointer", fontSize: "13px", opacity: productModalPage <= 1 ? 0.6 : 1 }}>←</button>
+                          <span style={{ fontSize: "13px", color: "#475569" }}>Halaman {productModalPage} dari {totalPages}</span>
+                          <button type="button" onClick={() => setProductModalPage((prev) => Math.min(totalPages, prev + 1))} disabled={productModalPage >= totalPages} style={{ padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: "6px", backgroundColor: "white", cursor: productModalPage >= totalPages ? "not-allowed" : "pointer", fontSize: "13px", opacity: productModalPage >= totalPages ? 0.6 : 1 }}>→</button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

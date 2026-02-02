@@ -98,6 +98,7 @@ export default function TransferBarangPage() {
     alasanPengajuan: "",
   });
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Load current user email
   useEffect(() => {
@@ -188,62 +189,63 @@ export default function TransferBarangPage() {
     return `TFB-${year}-${String(nextNumber).padStart(5, "0")}`;
   };
 
-  // Load data from localStorage
+  // Load data from API (Supabase) first, fallback to localStorage
   useEffect(() => {
-    const savedTransfers = localStorage.getItem("transferBarang");
-    if (savedTransfers) {
-      try {
-        const parsed = JSON.parse(savedTransfers);
-        const transfersWithDates = parsed.map((t: any) => ({
-          ...t,
-          createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
-          updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date(),
-        }));
-        setTransferList(transfersWithDates);
-      } catch (err) {
-        console.error("Error loading transfers:", err);
-      }
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const st = localStorage.getItem("transferBarang"); if (st) try { setTransferList(JSON.parse(st).map((t: any) => ({ ...t, createdAt: t.createdAt ? new Date(t.createdAt) : new Date(), updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date() }))); } catch (_) {}
+      const sp = localStorage.getItem("pengajuanTransferBarang"); if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {}
+      const sa = localStorage.getItem("apotiks"); if (sa) try { setApotiks(JSON.parse(sa).filter((a: Apotik) => a.statusAktif)); } catch (_) {}
+      const spr = localStorage.getItem("products"); if (spr) try { setProducts(JSON.parse(spr).filter((p: Product) => p.statusAktif)); } catch (_) {}
+      const su = localStorage.getItem("units"); if (su) try { setUnits(JSON.parse(su)); } catch (_) {}
     }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanTransferBarang");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan:", err);
-      }
-    }
-
-    const savedApotiks = localStorage.getItem("apotiks");
-    if (savedApotiks) {
-      try {
-        const parsed = JSON.parse(savedApotiks);
-        setApotiks(parsed.filter((a: Apotik) => a.statusAktif));
-      } catch (err) {
-        console.error("Error loading apotiks:", err);
-      }
-    }
-
-    const savedProducts = localStorage.getItem("products");
-    if (savedProducts) {
-      try {
-        const parsed = JSON.parse(savedProducts);
-        setProducts(parsed.filter((p: Product) => p.statusAktif));
-      } catch (err) {
-        console.error("Error loading products:", err);
-      }
-    }
-
-    const savedUnits = localStorage.getItem("units");
-    if (savedUnits) {
-      try {
-        setUnits(JSON.parse(savedUnits));
-      } catch (err) {
-        console.error("Error loading units:", err);
-      }
-    }
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) { loadFromLocalStorage(); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/transferBarang", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/pengajuanTransferBarang", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/apotiks", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/products", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/units", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([transfersData, pengajuanData, apotiksData, productsData, unitsData]) => {
+        if (cancelled) return;
+        if (Array.isArray(transfersData) && transfersData.length > 0) {
+          setTransferList(transfersData.map((t: any) => ({ ...t, createdAt: t.createdAt ? new Date(t.createdAt) : new Date(), updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date() })));
+          localStorage.setItem("transferBarang", JSON.stringify(transfersData));
+        } else { const st = localStorage.getItem("transferBarang"); if (st) try { setTransferList(JSON.parse(st).map((t: any) => ({ ...t, createdAt: t.createdAt ? new Date(t.createdAt) : new Date(), updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date() }))); } catch (_) {} }
+        if (Array.isArray(pengajuanData) && pengajuanData.length > 0) { setPengajuanList(pengajuanData); localStorage.setItem("pengajuanTransferBarang", JSON.stringify(pengajuanData)); }
+        else { const sp = localStorage.getItem("pengajuanTransferBarang"); if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {} }
+        if (Array.isArray(apotiksData) && apotiksData.length > 0) { setApotiks(apotiksData.filter((a: Apotik) => a.statusAktif)); localStorage.setItem("apotiks", JSON.stringify(apotiksData)); }
+        else { const sa = localStorage.getItem("apotiks"); if (sa) try { setApotiks(JSON.parse(sa).filter((a: Apotik) => a.statusAktif)); } catch (_) {} }
+        if (Array.isArray(productsData) && productsData.length > 0) { setProducts(productsData.filter((p: Product) => p.statusAktif)); localStorage.setItem("products", JSON.stringify(productsData)); }
+        else { const spr = localStorage.getItem("products"); if (spr) try { setProducts(JSON.parse(spr).filter((p: Product) => p.statusAktif)); } catch (_) {} }
+        if (Array.isArray(unitsData) && unitsData.length > 0) { setUnits(unitsData); localStorage.setItem("units", JSON.stringify(unitsData)); }
+        else { const su = localStorage.getItem("units"); if (su) try { setUnits(JSON.parse(su)); } catch (_) {} }
+        if (!cancelled) setIsLoadingData(false);
+      }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
+
+  // Sync transferBarang and pengajuanTransferBarang to API (guard: jangan POST saat initial load)
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        const payload = transferList.map((t) => ({ ...t, createdAt: t.createdAt instanceof Date ? t.createdAt.toISOString() : t.createdAt, updatedAt: t.updatedAt instanceof Date ? t.updatedAt.toISOString() : t.updatedAt }));
+        fetch("/api/data/transferBarang", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: payload }) }).catch(() => {});
+      }
+    });
+  }, [transferList, isLoadingData]);
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        fetch("/api/data/pengajuanTransferBarang", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
+      }
+    });
+  }, [pengajuanList, isLoadingData]);
 
   // Get stock per apotik
   const getStockPerApotik = (product: Product, apotikId: string): number => {
@@ -1845,7 +1847,9 @@ export default function TransferBarangPage() {
                                             : productSearch[detail.id] || ""
                                         }
                                         onChange={(e) => handleProductSearchChange(detail.id, e.target.value)}
-                                        onFocus={() => {
+                                        onFocus={(e) => {
+                                          e.currentTarget.style.borderColor = "#3b82f6";
+                                          e.currentTarget.style.outline = "none";
                                           setShowProductDropdown({ ...showProductDropdown, [detail.id]: true });
                                           if (detail.produkId) {
                                             const product = products.find((p) => p.id === detail.produkId);
@@ -1862,10 +1866,6 @@ export default function TransferBarangPage() {
                                           fontSize: "13px",
                                           boxSizing: "border-box",
                                           transition: "border-color 0.2s",
-                                        }}
-                                        onFocus={(e) => {
-                                          e.currentTarget.style.borderColor = "#3b82f6";
-                                          e.currentTarget.style.outline = "none";
                                         }}
                                         onBlur={(e) => {
                                           e.currentTarget.style.borderColor = "#d1d5db";

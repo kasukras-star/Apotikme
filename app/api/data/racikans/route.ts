@@ -52,11 +52,13 @@ export async function GET(req: Request) {
       console.error("racikans GET error:", error);
       return NextResponse.json([], { status: 200 });
     }
-    const list = Array.isArray(data?.value) ? data.value : [];
+    const row = data as { value?: unknown } | null;
+    const list = Array.isArray(row?.value) ? row.value : [];
     return NextResponse.json(list, { status: 200 });
   } catch (e) {
     console.error("racikans GET:", e);
-    return NextResponse.json([], { status: 200 });
+    const msg = e instanceof Error ? e.message : "Server error";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
@@ -73,7 +75,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const racikans = Array.isArray(body?.racikans) ? body.racikans : [];
     const admin = getSupabaseAdmin();
-    const { error } = await admin
+    const { error } = await (admin as any)
       .from("app_config")
       .upsert({ key: RACIKANS_KEY, value: racikans }, { onConflict: "key" });
     if (error) {

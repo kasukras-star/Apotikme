@@ -91,53 +91,64 @@ export default function DataRacikanPage() {
     loadUserEmail();
   }, []);
 
-  // Load data from localStorage on mount
+  // Load racikans, units, pengajuan from API first, fallback to localStorage
   useEffect(() => {
-    const savedRacikans = localStorage.getItem("racikans");
-    if (savedRacikans) {
-      try {
-        const parsed = JSON.parse(savedRacikans);
-        // Convert createdAt string back to Date
-        const racikansWithDates = parsed.map((racikan: any) => ({
-          ...racikan,
-          jasaRacik: typeof racikan.jasaRacik === "number" ? racikan.jasaRacik : Number(racikan.jasaRacik || 0),
-          jasaBungkus: typeof racikan.jasaBungkus === "number" ? racikan.jasaBungkus : Number(racikan.jasaBungkus || 0),
-          hargaDasarJasaRacik: racikan.hargaDasarJasaRacik ?? racikan.jasaRacik ?? 0,
-          batasRacik: racikan.batasRacik ?? racikan.kelipatanJasaRacik ?? 10,
-          pengaliRacik: racikan.pengaliRacik ?? 2,
-          hargaDasarJasaBungkus: racikan.hargaDasarJasaBungkus ?? racikan.jasaBungkus ?? 0,
-          batasBungkus: racikan.batasBungkus ?? 10,
-          pengaliBungkus: racikan.pengaliBungkus ?? 2,
-          createdAt: new Date(racikan.createdAt),
-          updatedAt: racikan.updatedAt ? new Date(racikan.updatedAt) : undefined,
-        }));
-        setRacikans(racikansWithDates);
-      } catch (err) {
-        console.error("Error loading racikans from localStorage:", err);
-      }
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const sr = localStorage.getItem("racikans");
+      if (sr) try {
+        const parsed = JSON.parse(sr);
+        setRacikans(parsed.map((r: any) => ({
+          ...r,
+          jasaRacik: typeof r.jasaRacik === "number" ? r.jasaRacik : Number(r.jasaRacik || 0),
+          jasaBungkus: typeof r.jasaBungkus === "number" ? r.jasaBungkus : Number(r.jasaBungkus || 0),
+          hargaDasarJasaRacik: r.hargaDasarJasaRacik ?? r.jasaRacik ?? 0,
+          batasRacik: r.batasRacik ?? 10,
+          pengaliRacik: r.pengaliRacik ?? 2,
+          hargaDasarJasaBungkus: r.hargaDasarJasaBungkus ?? r.jasaBungkus ?? 0,
+          batasBungkus: r.batasBungkus ?? 10,
+          pengaliBungkus: r.pengaliBungkus ?? 2,
+          createdAt: new Date(r.createdAt),
+          updatedAt: r.updatedAt ? new Date(r.updatedAt) : undefined,
+        })));
+      } catch (_) {}
+      const su = localStorage.getItem("units");
+      if (su) try { setUnits(JSON.parse(su)); } catch (_) {}
+      const sp = localStorage.getItem("pengajuanRacikan");
+      if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {}
     }
-
-    // Load units
-    const savedUnits = localStorage.getItem("units");
-    if (savedUnits) {
-      try {
-        setUnits(JSON.parse(savedUnits));
-      } catch (err) {
-        console.error("Error loading units:", err);
-      }
-    }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanRacikan");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan racikan:", err);
-      }
-    }
-
-    setIsLoadingData(false);
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) { loadFromLocalStorage(); setIsLoadingData(false); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/racikans", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/units", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/pengajuanRacikan", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([racikansData, unitsData, pengajuanData]) => {
+        if (cancelled) return;
+        if (Array.isArray(racikansData) && racikansData.length > 0) {
+          setRacikans(racikansData.map((r: any) => ({
+            ...r,
+            jasaRacik: typeof r.jasaRacik === "number" ? r.jasaRacik : Number(r.jasaRacik || 0),
+            jasaBungkus: typeof r.jasaBungkus === "number" ? r.jasaBungkus : Number(r.jasaBungkus || 0),
+            hargaDasarJasaRacik: r.hargaDasarJasaRacik ?? r.jasaRacik ?? 0,
+            batasRacik: r.batasRacik ?? 10,
+            pengaliRacik: r.pengaliRacik ?? 2,
+            hargaDasarJasaBungkus: r.hargaDasarJasaBungkus ?? r.jasaBungkus ?? 0,
+            batasBungkus: r.batasBungkus ?? 10,
+            pengaliBungkus: r.pengaliBungkus ?? 2,
+            createdAt: r.createdAt ? new Date(r.createdAt) : new Date(),
+            updatedAt: r.updatedAt ? new Date(r.updatedAt) : undefined,
+          })));
+          localStorage.setItem("racikans", JSON.stringify(racikansData));
+        } else { const sr = localStorage.getItem("racikans"); if (sr) try { const p = JSON.parse(sr); setRacikans(p.map((r: any) => ({ ...r, createdAt: new Date(r.createdAt), updatedAt: r.updatedAt ? new Date(r.updatedAt) : undefined }))); } catch (_) {} }
+        if (Array.isArray(unitsData) && unitsData.length > 0) { setUnits(unitsData); localStorage.setItem("units", JSON.stringify(unitsData)); }
+        else { const su = localStorage.getItem("units"); if (su) try { setUnits(JSON.parse(su)); } catch (_) {} }
+        if (Array.isArray(pengajuanData) && pengajuanData.length > 0) { setPengajuanList(pengajuanData); localStorage.setItem("pengajuanRacikan", JSON.stringify(pengajuanData)); }
+        else { const sp = localStorage.getItem("pengajuanRacikan"); if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {} }
+      }).catch(() => { if (!cancelled) loadFromLocalStorage(); }).finally(() => { if (!cancelled) setIsLoadingData(false); });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
 
   // Check pengajuan status when editingRacikan changes
@@ -281,7 +292,7 @@ export default function DataRacikanPage() {
     }
   }, [racikans, isLoadingData]);
 
-  // Sync racikans ke server agar POS bisa load saat localStorage kosong (Incognito / perangkat lain)
+  // Sync racikans ke server agar data sinkron antar perangkat dan via URL
   useEffect(() => {
     if (!isLoadingData && racikans.length >= 0) {
       getSupabaseClient()
@@ -304,6 +315,15 @@ export default function DataRacikanPage() {
         });
     }
   }, [racikans, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanRacikan", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
+        }
+      });
+    }
+  }, [pengajuanList, isLoadingData]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -349,7 +369,7 @@ export default function DataRacikanPage() {
       jasaRacik: String(racikan.jasaRacik ?? 0),
       jasaBungkus: String(racikan.jasaBungkus ?? 0),
       hargaDasarJasaRacik: String(racikan.hargaDasarJasaRacik ?? racikan.jasaRacik ?? 0),
-      batasRacik: String(racikan.batasRacik ?? racikan.kelipatanJasaRacik ?? 10),
+      batasRacik: String(racikan.batasRacik ?? 10),
       pengaliRacik: String(racikan.pengaliRacik ?? 2),
       hargaDasarJasaBungkus: String(racikan.hargaDasarJasaBungkus ?? racikan.jasaBungkus ?? 0),
       batasBungkus: String(racikan.batasBungkus ?? 10),
@@ -403,7 +423,7 @@ export default function DataRacikanPage() {
       jasaRacik: String(racikan.jasaRacik ?? 0),
       jasaBungkus: String(racikan.jasaBungkus ?? 0),
       hargaDasarJasaRacik: String(racikan.hargaDasarJasaRacik ?? racikan.jasaRacik ?? 0),
-      batasRacik: String(racikan.batasRacik ?? racikan.kelipatanJasaRacik ?? 10),
+      batasRacik: String(racikan.batasRacik ?? 10),
       pengaliRacik: String(racikan.pengaliRacik ?? 2),
       hargaDasarJasaBungkus: String(racikan.hargaDasarJasaBungkus ?? racikan.jasaBungkus ?? 0),
       batasBungkus: String(racikan.batasBungkus ?? 10),
@@ -455,7 +475,7 @@ export default function DataRacikanPage() {
       jasaRacik: String(viewingRacikan.jasaRacik ?? 0),
       jasaBungkus: String(viewingRacikan.jasaBungkus ?? 0),
       hargaDasarJasaRacik: String(viewingRacikan.hargaDasarJasaRacik ?? viewingRacikan.jasaRacik ?? 0),
-      batasRacik: String(viewingRacikan.batasRacik ?? viewingRacikan.kelipatanJasaRacik ?? 10),
+      batasRacik: String(viewingRacikan.batasRacik ?? 10),
       pengaliRacik: String(viewingRacikan.pengaliRacik ?? 2),
       hargaDasarJasaBungkus: String(viewingRacikan.hargaDasarJasaBungkus ?? viewingRacikan.jasaBungkus ?? 0),
       batasBungkus: String(viewingRacikan.batasBungkus ?? 10),
@@ -1929,7 +1949,7 @@ export default function DataRacikanPage() {
                   <div style={{ marginBottom: "6px" }}>
                     <span style={{ fontSize: "12px", color: "#64748b" }}>Batas Racik: </span>
                     <span style={{ fontSize: "14px", color: "#1e293b" }}>
-                      {Number(viewingRacikan.batasRacik ?? viewingRacikan.kelipatanJasaRacik ?? 10).toLocaleString("id-ID")}
+                      {Number(viewingRacikan.batasRacik ?? 10).toLocaleString("id-ID")}
                     </span>
                   </div>
                   <div>

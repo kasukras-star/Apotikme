@@ -65,6 +65,8 @@ export default function PerubahanHargaJualPage() {
   const [loading, setLoading] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
   const [riwayatList, setRiwayatList] = useState<RiwayatPerubahanHarga[]>([]);
+  const [riwayatLoading, setRiwayatLoading] = useState(true);
+  const [riwayatError, setRiwayatError] = useState<string | null>(null);
   const [viewingBatch, setViewingBatch] = useState<RiwayatPerubahanHarga[] | null>(null);
   const [pengajuanList, setPengajuanList] = useState<any[]>([]);
   const [isPengajuanModalOpen, setIsPengajuanModalOpen] = useState(false);
@@ -72,6 +74,7 @@ export default function PerubahanHargaJualPage() {
     jenisPengajuan: "",
     alasanPengajuan: "",
   });
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
     const loadUserEmail = async () => {
@@ -88,34 +91,150 @@ export default function PerubahanHargaJualPage() {
     loadUserEmail();
   }, []);
 
+  // Load products and pengajuan from API (Supabase), fallback ke localStorage
   useEffect(() => {
     const savedProducts = localStorage.getItem("products");
-    const savedRiwayat = localStorage.getItem("perubahanHargaJual");
-
-    if (savedProducts) {
-      try {
-        const parsed = JSON.parse(savedProducts);
-        setProducts(parsed);
-      } catch (err) {
-        console.error("Error loading products:", err);
-      }
-    }
-    if (savedRiwayat) {
-      try {
-        const parsed = JSON.parse(savedRiwayat);
-        setRiwayatList(parsed);
-      } catch (err) {
-        console.error("Error loading riwayat perubahan harga:", err);
-      }
-    }
     const savedPengajuan = localStorage.getItem("pengajuanPerubahanHargaJual");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan perubahan harga:", err);
+    if (savedProducts) try { setProducts(JSON.parse(savedProducts)); } catch (_) {}
+    if (savedPengajuan) try { setPengajuanList(JSON.parse(savedPengajuan)); } catch (_) {}
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token) { setIsLoadingData(false); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/products", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : null),
+        fetch("/api/data/pengajuanPerubahanHargaJual", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : null),
+      ]).then(([productsData, pengajuanData]) => {
+        if (Array.isArray(productsData) && productsData.length > 0) {
+          setProducts(productsData);
+          try { localStorage.setItem("products", JSON.stringify(productsData)); } catch (_) {}
+        }
+        if (Array.isArray(pengajuanData) && pengajuanData.length > 0) {
+          setPengajuanList(pengajuanData);
+          try { localStorage.setItem("pengajuanPerubahanHargaJual", JSON.stringify(pengajuanData)); } catch (_) {}
+        }
+        setIsLoadingData(false);
+      }).catch(() => { setIsLoadingData(false); });
+    }).catch(() => { setIsLoadingData(false); });
+  }, []);
+
+  // Sync pengajuanPerubahanHargaJual ke API saat berubah (guard: jangan POST saat initial load)
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        fetch("/api/data/pengajuanPerubahanHargaJual", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+          body: JSON.stringify({ value: pengajuanList }),
+        }).catch(() => {});
       }
+    });
+  }, [pengajuanList, isLoadingData]);
+
+  // Sync products ke API saat berubah (setelah simpan batch / setujui / hapus setujui)
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        fetch("/api/data/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+          body: JSON.stringify({ value: products }),
+        }).catch(() => {});
+      }
+    });
+  }, [products, isLoadingData]);
+
+  // Map Supabase row ke RiwayatPerubahanHarga
+  const mapRowToRiwayat = (r: Record<string, unknown>): RiwayatPerubahanHarga => ({
+    id: String(r.id),
+    noTransaksi: String(r.no_transaksi ?? ""),
+    tanggalBerlaku: String(r.tanggal_berlaku ?? ""),
+    produkId: String(r.produk_id ?? ""),
+    kodeProduk: String(r.kode_produk ?? ""),
+    namaProduk: String(r.nama_produk ?? ""),
+    hargaLama: Number(r.harga_lama ?? 0),
+    hargaBaru: Number(r.harga_baru ?? 0),
+    operator: String(r.operator ?? ""),
+    createdAt: r.created_at ? new Date(r.created_at as string).toISOString() : "",
+  });
+
+  // Load riwayat from Supabase (sinkron antar perangkat). Jika Supabase kosong dan localStorage ada data, unggah sekali ke Supabase.
+  const loadRiwayat = async () => {
+    setRiwayatLoading(true);
+    setRiwayatError(null);
+    try {
+      const supabase = getSupabaseClient();
+      const { data: rows, error } = await supabase
+        .from("riwayat_perubahan_harga_jual")
+        .select("id, no_transaksi, tanggal_berlaku, produk_id, kode_produk, nama_produk, harga_lama, harga_baru, operator, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const list: RiwayatPerubahanHarga[] = (rows ?? []).map(mapRowToRiwayat);
+      if (list.length > 0) {
+        setRiwayatList(list);
+        localStorage.setItem("perubahanHargaJual", JSON.stringify(list));
+        return;
+      }
+      // Supabase kosong: coba migrasi sekali dari localStorage ke Supabase (agar data di perangkat ini tampil via URL)
+      const savedRiwayat = localStorage.getItem("perubahanHargaJual");
+      if (savedRiwayat) {
+        let localList: RiwayatPerubahanHarga[] = [];
+        try {
+          localList = JSON.parse(savedRiwayat);
+        } catch {
+          setRiwayatList([]);
+          return;
+        }
+        if (localList.length > 0) {
+          const rowsToInsert = localList.map((r) => ({
+            no_transaksi: r.noTransaksi ?? "",
+            tanggal_berlaku: r.tanggalBerlaku ?? "",
+            produk_id: r.produkId ?? "",
+            kode_produk: r.kodeProduk ?? "",
+            nama_produk: r.namaProduk ?? "",
+            harga_lama: r.hargaLama ?? 0,
+            harga_baru: r.hargaBaru ?? 0,
+            operator: r.operator ?? "",
+          }));
+          const { error: insertErr } = await supabase
+            .from("riwayat_perubahan_harga_jual")
+            .insert(rowsToInsert as never[]);
+          if (!insertErr) {
+            const { data: newRows, error: fetchErr } = await supabase
+              .from("riwayat_perubahan_harga_jual")
+              .select("id, no_transaksi, tanggal_berlaku, produk_id, kode_produk, nama_produk, harga_lama, harga_baru, operator, created_at")
+              .order("created_at", { ascending: false });
+            if (!fetchErr && newRows?.length) {
+              const newList = newRows.map(mapRowToRiwayat);
+              setRiwayatList(newList);
+              localStorage.setItem("perubahanHargaJual", JSON.stringify(newList));
+              return;
+            }
+          }
+        }
+      }
+      setRiwayatList([]);
+    } catch (err) {
+      console.error("Error loading riwayat from Supabase:", err);
+      setRiwayatError(err instanceof Error ? err.message : "Gagal memuat dari server. Pastikan SQL di Supabase sudah dijalankan dan env Vercel di-set.");
+      const savedRiwayat = localStorage.getItem("perubahanHargaJual");
+      if (savedRiwayat) {
+        try {
+          setRiwayatList(JSON.parse(savedRiwayat));
+        } catch {
+          setRiwayatList([]);
+        }
+      } else {
+        setRiwayatList([]);
+      }
+    } finally {
+      setRiwayatLoading(false);
     }
+  };
+
+  useEffect(() => {
+    loadRiwayat();
   }, []);
 
   const handleOpenModal = () => {
@@ -210,9 +329,25 @@ export default function PerubahanHargaJualPage() {
     alert("Pengajuan telah diterapkan. Tombol Ajukan perubahan akan tampil kembali.");
   };
 
-  const handleHapusSetujui = () => {
+  const handleHapusSetujui = async () => {
     if (!viewingBatch || viewingBatch.length === 0 || !currentPengajuan || currentPengajuan.jenisPengajuan !== "Hapus Data") return;
     if (!confirm("Apakah Anda yakin ingin menghapus data perubahan harga ini? Harga produk akan dikembalikan ke harga lama.")) return;
+    const idsToRemove = new Set(viewingBatch.map((r) => r.id));
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const idsSupabase = viewingBatch.map((r) => r.id).filter((id) => uuidRegex.test(id));
+    try {
+      if (idsSupabase.length > 0) {
+        const supabase = getSupabaseClient();
+        const { error } = await supabase
+          .from("riwayat_perubahan_harga_jual")
+          .delete()
+          .in("id", idsSupabase);
+        if (error) throw error;
+      }
+    } catch (err) {
+      console.error("Error deleting from Supabase:", err);
+      alert("Gagal menghapus dari server. Data lokal akan dihapus.");
+    }
     let productsUpdated = [...products];
     for (const r of viewingBatch) {
       const product = productsUpdated.find((p) => p.id === r.produkId);
@@ -227,7 +362,6 @@ export default function PerubahanHargaJualPage() {
         });
       }
     }
-    const idsToRemove = new Set(viewingBatch.map((r) => r.id));
     const updatedRiwayatList = riwayatList.filter((r) => !idsToRemove.has(r.id));
     localStorage.setItem("products", JSON.stringify(productsUpdated));
     localStorage.setItem("perubahanHargaJual", JSON.stringify(updatedRiwayatList));
@@ -286,7 +420,7 @@ export default function PerubahanHargaJualPage() {
     setProductModalDetailId(null);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!tanggalBerlaku) {
       alert("Tanggal berlaku wajib diisi.");
       return;
@@ -310,13 +444,10 @@ export default function PerubahanHargaJualPage() {
     setLoading(true);
     try {
       let productsUpdated = [...products];
-      const riwayatArr: RiwayatPerubahanHarga[] = [];
-      const savedRiwayat = localStorage.getItem("perubahanHargaJual");
-      const existingRiwayat: RiwayatPerubahanHarga[] = savedRiwayat
-        ? JSON.parse(savedRiwayat)
-        : [];
       const createdAtIso = new Date().toISOString();
       const noTransaksi = "PH-" + new Date().getTime();
+      const operator = currentUserEmail || "System";
+      const rowsToInsert: { no_transaksi: string; tanggal_berlaku: string; produk_id: string; kode_produk: string; nama_produk: string; harga_lama: number; harga_baru: number; operator: string }[] = [];
 
       for (const d of validDetails) {
         const numHarga = parseInt(String(d.hargaBaru).replace(/\D/g, ""), 10) || 0;
@@ -334,25 +465,47 @@ export default function PerubahanHargaJualPage() {
           return next;
         });
 
-        riwayatArr.push({
-          id: Date.now().toString() + "-" + d.id,
-          noTransaksi,
-          tanggalBerlaku,
-          produkId: d.produkId,
-          kodeProduk: d.kodeProduk,
-          namaProduk: d.namaProduk,
-          hargaLama,
-          hargaBaru: numHarga,
-          operator: currentUserEmail || "System",
-          createdAt: createdAtIso,
+        rowsToInsert.push({
+          no_transaksi: noTransaksi,
+          tanggal_berlaku: tanggalBerlaku,
+          produk_id: d.produkId,
+          kode_produk: d.kodeProduk,
+          nama_produk: d.namaProduk,
+          harga_lama: hargaLama,
+          harga_baru: numHarga,
+          operator,
         });
       }
 
+      const supabase = getSupabaseClient();
+      const { error: insertError } = await supabase
+        .from("riwayat_perubahan_harga_jual")
+        .insert(rowsToInsert as never[]);
+      if (insertError) throw insertError;
+
+      const { data: rows, error: fetchError } = await supabase
+        .from("riwayat_perubahan_harga_jual")
+        .select("id, no_transaksi, tanggal_berlaku, produk_id, kode_produk, nama_produk, harga_lama, harga_baru, operator, created_at")
+        .order("created_at", { ascending: false });
+      if (fetchError) throw fetchError;
+
+      const list: RiwayatPerubahanHarga[] = (rows ?? []).map((r: Record<string, unknown>) => ({
+        id: String(r.id),
+        noTransaksi: String(r.no_transaksi ?? ""),
+        tanggalBerlaku: String(r.tanggal_berlaku ?? ""),
+        produkId: String(r.produk_id ?? ""),
+        kodeProduk: String(r.kode_produk ?? ""),
+        namaProduk: String(r.nama_produk ?? ""),
+        hargaLama: Number(r.harga_lama ?? 0),
+        hargaBaru: Number(r.harga_baru ?? 0),
+        operator: String(r.operator ?? ""),
+        createdAt: r.created_at ? new Date(r.created_at as string).toISOString() : "",
+      }));
+      setRiwayatList(list);
+      localStorage.setItem("perubahanHargaJual", JSON.stringify(list));
+
       localStorage.setItem("products", JSON.stringify(productsUpdated));
       setProducts(productsUpdated);
-      const newRiwayatList = [...riwayatArr, ...existingRiwayat];
-      localStorage.setItem("perubahanHargaJual", JSON.stringify(newRiwayatList));
-      setRiwayatList(newRiwayatList);
 
       alert("Perubahan harga jual berhasil disimpan. Berlaku untuk seluruh apotik.");
       handleCloseModal();
@@ -433,21 +586,44 @@ export default function PerubahanHargaJualPage() {
         </div>
 
         <div>
-          <h2
-            style={{
-              fontSize: "18px",
-              fontWeight: 600,
-              marginBottom: "12px",
-              color: "#1e293b",
-            }}
-          >
-            Riwayat Perubahan harga jual
-          </h2>
-          {riwayatByTransaksi.length === 0 ? (
-            <p style={{ color: "#64748b", fontSize: "14px" }}>
-              Belum ada riwayat perubahan harga jual.
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
+            <h2
+              style={{
+                fontSize: "18px",
+                fontWeight: 600,
+                margin: 0,
+                color: "#1e293b",
+              }}
+            >
+              Riwayat Perubahan harga jual
+            </h2>
+            <button
+              type="button"
+              onClick={() => loadRiwayat()}
+              disabled={riwayatLoading}
+              style={{
+                padding: "6px 12px",
+                fontSize: "13px",
+                border: "1px solid #e2e8f0",
+                borderRadius: "6px",
+                background: "#fff",
+                cursor: riwayatLoading ? "not-allowed" : "pointer",
+                color: "#64748b",
+              }}
+            >
+              {riwayatLoading ? "Memuat..." : "Muat ulang"}
+            </button>
+          </div>
+          {riwayatError && (
+            <p style={{ color: "#dc2626", fontSize: "14px", marginBottom: "12px" }}>
+              {riwayatError}
             </p>
-          ) : (
+          )}
+          {riwayatByTransaksi.length === 0 && !riwayatLoading ? (
+            <p style={{ color: "#64748b", fontSize: "14px" }}>
+              Belum ada riwayat perubahan harga jual. Agar data tampil di semua perangkat dan via URL: jalankan SQL di Supabase Dashboard (file supabase-riwayat_perubahan_harga_jual.sql), set env di Vercel, lalu di perangkat yang sudah punya data klik &quot;Muat ulang&quot; sekali untuk mengunggah ke server.
+            </p>
+          ) : riwayatByTransaksi.length > 0 ? (
             <div
               style={{
                 overflowX: "auto",
@@ -519,7 +695,7 @@ export default function PerubahanHargaJualPage() {
                 </tbody>
               </table>
             </div>
-          )}
+          ) : null}
 
         {/* Modal View Detail - layout seperti form input (Tambah perubahan harga) */}
         {viewingBatch && viewingBatch.length > 0 && (

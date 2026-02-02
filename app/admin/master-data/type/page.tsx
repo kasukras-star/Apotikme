@@ -66,34 +66,32 @@ export default function DataTypePage() {
     loadUserEmail();
   }, []);
 
-  // Load data from localStorage on mount
+  // Load data from API (Supabase) first, fallback to localStorage
   useEffect(() => {
-    const savedTypes = localStorage.getItem("types");
-    if (savedTypes) {
-      try {
-        const parsed = JSON.parse(savedTypes);
-        const typesWithDates = parsed.map((type: any) => ({
-          ...type,
-          createdAt: new Date(type.createdAt),
-          updatedAt: type.updatedAt ? new Date(type.updatedAt) : undefined,
-        }));
-        setTypes(typesWithDates);
-      } catch (err) {
-        console.error("Error loading types from localStorage:", err);
-      }
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem("types");
+      if (saved) try { setTypes(JSON.parse(saved).map((t: any) => ({ ...t, createdAt: new Date(t.createdAt), updatedAt: t.updatedAt ? new Date(t.updatedAt) : undefined }))); } catch (_) {}
+      const sp = localStorage.getItem("pengajuanType");
+      if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {}
     }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanType");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan type:", err);
-      }
-    }
-
-    setIsLoadingData(false);
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) { loadFromLocalStorage(); setIsLoadingData(false); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/types", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/pengajuanType", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([arr, pengajuan]) => {
+        if (cancelled) return;
+        if (Array.isArray(arr) && arr.length > 0) {
+          setTypes(arr.map((t: any) => ({ ...t, createdAt: t.createdAt ? new Date(t.createdAt) : new Date(), updatedAt: t.updatedAt ? new Date(t.updatedAt) : undefined })));
+          localStorage.setItem("types", JSON.stringify(arr));
+        } else loadFromLocalStorage();
+        if (Array.isArray(pengajuan) && pengajuan.length > 0) { setPengajuanList(pengajuan); localStorage.setItem("pengajuanType", JSON.stringify(pengajuan)); }
+        else { const sp = localStorage.getItem("pengajuanType"); if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {} }
+      }).catch(() => { if (!cancelled) loadFromLocalStorage(); }).finally(() => { if (!cancelled) setIsLoadingData(false); });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
 
   // Check pengajuan status when editingType changes
@@ -230,12 +228,31 @@ export default function DataTypePage() {
     return () => clearInterval(interval);
   }, [isModalOpen, editingType]);
 
-  // Save to localStorage whenever types change
+  // Save to localStorage and sync to API whenever types or pengajuan change
   useEffect(() => {
     if (!isLoadingData) {
       localStorage.setItem("types", JSON.stringify(types));
     }
   }, [types, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          const payload = types.map((t) => ({ ...t, createdAt: t.createdAt instanceof Date ? t.createdAt.toISOString() : t.createdAt, updatedAt: t.updatedAt instanceof Date ? t.updatedAt.toISOString() : t.updatedAt }));
+          fetch("/api/data/types", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: payload }) }).catch(() => {});
+        }
+      });
+    }
+  }, [types, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanType", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
+        }
+      });
+    }
+  }, [pengajuanList, isLoadingData]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);

@@ -125,12 +125,15 @@ export default function PenjualanPage() {
   const [userApotikIds, setUserApotikIds] = useState<string[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [apiLoadError, setApiLoadError] = useState<string | null>(null);
 
   // Load data and check POS session
   useEffect(() => {
     const savedProducts = localStorage.getItem("products");
     const savedCustomers = localStorage.getItem("customers");
     const savedApotiks = localStorage.getItem("apotiks");
+    const savedPenjualan = localStorage.getItem("penjualan");
 
     if (savedProducts) {
       try {
@@ -169,6 +172,15 @@ export default function PenjualanPage() {
         setRacikans(parsed);
       } catch (err) {
         console.error("Error loading racikans:", err);
+      }
+    }
+
+    if (savedPenjualan) {
+      try {
+        const parsed = JSON.parse(savedPenjualan);
+        setTransactions(Array.isArray(parsed) ? parsed : []);
+      } catch (err) {
+        console.error("Error loading penjualan from localStorage:", err);
       }
     }
 
@@ -236,33 +248,57 @@ export default function PenjualanPage() {
         router.replace("/");
         return;
       }
-      if (!hasApotiksFromStorage && session.access_token) {
-        fetch("/api/data/apotiks", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
-          .then((r) => r.json())
-          .then((list) => {
-            if (Array.isArray(list)) {
-              const active = list.filter((a: Apotik) => a.statusAktif !== false);
-              setApotiks(active);
-              if (active.length > 0) try { localStorage.setItem("apotiks", JSON.stringify(list)); } catch (_) {}
-            }
-          })
-          .catch(() => {});
-      }
-      if (!hasRacikansFromStorage && session.access_token) {
-        fetch("/api/data/racikans", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
-          .then((r) => r.json())
-          .then((list) => {
-            if (Array.isArray(list)) {
-              setRacikans(list);
-              if (list.length > 0) try { localStorage.setItem("racikans", JSON.stringify(list)); } catch (_) {}
-            }
-          })
-          .catch(() => {});
-      }
+      const token = session.access_token;
+      if (!token) return;
+      setApiLoadError(null);
+      const headers = { Authorization: `Bearer ${token}` };
+      const handleRes = (r: Response): Promise<unknown> => {
+        if (r.status === 401) setApiLoadError("Sesi habis, silakan login lagi.");
+        else if (r.status === 500) setApiLoadError("Gagal memuat dari server. Cek koneksi dan env Vercel.");
+        return r.ok ? r.json() : Promise.resolve(null);
+      };
+      // Load from API (Supabase) first; overwrite state and localStorage when API returns data
+      Promise.all([
+        fetch("/api/data/products", { headers }).then(handleRes),
+        fetch("/api/data/customers", { headers }).then(handleRes),
+        fetch("/api/data/apotiks", { headers }).then(handleRes),
+        fetch("/api/data/racikans", { headers }).then(handleRes),
+        fetch("/api/data/penjualan", { headers }).then(handleRes),
+      ]).then(([productsData, customersData, apotiksData, racikansData, penjualanData]) => {
+        if (Array.isArray(productsData) && productsData.length > 0) {
+          setProducts(productsData);
+          try {
+            localStorage.setItem("products", JSON.stringify(productsData));
+          } catch (_) {}
+        }
+        if (Array.isArray(customersData) && customersData.length > 0) {
+          setCustomers(customersData);
+          try {
+            localStorage.setItem("customers", JSON.stringify(customersData));
+          } catch (_) {}
+        }
+        if (Array.isArray(apotiksData)) {
+          const active = apotiksData.filter((a: Apotik) => a.statusAktif !== false);
+          setApotiks(active);
+          if (apotiksData.length > 0) {
+            try {
+              localStorage.setItem("apotiks", JSON.stringify(apotiksData));
+            } catch (_) {}
+          }
+        }
+        if (Array.isArray(racikansData) && racikansData.length > 0) {
+          setRacikans(racikansData);
+          try {
+            localStorage.setItem("racikans", JSON.stringify(racikansData));
+          } catch (_) {}
+        }
+        if (Array.isArray(penjualanData)) {
+          setTransactions(penjualanData);
+          try {
+            localStorage.setItem("penjualan", JSON.stringify(penjualanData));
+          } catch (_) {}
+        }
+      }).catch(() => {});
     });
 
     // Check for existing POS session
@@ -352,10 +388,10 @@ export default function PenjualanPage() {
       customer.kodeCustomer.toLowerCase().includes(customerSearch.toLowerCase())
   );
 
-  const isProductItem = (line: CartLine): line is CartItem =>
-    !("itemType" in line) || (line as CartItem).itemType !== "racikan";
   const isRacikanItem = (line: CartLine): line is CartItemRacikan =>
-    (line as CartItemRacikan).itemType === "racikan";
+    "itemType" in line && (line as CartItemRacikan).itemType === "racikan";
+  const isProductItem = (line: CartLine): line is CartItem =>
+    !isRacikanItem(line);
 
   const productCartItems = (): CartItem[] => cartItems.filter(isProductItem) as CartItem[];
 
@@ -569,16 +605,12 @@ export default function PenjualanPage() {
 
     setLoading(true);
     try {
-      // Generate transaction number
       const today = new Date();
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, "0");
-      const savedTransactions = localStorage.getItem("penjualan");
-      const transactions = savedTransactions ? JSON.parse(savedTransactions) : [];
       const sequence = String(transactions.length + 1).padStart(4, "0");
       const nomorTransaksi = `POS-${year}${month}-${sequence}`;
 
-      // Create transaction object
       const transaction = {
         id: Date.now().toString(),
         nomorTransaksi,
@@ -596,9 +628,20 @@ export default function PenjualanPage() {
         createdAt: new Date().toISOString(),
       };
 
-      // Save transaction
-      transactions.push(transaction);
-      localStorage.setItem("penjualan", JSON.stringify(transactions));
+      const newTransactions = [...transactions, transaction];
+      setTransactions(newTransactions);
+      try {
+        localStorage.setItem("penjualan", JSON.stringify(newTransactions));
+      } catch (_) {}
+      const session = await getSupabaseClient().auth.getSession();
+      const token = session.data.session?.access_token;
+      if (token) {
+        await fetch("/api/data/penjualan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ value: newTransactions }),
+        }).catch(() => {});
+      }
 
       // Update stock - only product items
       const updatedProducts = [...products];
@@ -632,7 +675,16 @@ export default function PenjualanPage() {
       });
       
       setProducts(updatedProducts);
-      localStorage.setItem("products", JSON.stringify(updatedProducts));
+      try {
+        localStorage.setItem("products", JSON.stringify(updatedProducts));
+      } catch (_) {}
+      if (token) {
+        await fetch("/api/data/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ value: updatedProducts }),
+        }).catch(() => {});
+      }
 
       // Set receipt data
       const customerData = selectedCustomer 
@@ -1172,6 +1224,21 @@ export default function PenjualanPage() {
         padding: "24px",
         transition: "margin-left 0.3s ease",
       }}>
+      {apiLoadError && (
+        <div
+          style={{
+            padding: "12px",
+            backgroundColor: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderRadius: "6px",
+            marginBottom: "16px",
+            color: "#dc2626",
+            fontSize: "14px",
+          }}
+        >
+          {apiLoadError}
+        </div>
+      )}
       {/* POS Header with Apotik Info and Logout */}
       <div style={{
         display: "flex",

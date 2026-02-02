@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import DashboardLayout from "../../../../components/DashboardLayout";
+import { getSupabaseClient } from "../../../../lib/supabaseClient";
 
 interface CartItem {
   id: string;
@@ -76,7 +77,7 @@ export default function DashboardPOSPage() {
     if (savedPenjualan) {
       try {
         const parsed = JSON.parse(savedPenjualan);
-        const sorted = parsed.sort((a: Penjualan, b: Penjualan) =>
+        const sorted = (Array.isArray(parsed) ? parsed : []).sort((a: Penjualan, b: Penjualan) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         setPenjualanList(sorted);
@@ -93,7 +94,39 @@ export default function DashboardPOSPage() {
       }
     }
 
-    setIsCheckingSession(false);
+    getSupabaseClient()
+      .auth.getSession()
+      .then(({ data }) => {
+        if (!data.session?.access_token) {
+          setIsCheckingSession(false);
+          return;
+        }
+        const token = data.session.access_token;
+        const headers = { Authorization: `Bearer ${token}` };
+        Promise.all([
+          fetch("/api/data/penjualan", { headers }).then((r) => (r.ok ? r.json() : null)),
+          fetch("/api/data/customers", { headers }).then((r) => (r.ok ? r.json() : null)),
+        ]).then(([penjualanData, customersData]) => {
+          if (Array.isArray(penjualanData) && penjualanData.length > 0) {
+            const sorted = penjualanData.sort((a: Penjualan, b: Penjualan) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            setPenjualanList(sorted);
+            try {
+              localStorage.setItem("penjualan", JSON.stringify(penjualanData));
+            } catch (_) {}
+          }
+          if (Array.isArray(customersData) && customersData.length > 0) {
+            setCustomers(customersData);
+            try {
+              localStorage.setItem("customers", JSON.stringify(customersData));
+            } catch (_) {}
+          }
+        })
+          .catch(() => {})
+          .finally(() => setIsCheckingSession(false));
+      })
+      .catch(() => setIsCheckingSession(false));
   }, []);
 
   const getCustomerName = (customerId: string | null): string => {

@@ -1272,7 +1272,7 @@ export default function InventoryPOSPage() {
                               {item.apotikName}
                             </span>
                             <span style={{ fontSize: "14px", fontWeight: "600", color: "#3b82f6" }}>
-                              {formatStock(viewStockModal.product, item.apotikId)}
+                              {viewStockModal.product ? formatStock(viewStockModal.product, item.apotikId) : "-"}
                             </span>
                           </div>
                         ))}

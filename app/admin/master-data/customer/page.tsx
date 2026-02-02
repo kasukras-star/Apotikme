@@ -78,34 +78,32 @@ export default function DataCustomerPage() {
     loadUserEmail();
   }, []);
 
-  // Load data from localStorage on mount
+  // Load data from API (Supabase) first, fallback to localStorage
   useEffect(() => {
-    const savedCustomers = localStorage.getItem("customers");
-    if (savedCustomers) {
-      try {
-        const parsed = JSON.parse(savedCustomers);
-        const customersWithDates = parsed.map((customer: any) => ({
-          ...customer,
-          createdAt: new Date(customer.createdAt),
-          updatedAt: customer.updatedAt ? new Date(customer.updatedAt) : undefined,
-        }));
-        setCustomers(customersWithDates);
-      } catch (err) {
-        console.error("Error loading customers from localStorage:", err);
-      }
+    let cancelled = false;
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem("customers");
+      if (saved) try { setCustomers(JSON.parse(saved).map((c: any) => ({ ...c, createdAt: new Date(c.createdAt), updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined }))); } catch (_) {}
+      const sp = localStorage.getItem("pengajuanCustomer");
+      if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {}
     }
-
-    // Load pengajuan list
-    const savedPengajuan = localStorage.getItem("pengajuanCustomer");
-    if (savedPengajuan) {
-      try {
-        setPengajuanList(JSON.parse(savedPengajuan));
-      } catch (err) {
-        console.error("Error loading pengajuan customer:", err);
-      }
-    }
-
-    setIsLoadingData(false);
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token || cancelled) { loadFromLocalStorage(); setIsLoadingData(false); return; }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/customers", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/pengajuanCustomer", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([arr, pengajuan]) => {
+        if (cancelled) return;
+        if (Array.isArray(arr) && arr.length > 0) {
+          setCustomers(arr.map((c: any) => ({ ...c, createdAt: c.createdAt ? new Date(c.createdAt) : new Date(), updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined })));
+          localStorage.setItem("customers", JSON.stringify(arr));
+        } else loadFromLocalStorage();
+        if (Array.isArray(pengajuan) && pengajuan.length > 0) { setPengajuanList(pengajuan); localStorage.setItem("pengajuanCustomer", JSON.stringify(pengajuan)); }
+        else { const sp = localStorage.getItem("pengajuanCustomer"); if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {} }
+      }).catch(() => { if (!cancelled) loadFromLocalStorage(); }).finally(() => { if (!cancelled) setIsLoadingData(false); });
+    }).catch(() => { if (!cancelled) { loadFromLocalStorage(); setIsLoadingData(false); } });
+    return () => { cancelled = true; };
   }, []);
 
   // Check pengajuan status when editingCustomer changes
@@ -242,12 +240,31 @@ export default function DataCustomerPage() {
     return () => clearInterval(interval);
   }, [isModalOpen, editingCustomer]);
 
-  // Save to localStorage whenever customers change
+  // Save to localStorage and sync to API whenever customers or pengajuan change
   useEffect(() => {
     if (!isLoadingData) {
       localStorage.setItem("customers", JSON.stringify(customers));
     }
   }, [customers, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          const payload = customers.map((c) => ({ ...c, createdAt: c.createdAt instanceof Date ? c.createdAt.toISOString() : c.createdAt, updatedAt: c.updatedAt instanceof Date ? c.updatedAt.toISOString() : c.updatedAt }));
+          fetch("/api/data/customers", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: payload }) }).catch(() => {});
+        }
+      });
+    }
+  }, [customers, isLoadingData]);
+  useEffect(() => {
+    if (!isLoadingData) {
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanCustomer", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: pengajuanList }) }).catch(() => {});
+        }
+      });
+    }
+  }, [pengajuanList, isLoadingData]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
