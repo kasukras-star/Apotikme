@@ -78,12 +78,17 @@ const allMenus = [
   { label: "POS - Dashboard", path: "/admin/penjualan/dashboard" },
   { label: "POS - Inventory", path: "/admin/penjualan/inventory" },
   { label: "Finance - Hutang", path: "/admin/finance/hutang" },
-  { label: "Laporan", path: "/admin/laporan" },
+  { label: "Laporan - Data Produk", path: "/admin/laporan/data-produk" },
+  { label: "Laporan - Pembelian", path: "/admin/laporan/pembelian" },
+  { label: "Laporan - Alokasi Barang", path: "/admin/laporan/alokasi-barang" },
+  { label: "Laporan - Perubahan Harga Jual", path: "/admin/laporan/perubahan-harga-jual" },
+  { label: "Laporan - Persediaan", path: "/admin/laporan/persediaan" },
   { label: "Pengaturan - User", path: "/admin/pengaturan/user" },
   { label: "Pengaturan - Role", path: "/admin/pengaturan/role" },
   { label: "Pengaturan - Perusahaan", path: "/admin/pengaturan/perusahaan" },
   { label: "Pengaturan - Sistem", path: "/admin/pengaturan/sistem" },
   { label: "Pengaturan - Backup & Restore", path: "/admin/pengaturan/backup" },
+  { label: "Pengaturan - Hapus Data", path: "/admin/pengaturan/hapus-data" },
 ];
 
 export default function RoleManagementPage() {

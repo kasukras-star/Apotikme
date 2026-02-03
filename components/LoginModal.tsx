@@ -127,6 +127,9 @@ export default function LoginModal({ onClose }: Props) {
             ×
           </button>
         </div>
+        <div className={styles.logoWrap}>
+          <img src="/landing-bg.png" alt="Simatik" className={styles.logoImage} />
+        </div>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
             <label htmlFor="modal-email">User ID / Email</label>
@@ -181,9 +184,11 @@ export default function LoginModal({ onClose }: Props) {
             </a>
           </div>
           {error && <p className={styles.error}>{error}</p>}
-          <button type="submit" className={styles.submit} disabled={loading}>
-            {loading ? "Memproses..." : "Login"}
-          </button>
+          <div className={styles.submitWrap}>
+            <button type="submit" className={styles.submit} disabled={loading}>
+              {loading ? "Memproses..." : "Masuk"}
+            </button>
+          </div>
         </form>
       </aside>
     </>

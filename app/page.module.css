@@ -9,6 +9,20 @@
   background: #fff;
 }
 
+/* Saat modal login terbuka: geser area konten ke kiri, isi hanya di area yang tidak tertutup modal */
+.page.modalOpen {
+  justify-content: flex-start !important;
+}
+
+@media (min-width: 421px) {
+  .page.modalOpen .main {
+    width: calc(100% - 420px);
+    max-width: calc(100% - 420px);
+    flex: 0 0 auto;
+    margin-right: 0;
+  }
+}
+
 .main {
   display: flex;
   flex: 1;

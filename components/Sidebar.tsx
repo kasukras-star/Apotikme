@@ -204,8 +204,14 @@ const menuItems: MenuItem[] = [
   },
   {
     label: "Laporan",
-    href: "/admin/laporan",
     icon: "laporan",
+    children: [
+      { label: "Laporan data produk", href: "/admin/laporan/data-produk", icon: "laporan" },
+      { label: "Laporan Pembelian", href: "/admin/laporan/pembelian", icon: "laporan" },
+      { label: "Laporan Alokasi Barang", href: "/admin/laporan/alokasi-barang", icon: "laporan" },
+      { label: "Laporan Perubahan harga jual", href: "/admin/laporan/perubahan-harga-jual", icon: "laporan" },
+      { label: "Laporan Persediaan", href: "/admin/laporan/persediaan", icon: "laporan" },
+    ],
   },
   {
     label: "IT Manajemen",
@@ -216,6 +222,7 @@ const menuItems: MenuItem[] = [
       { label: "Pengaturan Perusahaan", href: "/admin/pengaturan/perusahaan", icon: "pengaturan-perusahaan" },
       { label: "Pengaturan Sistem", href: "/admin/pengaturan/sistem", icon: "pengaturan-sistem" },
       { label: "Backup & Restore", href: "/admin/pengaturan/backup", icon: "backup-restore" },
+      { label: "Hapus Data", href: "/admin/pengaturan/hapus-data", icon: "backup-restore" },
     ],
   },
 ];

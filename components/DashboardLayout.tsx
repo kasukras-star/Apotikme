@@ -17,36 +17,10 @@ interface Apotik {
 
 const iconSize = 20;
 
-function IconLanguage() {
-  return (
-    <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-    </svg>
-  );
-}
-
 function IconShield() {
   return (
     <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  );
-}
-
-function IconFont() {
-  return (
-    <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 7V4h16v3M9 20h6M12 4v16" />
-    </svg>
-  );
-}
-
-function IconTheme() {
-  return (
-    <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
     </svg>
   );
 }
@@ -68,18 +42,6 @@ function IconMoon() {
   );
 }
 
-function IconPalette() {
-  return (
-    <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
-      <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
-      <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
-      <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
-      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.7-.1 2.5-.3.8-.2 1.4-.5 2-.9.6-.4 1.1-.9 1.5-1.5.4-.6.7-1.2.9-2 .2-.8.3-1.6.3-2.5 0-5.5-4.5-10-10-10z" />
-    </svg>
-  );
-}
-
 function IconCheck() {
   return (
     <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -90,23 +52,10 @@ function IconCheck() {
 
 const THEME_STORAGE_KEY = "app-theme";
 
-const THEME_OPTIONS: { id: string; label: string; icon: "sun" | "moon" | "palette" }[] = [
+const THEME_OPTIONS: { id: string; label: string; icon: "sun" | "moon" }[] = [
   { id: "light", label: "Light", icon: "sun" },
   { id: "dark", label: "Dark", icon: "moon" },
-  { id: "dark-modern", label: "Dark Modern", icon: "palette" },
-  { id: "abyss", label: "Abyss", icon: "palette" },
-  { id: "monokai-dimmed", label: "Monokai Dimmed", icon: "palette" },
-  { id: "kimbie-dark", label: "Kimbie Dark", icon: "palette" },
-  { id: "tomorrow-night-blue", label: "Tomorrow Night Blue", icon: "palette" },
 ];
-
-function IconChatAI() {
-  return (
-    <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2a4 4 0 0 0-4 4c0 1.1.4 2.1 1 2.8L3 21h4l2-4h2l2 4h4l-6-12.2c.6-.7 1-1.7 1-2.8a4 4 0 0 0-4-4z" />
-    </svg>
-  );
-}
 
 function IconLogout() {
   return (
@@ -188,9 +137,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [currentTheme, setCurrentTheme] = useState<string>(() => {
     if (typeof window === "undefined") return "light";
     const s = localStorage.getItem(THEME_STORAGE_KEY);
-    return s && THEME_OPTIONS.some((o) => o.id === s) ? s : "light";
+    if (s === "light" || s === "dark") return s;
+    if (s && ["dark-modern", "abyss", "monokai-dimmed", "kimbie-dark", "tomorrow-night-blue"].includes(s)) return "dark";
+    return "light";
   });
-  const [showThemeSubmenu, setShowThemeSubmenu] = useState(false);
 
   // Function to get page title based on pathname
   const getPageTitle = (): string => {
@@ -218,11 +168,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       "/admin/penjualan/history": "History Penjualan",
       "/admin/finance/hutang": "Hutang",
       "/admin/laporan": "Laporan",
+      "/admin/laporan/data-produk": "Laporan Data Produk",
+      "/admin/laporan/pembelian": "Laporan Pembelian",
+      "/admin/laporan/alokasi-barang": "Laporan Alokasi Barang",
+      "/admin/laporan/perubahan-harga-jual": "Laporan Perubahan Harga Jual",
+      "/admin/laporan/persediaan": "Laporan Persediaan",
       "/admin/pengaturan/user": "Pengaturan User",
       "/admin/pengaturan/role": "Role & Permissions",
       "/admin/pengaturan/perusahaan": "Pengaturan Perusahaan",
       "/admin/pengaturan/sistem": "Pengaturan Sistem",
       "/admin/pengaturan/backup": "Backup & Restore",
+      "/admin/pengaturan/hapus-data": "Hapus Data",
       "/admin/pengaturan/change-password": "Ganti Password",
     };
 
@@ -570,7 +526,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 }}
                 onClick={() => {
                   setShowUserMenu(false);
-                  setShowThemeSubmenu(false);
                 }}
                 aria-hidden
               />
@@ -599,12 +554,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </div>
                 <div style={{ padding: "8px 0", position: "relative" }}>
                   <MenuItem
-                    icon={<IconLanguage />}
-                    label="Bahasa"
-                    hasArrow
-                    onClick={() => setShowUserMenu(false)}
-                  />
-                  <MenuItem
                     icon={<IconShield />}
                     label="Ganti Password"
                     onClick={() => {
@@ -615,18 +564,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       setChangePasswordConfirm("");
                     }}
                   />
-                  <MenuItem
-                    icon={<IconFont />}
-                    label="Pengaturan Font"
-                    onClick={() => setShowUserMenu(false)}
-                  />
-                  <div
-                    style={{ position: "relative" }}
-                    onMouseLeave={() => setShowThemeSubmenu(false)}
-                  >
-                    <div
-                      role="button"
-                      tabIndex={0}
+                  {THEME_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentTheme(opt.id);
+                        try {
+                          localStorage.setItem(THEME_STORAGE_KEY, opt.id);
+                          document.documentElement.setAttribute("data-theme", opt.id);
+                        } catch {
+                          // ignore
+                        }
+                        setShowUserMenu(false);
+                      }}
                       style={{
                         width: "100%",
                         padding: "10px 16px",
@@ -634,112 +586,31 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         alignItems: "center",
                         gap: "12px",
                         border: "none",
-                        background: showThemeSubmenu ? "var(--hover-bg)" : "transparent",
+                        background: currentTheme === opt.id ? "var(--selected-bg)" : "transparent",
                         cursor: "pointer",
                         fontSize: "14px",
                         color: "var(--text-primary)",
                         textAlign: "left",
-                        boxSizing: "border-box",
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowThemeSubmenu((prev) => !prev);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          setShowThemeSubmenu((prev) => !prev);
-                        }
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "var(--hover-bg)";
+                        e.currentTarget.style.backgroundColor = currentTheme === opt.id ? "var(--selected-bg)" : "var(--hover-bg)";
                       }}
                       onMouseLeave={(e) => {
-                        if (!showThemeSubmenu) e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.backgroundColor = currentTheme === opt.id ? "var(--selected-bg)" : "transparent";
                       }}
                     >
                       <span style={{ flexShrink: 0, display: "flex", color: "var(--text-secondary)" }}>
-                        <IconTheme />
+                        {opt.icon === "sun" && <IconSun />}
+                        {opt.icon === "moon" && <IconMoon />}
                       </span>
-                      <span style={{ flex: 1 }}>Tema</span>
-                      <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: 500 }}>
-                        {THEME_OPTIONS.find((o) => o.id === currentTheme)?.label ?? "Light"}
-                      </span>
-                      <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M9 18l6-6-6-6" />
-                        </svg>
-                      </span>
-                    </div>
-                    {showThemeSubmenu && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: "100%",
-                          top: 0,
-                          marginLeft: "4px",
-                          width: "220px",
-                          backgroundColor: "var(--surface)",
-                          border: "1px solid var(--border)",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-                          zIndex: 1000,
-                          padding: "6px 0",
-                          maxHeight: "320px",
-                          overflowY: "auto",
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {THEME_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentTheme(opt.id);
-                              setShowThemeSubmenu(false);
-                            }}
-                            style={{
-                              width: "100%",
-                              padding: "8px 16px",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "12px",
-                              border: "none",
-                              background: currentTheme === opt.id ? "var(--selected-bg)" : "none",
-                              cursor: "pointer",
-                              fontSize: "14px",
-                              color: "var(--text-primary)",
-                              textAlign: "left",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = currentTheme === opt.id ? "var(--selected-bg)" : "var(--hover-bg)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = currentTheme === opt.id ? "var(--selected-bg)" : "transparent";
-                            }}
-                          >
-                            <span style={{ flexShrink: 0, display: "flex", color: "var(--text-secondary)" }}>
-                              {opt.icon === "sun" && <IconSun />}
-                              {opt.icon === "moon" && <IconMoon />}
-                              {opt.icon === "palette" && <IconPalette />}
-                            </span>
-                            <span style={{ flex: 1 }}>{opt.label}</span>
-                            {currentTheme === opt.id && (
-                              <span style={{ color: "var(--primary)" }}>
-                                <IconCheck />
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <MenuItem
-                    icon={<IconChatAI />}
-                    label="Chat AI"
-                    onClick={() => setShowUserMenu(false)}
-                  />
+                      <span style={{ flex: 1 }}>{opt.label}</span>
+                      {currentTheme === opt.id && (
+                        <span style={{ color: "var(--primary)" }}>
+                          <IconCheck />
+                        </span>
+                      )}
+                    </button>
+                  ))}
                 </div>
                 <div style={{ borderTop: "1px solid var(--border)", padding: "8px 0" }}>
                   <MenuItem
@@ -759,7 +630,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <button
             type="button"
             onClick={() => {
-              setShowThemeSubmenu(false);
               setShowUserMenu(!showUserMenu);
             }}
             style={{

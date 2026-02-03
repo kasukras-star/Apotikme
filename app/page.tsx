@@ -32,7 +32,7 @@ export default function Home() {
   }, [router]);
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${showLoginModal ? styles.modalOpen : ""}`}>
       <main className={styles.main}>
         <img
           src="/landing-bg.png"
