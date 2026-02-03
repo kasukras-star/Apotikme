@@ -562,7 +562,7 @@ export default function PerubahanHargaJualPage() {
   return (
     <DashboardLayout>
       <div style={{ padding: "24px" }}>
-        <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "24px" }}>
+        <p style={{ color: "var(--text-secondary)", fontSize: "14px", marginBottom: "24px" }}>
           Perubahan harga jual berlaku untuk seluruh apotik.
         </p>
 
@@ -572,7 +572,7 @@ export default function PerubahanHargaJualPage() {
             onClick={handleOpenModal}
             style={{
               padding: "10px 20px",
-              backgroundColor: "#3b82f6",
+              backgroundColor: "var(--primary)",
               color: "#fff",
               border: "none",
               borderRadius: "8px",
@@ -592,7 +592,7 @@ export default function PerubahanHargaJualPage() {
                 fontSize: "18px",
                 fontWeight: 600,
                 margin: 0,
-                color: "#1e293b",
+                color: "var(--text-primary)",
               }}
             >
               Riwayat Perubahan harga jual
@@ -604,11 +604,11 @@ export default function PerubahanHargaJualPage() {
               style={{
                 padding: "6px 12px",
                 fontSize: "13px",
-                border: "1px solid #e2e8f0",
+                border: "1px solid var(--border)",
                 borderRadius: "6px",
                 background: "#fff",
                 cursor: riwayatLoading ? "not-allowed" : "pointer",
-                color: "#64748b",
+                color: "var(--text-secondary)",
               }}
             >
               {riwayatLoading ? "Memuat..." : "Muat ulang"}
@@ -620,14 +620,14 @@ export default function PerubahanHargaJualPage() {
             </p>
           )}
           {riwayatByTransaksi.length === 0 && !riwayatLoading ? (
-            <p style={{ color: "#64748b", fontSize: "14px" }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: "14px" }}>
               Belum ada riwayat perubahan harga jual. Agar data tampil di semua perangkat dan via URL: jalankan SQL di Supabase Dashboard (file supabase-riwayat_perubahan_harga_jual.sql), set env di Vercel, lalu di perangkat yang sudah punya data klik &quot;Muat ulang&quot; sekali untuk mengunggah ke server.
             </p>
           ) : riwayatByTransaksi.length > 0 ? (
             <div
               style={{
                 overflowX: "auto",
-                border: "1px solid #e2e8f0",
+                border: "1px solid var(--border)",
                 borderRadius: "8px",
               }}
             >
@@ -641,7 +641,7 @@ export default function PerubahanHargaJualPage() {
                 <thead>
                   <tr
                     style={{
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--hover-bg)",
                       borderBottom: "1px solid #e2e8f0",
                     }}
                   >
@@ -716,7 +716,7 @@ export default function PerubahanHargaJualPage() {
           >
             <div
               style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 padding: "24px",
                 width: "95%",
@@ -728,7 +728,7 @@ export default function PerubahanHargaJualPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#1e293b" }}>
+                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
                   Detail Perubahan harga jual
                 </h2>
                 <button
@@ -739,7 +739,7 @@ export default function PerubahanHargaJualPage() {
                     border: "none",
                     fontSize: "24px",
                     cursor: "pointer",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                     padding: 0,
                     width: "32px",
                     height: "32px",
@@ -763,33 +763,33 @@ export default function PerubahanHargaJualPage() {
                       display: "flex",
                       flexDirection: "column",
                       gap: "8px",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
                       padding: "12px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--hover-bg)",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>No. Transaksi</label>
-                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>No. Transaksi</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "var(--text-primary)", boxSizing: "border-box" }}>
                         {viewingBatch[0].noTransaksi ?? "-"}
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>Tanggal transaksi</label>
-                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Tanggal transaksi</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "var(--text-primary)", boxSizing: "border-box" }}>
                         {formatTanggal(viewingBatch[0].createdAt)}
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>Tanggal Berlaku</label>
-                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Tanggal Berlaku</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "var(--text-primary)", boxSizing: "border-box" }}>
                         {viewingBatch[0].tanggalBerlaku}
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>Operator</label>
-                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Operator</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "var(--text-primary)", boxSizing: "border-box" }}>
                         {viewingBatch[0].operator}
                       </div>
                     </div>
@@ -803,14 +803,14 @@ export default function PerubahanHargaJualPage() {
                       display: "flex",
                       flexDirection: "column",
                       gap: "4px",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
                       padding: "12px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--hover-bg)",
                     }}
                   >
-                    <label style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Keterangan</label>
-                    <div style={{ flex: 1, minHeight: "96px", padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#64748b", boxSizing: "border-box" }}>
+                    <label style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Keterangan</label>
+                    <div style={{ flex: 1, minHeight: "96px", padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "var(--text-secondary)", boxSizing: "border-box" }}>
                       -
                     </div>
                   </div>
@@ -818,13 +818,13 @@ export default function PerubahanHargaJualPage() {
 
                 {/* Detail Perubahan Harga */}
                 <div style={{ display: "flex", flexDirection: "column", minHeight: "200px" }}>
-                  <h4 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 12px 0", color: "#1e293b" }}>Detail Perubahan Harga</h4>
-                  <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", overflowX: "auto" }}>
+                  <h4 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 12px 0", color: "var(--text-primary)" }}>Detail Perubahan Harga</h4>
+                  <div style={{ border: "1px solid var(--border)", borderRadius: "6px", overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "600px", fontSize: "13px" }}>
                       <thead>
-                        <tr style={{ backgroundColor: "#f8fafc" }}>
+                        <tr style={{ backgroundColor: "var(--hover-bg)" }}>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "160px" }}>Produk</th>
                           <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode</th>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "160px" }}>Nama</th>
                           <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Harga saat ini</th>
                           <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Harga baru</th>
                         </tr>
@@ -832,8 +832,8 @@ export default function PerubahanHargaJualPage() {
                       <tbody>
                         {viewingBatch.map((r) => (
                           <tr key={r.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                            <td style={{ padding: "10px 12px" }}>{r.kodeProduk}</td>
                             <td style={{ padding: "10px 12px" }}>{r.namaProduk}</td>
+                            <td style={{ padding: "10px 12px" }}>{r.kodeProduk}</td>
                             <td style={{ padding: "10px 12px", textAlign: "right" }}>{formatRupiah(r.hargaLama)}</td>
                             <td style={{ padding: "10px 12px", textAlign: "right" }}>{formatRupiah(r.hargaBaru)}</td>
                           </tr>
@@ -904,7 +904,7 @@ export default function PerubahanHargaJualPage() {
                         onClick={handleSimpanSetujui}
                         style={{
                           padding: "8px 16px",
-                          backgroundColor: "#3b82f6",
+                          backgroundColor: "var(--primary)",
                           color: "#fff",
                           border: "none",
                           borderRadius: "6px",
@@ -940,7 +940,7 @@ export default function PerubahanHargaJualPage() {
                         padding: "8px 16px",
                         backgroundColor: "#f1f5f9",
                         color: "#475569",
-                        border: "1px solid #e2e8f0",
+                        border: "1px solid var(--border)",
                         borderRadius: "6px",
                         fontSize: "13px",
                         fontWeight: 500,
@@ -956,7 +956,7 @@ export default function PerubahanHargaJualPage() {
                     onClick={handleOpenPengajuanModal}
                     style={{
                       padding: "8px 16px",
-                      backgroundColor: "#3b82f6",
+                      backgroundColor: "var(--primary)",
                       color: "#fff",
                       border: "none",
                       borderRadius: "6px",
@@ -975,7 +975,7 @@ export default function PerubahanHargaJualPage() {
                     padding: "8px 16px",
                     backgroundColor: "#f1f5f9",
                     color: "#475569",
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid var(--border)",
                     borderRadius: "6px",
                     fontSize: "13px",
                     fontWeight: 500,
@@ -1007,7 +1007,7 @@ export default function PerubahanHargaJualPage() {
           >
             <div
               style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 padding: "24px",
                 width: "90%",
@@ -1016,12 +1016,12 @@ export default function PerubahanHargaJualPage() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 20px 0", color: "#1e293b" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 20px 0", color: "var(--text-primary)" }}>
                 Ajukan Perubahan
               </h3>
               <form onSubmit={handleSubmitPengajuan}>
                 <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                     Jenis Pengajuan <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <select
@@ -1031,7 +1031,7 @@ export default function PerubahanHargaJualPage() {
                     style={{
                       width: "100%",
                       padding: "8px 10px",
-                      border: "1px solid #d1d5db",
+                      border: "1px solid var(--input-border)",
                       borderRadius: "6px",
                       fontSize: "13px",
                       boxSizing: "border-box",
@@ -1043,7 +1043,7 @@ export default function PerubahanHargaJualPage() {
                   </select>
                 </div>
                 <div style={{ marginBottom: "20px" }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                     Alasan <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <textarea
@@ -1055,7 +1055,7 @@ export default function PerubahanHargaJualPage() {
                     style={{
                       width: "100%",
                       padding: "8px 10px",
-                      border: "1px solid #d1d5db",
+                      border: "1px solid var(--input-border)",
                       borderRadius: "6px",
                       fontSize: "13px",
                       boxSizing: "border-box",
@@ -1071,7 +1071,7 @@ export default function PerubahanHargaJualPage() {
                       padding: "8px 16px",
                       backgroundColor: "#f1f5f9",
                       color: "#475569",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--border)",
                       borderRadius: "6px",
                       fontSize: "13px",
                       cursor: "pointer",
@@ -1083,7 +1083,7 @@ export default function PerubahanHargaJualPage() {
                     type="submit"
                     style={{
                       padding: "8px 16px",
-                      backgroundColor: "#3b82f6",
+                      backgroundColor: "var(--primary)",
                       color: "#fff",
                       border: "none",
                       borderRadius: "6px",
@@ -1118,7 +1118,7 @@ export default function PerubahanHargaJualPage() {
           >
             <div
               style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 padding: "24px",
                 width: "95%",
@@ -1137,7 +1137,7 @@ export default function PerubahanHargaJualPage() {
                   marginBottom: "24px",
                 }}
               >
-                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#1e293b" }}>
+                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
                   Tambah perubahan harga jual
                 </h2>
                 <button
@@ -1147,7 +1147,7 @@ export default function PerubahanHargaJualPage() {
                     border: "none",
                     fontSize: "24px",
                     cursor: "pointer",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                     padding: 0,
                     width: "32px",
                     height: "32px",
@@ -1171,14 +1171,14 @@ export default function PerubahanHargaJualPage() {
                       display: "flex",
                       flexDirection: "column",
                       gap: "8px",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
                       padding: "12px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--hover-bg)",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                         No. Bukti
                       </label>
                       <div
@@ -1189,7 +1189,7 @@ export default function PerubahanHargaJualPage() {
                           borderRadius: "6px",
                           fontSize: "13px",
                           backgroundColor: "#f9fafb",
-                          color: "#64748b",
+                          color: "var(--text-secondary)",
                           boxSizing: "border-box",
                         }}
                       >
@@ -1197,7 +1197,7 @@ export default function PerubahanHargaJualPage() {
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                         Tanggal
                       </label>
                       <input
@@ -1207,7 +1207,7 @@ export default function PerubahanHargaJualPage() {
                         style={{
                           flex: 1,
                           padding: "6px 8px",
-                          border: "1px solid #d1d5db",
+                          border: "1px solid var(--input-border)",
                           borderRadius: "6px",
                           fontSize: "13px",
                           boxSizing: "border-box",
@@ -1215,7 +1215,7 @@ export default function PerubahanHargaJualPage() {
                       />
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                         Tanggal Berlaku <span style={{ color: "#ef4444" }}>*</span>
                       </label>
                       <input
@@ -1225,7 +1225,7 @@ export default function PerubahanHargaJualPage() {
                         style={{
                           flex: 1,
                           padding: "6px 8px",
-                          border: "1px solid #d1d5db",
+                          border: "1px solid var(--input-border)",
                           borderRadius: "6px",
                           fontSize: "13px",
                           boxSizing: "border-box",
@@ -1242,13 +1242,13 @@ export default function PerubahanHargaJualPage() {
                       display: "flex",
                       flexDirection: "column",
                       gap: "4px",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
                       padding: "12px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--hover-bg)",
                     }}
                   >
-                    <label style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Keterangan</label>
+                    <label style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Keterangan</label>
                     <textarea
                       value={keterangan}
                       onChange={(e) => setKeterangan(e.target.value)}
@@ -1259,7 +1259,7 @@ export default function PerubahanHargaJualPage() {
                         flex: 1,
                         minHeight: "96px",
                         padding: "6px 8px",
-                        border: "1px solid #d1d5db",
+                        border: "1px solid var(--input-border)",
                         borderRadius: "6px",
                         fontSize: "13px",
                         boxSizing: "border-box",
@@ -1279,7 +1279,7 @@ export default function PerubahanHargaJualPage() {
                       marginBottom: "12px",
                     }}
                   >
-                    <h4 style={{ fontSize: "16px", fontWeight: 600, margin: 0, color: "#1e293b" }}>
+                    <h4 style={{ fontSize: "16px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
                       Detail Perubahan Harga
                     </h4>
                     <button
@@ -1287,7 +1287,7 @@ export default function PerubahanHargaJualPage() {
                       onClick={handleAddDetail}
                       style={{
                         padding: "8px 16px",
-                        backgroundColor: "#3b82f6",
+                        backgroundColor: "var(--primary)",
                         color: "white",
                         border: "none",
                         borderRadius: "6px",
@@ -1302,7 +1302,7 @@ export default function PerubahanHargaJualPage() {
                   {detailHarga.length > 0 ? (
                     <div
                       style={{
-                        border: "1px solid #e2e8f0",
+                        border: "1px solid var(--border)",
                         borderRadius: "6px",
                         overflowX: "auto",
                         flex: 1,
@@ -1311,11 +1311,10 @@ export default function PerubahanHargaJualPage() {
                     >
                       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px", fontSize: "13px" }}>
                         <thead>
-                          <tr style={{ backgroundColor: "#f8fafc" }}>
+                          <tr style={{ backgroundColor: "var(--hover-bg)" }}>
                             <th style={{ padding: "10px 12px", textAlign: "center", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", width: "56px" }}>Aksi</th>
-                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Produk</th>
+                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "180px" }}>Produk</th>
                             <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode</th>
-                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "160px" }}>Nama</th>
                             <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Harga saat ini</th>
                             <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", width: "120px" }}>Harga baru</th>
                           </tr>
@@ -1354,7 +1353,7 @@ export default function PerubahanHargaJualPage() {
                                 <input
                                   type="text"
                                   readOnly
-                                  value={d.namaProduk ? `${d.kodeProduk} - ${d.namaProduk}` : ""}
+                                  value={d.namaProduk || ""}
                                   placeholder="Klik untuk pilih produk"
                                   onClick={() => {
                                     setProductModalDetailId(d.id);
@@ -1364,7 +1363,7 @@ export default function PerubahanHargaJualPage() {
                                   style={{
                                     width: "100%",
                                     padding: "8px 10px",
-                                    border: "1px solid #d1d5db",
+                                    border: "1px solid var(--input-border)",
                                     borderRadius: "6px",
                                     fontSize: "13px",
                                     boxSizing: "border-box",
@@ -1373,9 +1372,8 @@ export default function PerubahanHargaJualPage() {
                                   }}
                                 />
                               </td>
-                              <td style={{ padding: "10px 12px", color: "#64748b" }}>{d.kodeProduk || "-"}</td>
-                              <td style={{ padding: "10px 12px", color: "#64748b", minWidth: "160px" }}>{d.namaProduk || "-"}</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: "#64748b" }}>
+                              <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{d.kodeProduk || "-"}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: "var(--text-secondary)" }}>
                                 {d.produkId ? formatRupiah(d.hargaSaatIni) : "-"}
                               </td>
                               <td style={{ padding: "8px 12px", verticalAlign: "middle", textAlign: "right" }}>
@@ -1387,7 +1385,7 @@ export default function PerubahanHargaJualPage() {
                                   style={{
                                     width: "100px",
                                     padding: "6px 8px",
-                                    border: "1px solid #d1d5db",
+                                    border: "1px solid var(--input-border)",
                                     borderRadius: "4px",
                                     fontSize: "13px",
                                     boxSizing: "border-box",
@@ -1408,7 +1406,7 @@ export default function PerubahanHargaJualPage() {
                         textAlign: "center",
                         border: "1px dashed #d1d5db",
                         borderRadius: "6px",
-                        color: "#64748b",
+                        color: "var(--text-secondary)",
                         fontSize: "14px",
                         flex: 1,
                         minHeight: "360px",
@@ -1432,7 +1430,7 @@ export default function PerubahanHargaJualPage() {
                     padding: "8px 16px",
                     backgroundColor: "#f1f5f9",
                     color: "#475569",
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid var(--border)",
                     borderRadius: "6px",
                     fontSize: "13px",
                     cursor: "pointer",
@@ -1482,7 +1480,7 @@ export default function PerubahanHargaJualPage() {
               >
                 <div
                   style={{
-                    backgroundColor: "#ffffff",
+                    backgroundColor: "var(--surface)",
                     borderRadius: "8px",
                     padding: "24px",
                     width: "90%",
@@ -1497,8 +1495,8 @@ export default function PerubahanHargaJualPage() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
                     <div>
-                      <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "#1e293b" }}>Pilih Produk</h3>
-                      <p style={{ fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" }}>Pilih produk dari daftar di bawah ini</p>
+                      <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>Pilih Produk</h3>
+                      <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>Pilih produk dari daftar di bawah ini</p>
                     </div>
                     <button
                       type="button"
@@ -1511,7 +1509,7 @@ export default function PerubahanHargaJualPage() {
                         border: "none",
                         fontSize: "24px",
                         cursor: "pointer",
-                        color: "#64748b",
+                        color: "var(--text-secondary)",
                         padding: 0,
                         width: "32px",
                         height: "32px",
@@ -1523,10 +1521,10 @@ export default function PerubahanHargaJualPage() {
                       ×
                     </button>
                   </div>
-                  <div style={{ overflow: "auto", flex: 1, border: "1px solid #e2e8f0", borderRadius: "6px" }}>
+                  <div style={{ overflow: "auto", flex: 1, border: "1px solid var(--border)", borderRadius: "6px" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                       <thead>
-                        <tr style={{ backgroundColor: "#f8fafc", position: "sticky", top: 0 }}>
+                        <tr style={{ backgroundColor: "var(--hover-bg)", position: "sticky", top: 0 }}>
                           <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode</th>
                           <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "200px" }}>Nama</th>
                           <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Satuan</th>
@@ -1548,7 +1546,7 @@ export default function PerubahanHargaJualPage() {
                             <>
                               {paginatedProducts.length === 0 ? (
                                 <tr>
-                                  <td colSpan={3} style={{ padding: "24px", textAlign: "center", color: "#64748b" }}>
+                                  <td colSpan={3} style={{ padding: "24px", textAlign: "center", color: "var(--text-secondary)" }}>
                                     Tidak ada produk
                                   </td>
                                 </tr>
@@ -1565,9 +1563,9 @@ export default function PerubahanHargaJualPage() {
                                       e.currentTarget.style.backgroundColor = "white";
                                     }}
                                   >
-                                    <td style={{ padding: "10px 12px", color: "#1e293b" }}>{p.kodeProduk}</td>
-                                    <td style={{ padding: "10px 12px", color: "#1e293b" }}>{p.namaProduk}</td>
-                                    <td style={{ padding: "10px 12px", color: "#64748b" }}>{p.satuan || "-"}</td>
+                                    <td style={{ padding: "10px 12px", color: "var(--text-primary)" }}>{p.kodeProduk}</td>
+                                    <td style={{ padding: "10px 12px", color: "var(--text-primary)" }}>{p.namaProduk}</td>
+                                    <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{p.satuan || "-"}</td>
                                   </tr>
                                 ))
                               )}
@@ -1599,7 +1597,7 @@ export default function PerubahanHargaJualPage() {
                           paddingTop: "12px",
                           borderTop: "1px solid #e2e8f0",
                           fontSize: "13px",
-                          color: "#64748b",
+                          color: "var(--text-secondary)",
                         }}
                       >
                         <span>
@@ -1612,7 +1610,7 @@ export default function PerubahanHargaJualPage() {
                             disabled={productModalPage <= 1}
                             style={{
                               padding: "6px 12px",
-                              border: "1px solid #e2e8f0",
+                              border: "1px solid var(--border)",
                               borderRadius: "6px",
                               backgroundColor: "white",
                               cursor: productModalPage <= 1 ? "not-allowed" : "pointer",
@@ -1631,7 +1629,7 @@ export default function PerubahanHargaJualPage() {
                             disabled={productModalPage >= totalPages}
                             style={{
                               padding: "6px 12px",
-                              border: "1px solid #e2e8f0",
+                              border: "1px solid var(--border)",
                               borderRadius: "6px",
                               backgroundColor: "white",
                               cursor: productModalPage >= totalPages ? "not-allowed" : "pointer",

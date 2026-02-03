@@ -472,7 +472,7 @@ export default function FakturPembelianPage() {
             onClick={() => handleOpenModal()}
             style={{
               padding: "10px 20px",
-              backgroundColor: "#3b82f6",
+              backgroundColor: "var(--primary)",
               color: "white",
               border: "none",
               borderRadius: "6px",
@@ -493,7 +493,7 @@ export default function FakturPembelianPage() {
         </div>
 
         {/* Tabs */}
-        <div style={{ marginBottom: "20px", display: "flex", gap: "12px", borderBottom: "2px solid #e2e8f0" }}>
+        <div style={{ marginBottom: "20px", display: "flex", gap: "12px", borderBottom: "2px solid var(--border)" }}>
           <button
             onClick={() => setActiveTab("penerimaan")}
             style={{
@@ -532,7 +532,7 @@ export default function FakturPembelianPage() {
         {activeTab === "penerimaan" && getAvailablePenerimaan().length > 0 ? (
           <div
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--surface)",
               borderRadius: "8px",
               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               overflow: "hidden",
@@ -547,8 +547,8 @@ export default function FakturPembelianPage() {
               <thead>
                 <tr
                   style={{
-                    backgroundColor: "#f8fafc",
-                    borderBottom: "2px solid #e2e8f0",
+                    backgroundColor: "var(--hover-bg)",
+                    borderBottom: "2px solid var(--border)",
                   }}
                 >
                   <th
@@ -557,7 +557,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Supplier
@@ -568,7 +568,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Nomor Penerimaan
@@ -579,7 +579,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Nomor PO
@@ -590,7 +590,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Tanggal Penerimaan
@@ -601,7 +601,7 @@ export default function FakturPembelianPage() {
                       textAlign: "center",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Jumlah Item
@@ -612,7 +612,7 @@ export default function FakturPembelianPage() {
                       textAlign: "center",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                       width: "150px",
                     }}
                   >
@@ -627,11 +627,11 @@ export default function FakturPembelianPage() {
                     <tr
                       key={penerimaan.id}
                       style={{
-                        borderBottom: "1px solid #e2e8f0",
+                        borderBottom: "1px solid var(--border)",
                         transition: "background-color 0.2s",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#f8fafc";
+                        e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = "transparent";
@@ -643,7 +643,7 @@ export default function FakturPembelianPage() {
                           style={{
                             padding: "12px",
                             fontSize: "13px",
-                            color: "#1e293b",
+                            color: "var(--text-primary)",
                             fontWeight: "500",
                             verticalAlign: "top",
                           }}
@@ -655,7 +655,7 @@ export default function FakturPembelianPage() {
                         style={{
                           padding: "12px",
                           fontSize: "13px",
-                          color: "#1e293b",
+                          color: "var(--text-primary)",
                         }}
                       >
                         {penerimaan.nomorPenerimaan}
@@ -664,7 +664,7 @@ export default function FakturPembelianPage() {
                         style={{
                           padding: "12px",
                           fontSize: "13px",
-                          color: "#64748b",
+                          color: "var(--text-secondary)",
                         }}
                       >
                         {penerimaan.nomorPesanan}
@@ -673,7 +673,7 @@ export default function FakturPembelianPage() {
                         style={{
                           padding: "12px",
                           fontSize: "13px",
-                          color: "#64748b",
+                          color: "var(--text-secondary)",
                         }}
                       >
                         {formatDate(penerimaan.tanggalPenerimaan)}
@@ -683,7 +683,7 @@ export default function FakturPembelianPage() {
                           padding: "12px",
                           fontSize: "13px",
                           textAlign: "center",
-                          color: "#64748b",
+                          color: "var(--text-secondary)",
                         }}
                       >
                         {penerimaan.detailBarang.length} item
@@ -704,7 +704,7 @@ export default function FakturPembelianPage() {
                             }}
                             style={{
                               padding: "6px 12px",
-                              backgroundColor: "#3b82f6",
+                              backgroundColor: "var(--primary)",
                               color: "white",
                               border: "none",
                               borderRadius: "4px",
@@ -733,14 +733,14 @@ export default function FakturPembelianPage() {
         ) : activeTab === "penerimaan" ? (
         <div
           style={{
-            backgroundColor: "#ffffff",
+            backgroundColor: "var(--surface)",
             padding: "24px",
             borderRadius: "8px",
             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               textAlign: "center",
           }}
         >
-          <p style={{ color: "#64748b" }}>
+          <p style={{ color: "var(--text-secondary)" }}>
               Semua penerimaan pembelian sudah dibuat faktur.
           </p>
         </div>
@@ -750,7 +750,7 @@ export default function FakturPembelianPage() {
         {activeTab === "faktur" && fakturList.length > 0 ? (
           <div
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--surface)",
               borderRadius: "8px",
               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               overflow: "hidden",
@@ -765,8 +765,8 @@ export default function FakturPembelianPage() {
               <thead>
                 <tr
                   style={{
-                    backgroundColor: "#f8fafc",
-                    borderBottom: "2px solid #e2e8f0",
+                    backgroundColor: "var(--hover-bg)",
+                    borderBottom: "2px solid var(--border)",
                   }}
                 >
                   <th
@@ -775,7 +775,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Nomor Faktur
@@ -786,7 +786,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Kode Bukti
@@ -797,7 +797,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Nomor Faktur Supplier
@@ -808,7 +808,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Tanggal Faktur
@@ -819,7 +819,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Supplier
@@ -830,7 +830,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Jumlah Penerimaan
@@ -841,7 +841,7 @@ export default function FakturPembelianPage() {
                       textAlign: "right",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Total
@@ -852,7 +852,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Operator
@@ -863,7 +863,7 @@ export default function FakturPembelianPage() {
                       textAlign: "left",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Last Update
@@ -874,7 +874,7 @@ export default function FakturPembelianPage() {
                       textAlign: "center",
                       fontSize: "13px",
                       fontWeight: "600",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     Status Bayar
@@ -886,11 +886,11 @@ export default function FakturPembelianPage() {
                   <tr
                     key={faktur.id}
                     style={{
-                      borderBottom: "1px solid #e2e8f0",
+                      borderBottom: "1px solid var(--border)",
                       transition: "background-color 0.2s",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#f8fafc";
+                      e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent";
@@ -900,7 +900,7 @@ export default function FakturPembelianPage() {
                       style={{
                         padding: "12px",
                         fontSize: "13px",
-                        color: "#1e293b",
+                        color: "var(--text-primary)",
                       }}
                     >
                       {faktur.nomorFaktur}
@@ -909,7 +909,7 @@ export default function FakturPembelianPage() {
                       style={{
                         padding: "12px",
                         fontSize: "13px",
-                        color: "#64748b",
+                        color: "var(--text-secondary)",
                       }}
                     >
                       {faktur.nomorBukti || "-"}
@@ -918,7 +918,7 @@ export default function FakturPembelianPage() {
                       style={{
                         padding: "12px",
                         fontSize: "13px",
-                        color: "#64748b",
+                        color: "var(--text-secondary)",
                       }}
                     >
                       {faktur.nomorFakturSupplier || "-"}
@@ -927,7 +927,7 @@ export default function FakturPembelianPage() {
                       style={{
                         padding: "12px",
                         fontSize: "13px",
-                        color: "#64748b",
+                        color: "var(--text-secondary)",
                       }}
                     >
                       {formatDate(faktur.tanggalFaktur)}
@@ -936,7 +936,7 @@ export default function FakturPembelianPage() {
                       style={{
                         padding: "12px",
                         fontSize: "13px",
-                        color: "#64748b",
+                        color: "var(--text-secondary)",
                       }}
                     >
                       {suppliers.find((s) => s.id === faktur.supplierId)
@@ -946,7 +946,7 @@ export default function FakturPembelianPage() {
                       style={{
                         padding: "12px",
                         fontSize: "13px",
-                        color: "#64748b",
+                        color: "var(--text-secondary)",
                       }}
                     >
                       {faktur.penerimaanIds.length} penerimaan
@@ -957,7 +957,7 @@ export default function FakturPembelianPage() {
                         fontSize: "13px",
                         textAlign: "right",
                         fontWeight: "500",
-                        color: "#1e293b",
+                        color: "var(--text-primary)",
                       }}
                     >
                       {formatCurrency(faktur.total)}
@@ -966,7 +966,7 @@ export default function FakturPembelianPage() {
                       style={{
                         padding: "12px",
                         fontSize: "13px",
-                        color: "#64748b",
+                        color: "var(--text-secondary)",
                       }}
                     >
                       {faktur.operator || "-"}
@@ -975,7 +975,7 @@ export default function FakturPembelianPage() {
                       style={{
                         padding: "12px",
                         fontSize: "13px",
-                        color: "#64748b",
+                        color: "var(--text-secondary)",
                       }}
                     >
                       {faktur.updatedAt 
@@ -1030,14 +1030,14 @@ export default function FakturPembelianPage() {
         ) : activeTab === "faktur" ? (
           <div
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--surface)",
               padding: "24px",
               borderRadius: "8px",
               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               textAlign: "center",
             }}
           >
-            <p style={{ color: "#64748b" }}>
+            <p style={{ color: "var(--text-secondary)" }}>
               Belum ada faktur pembelian. Klik "Buat Faktur Pembelian" untuk membuat faktur baru.
             </p>
           </div>
@@ -1063,7 +1063,7 @@ export default function FakturPembelianPage() {
           >
             <div
               style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 width: "95%",
                 maxWidth: "1200px",
@@ -1078,11 +1078,11 @@ export default function FakturPembelianPage() {
               <div
                 style={{
                   padding: "20px 24px",
-                  borderBottom: "1px solid #e2e8f0",
+                  borderBottom: "1px solid var(--border)",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  backgroundColor: "#f8fafc",
+                  backgroundColor: "var(--hover-bg)",
                   borderTopLeftRadius: "8px",
                   borderTopRightRadius: "8px",
                 }}
@@ -1092,7 +1092,7 @@ export default function FakturPembelianPage() {
                     fontSize: "20px",
                     fontWeight: "600",
                     margin: 0,
-                    color: "#1e293b",
+                    color: "var(--text-primary)",
                   }}
                 >
                   Buat Faktur Pembelian
@@ -1104,7 +1104,7 @@ export default function FakturPembelianPage() {
                     border: "none",
                     fontSize: "24px",
                     cursor: "pointer",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                     padding: 0,
                     width: "32px",
                     height: "32px",
@@ -1115,7 +1115,7 @@ export default function FakturPembelianPage() {
                     transition: "background-color 0.2s",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#e2e8f0";
+                    e.currentTarget.style.backgroundColor = "var(--border)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = "transparent";
@@ -1145,7 +1145,7 @@ export default function FakturPembelianPage() {
                           marginBottom: "8px",
                           fontSize: "14px",
                           fontWeight: "500",
-                          color: "#374151",
+                          color: "var(--text-primary)",
                         }}
                       >
                         Supplier <span style={{ color: "#ef4444" }}>*</span>
@@ -1158,7 +1158,7 @@ export default function FakturPembelianPage() {
                         style={{
                           width: "100%",
                           padding: "10px 12px",
-                          border: "1px solid #d1d5db",
+                          border: "1px solid var(--input-border)",
                           borderRadius: "6px",
                           fontSize: "14px",
                           boxSizing: "border-box",
@@ -1193,7 +1193,7 @@ export default function FakturPembelianPage() {
                           marginBottom: "8px",
                           fontSize: "14px",
                           fontWeight: "500",
-                          color: "#374151",
+                          color: "var(--text-primary)",
                         }}
                       >
                         Kode Bukti
@@ -1202,12 +1202,12 @@ export default function FakturPembelianPage() {
                         style={{
                           width: "100%",
                           padding: "10px 12px",
-                          border: "1px solid #d1d5db",
+                          border: "1px solid var(--input-border)",
                           borderRadius: "6px",
                           fontSize: "14px",
                           boxSizing: "border-box",
-                          backgroundColor: "#f3f4f6",
-                          color: "#64748b",
+                          backgroundColor: "var(--surface)",
+                          color: "var(--text-secondary)",
                         }}
                       >
                         {selectedPenerimaanIds.length > 0 ? generateNomorBukti() : "-"}
@@ -1221,7 +1221,7 @@ export default function FakturPembelianPage() {
                           marginBottom: "8px",
                           fontSize: "14px",
                           fontWeight: "500",
-                          color: "#374151",
+                          color: "var(--text-primary)",
                         }}
                       >
                         Tanggal Faktur <span style={{ color: "#ef4444" }}>*</span>
@@ -1240,7 +1240,7 @@ export default function FakturPembelianPage() {
                         style={{
                           width: "100%",
                           padding: "10px 12px",
-                          border: "1px solid #d1d5db",
+                          border: "1px solid var(--input-border)",
                           borderRadius: "6px",
                           fontSize: "14px",
                           boxSizing: "border-box",
@@ -1266,7 +1266,7 @@ export default function FakturPembelianPage() {
                           marginBottom: "8px",
                           fontSize: "14px",
                           fontWeight: "500",
-                          color: "#374151",
+                          color: "var(--text-primary)",
                         }}
                       >
                         Nomor Faktur Supplier{" "}
@@ -1287,7 +1287,7 @@ export default function FakturPembelianPage() {
                         style={{
                           width: "100%",
                           padding: "10px 12px",
-                          border: "1px solid #d1d5db",
+                          border: "1px solid var(--input-border)",
                           borderRadius: "6px",
                           fontSize: "14px",
                           boxSizing: "border-box",
@@ -1310,7 +1310,7 @@ export default function FakturPembelianPage() {
                           marginBottom: "8px",
                           fontSize: "14px",
                           fontWeight: "500",
-                          color: "#374151",
+                          color: "var(--text-primary)",
                         }}
                       >
                         No Faktur Pajak
@@ -1329,7 +1329,7 @@ export default function FakturPembelianPage() {
                         style={{
                           width: "100%",
                           padding: "10px 12px",
-                          border: "1px solid #d1d5db",
+                          border: "1px solid var(--input-border)",
                           borderRadius: "6px",
                           fontSize: "14px",
                           boxSizing: "border-box",
@@ -1352,7 +1352,7 @@ export default function FakturPembelianPage() {
                           marginBottom: "8px",
                           fontSize: "14px",
                           fontWeight: "500",
-                          color: "#374151",
+                          color: "var(--text-primary)",
                         }}
                       >
                         Tanggal Jatuh Tempo{" "}
@@ -1372,7 +1372,7 @@ export default function FakturPembelianPage() {
                         style={{
                           width: "100%",
                           padding: "10px 12px",
-                          border: "1px solid #d1d5db",
+                          border: "1px solid var(--input-border)",
                           borderRadius: "6px",
                           fontSize: "14px",
                           boxSizing: "border-box",
@@ -1396,7 +1396,7 @@ export default function FakturPembelianPage() {
                           style={{
                             fontSize: "14px",
                             fontWeight: "500",
-                            color: "#374151",
+                            color: "var(--text-primary)",
                           }}
                         >
                           Pilih Penerimaan Pembelian{" "}
@@ -1427,7 +1427,7 @@ export default function FakturPembelianPage() {
                       {penerimaanForSupplier.length > 0 ? (
                         <div
                           style={{
-                            border: "1px solid #e2e8f0",
+                            border: "1px solid var(--border)",
                             borderRadius: "6px",
                             maxHeight: "300px",
                             overflowY: "auto",
@@ -1438,7 +1438,7 @@ export default function FakturPembelianPage() {
                               key={penerimaan.id}
                               style={{
                                 padding: "12px",
-                                borderBottom: "1px solid #e2e8f0",
+                                borderBottom: "1px solid var(--border)",
                                 display: "flex",
                                 alignItems: "center",
                                 gap: "12px",
@@ -1446,7 +1446,7 @@ export default function FakturPembelianPage() {
                                 transition: "background-color 0.2s",
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = "#f8fafc";
+                                e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                               }}
                               onMouseLeave={(e) => {
                                 e.currentTarget.style.backgroundColor = "transparent";
@@ -1474,7 +1474,7 @@ export default function FakturPembelianPage() {
                                   style={{
                                     fontSize: "14px",
                                     fontWeight: "500",
-                                    color: "#1e293b",
+                                    color: "var(--text-primary)",
                                   }}
                                 >
                                   {penerimaan.nomorPenerimaan}
@@ -1482,7 +1482,7 @@ export default function FakturPembelianPage() {
                                 <div
                                   style={{
                                     fontSize: "12px",
-                                    color: "#64748b",
+                                    color: "var(--text-secondary)",
                                     marginTop: "4px",
                                   }}
                                 >
@@ -1499,7 +1499,7 @@ export default function FakturPembelianPage() {
                           style={{
                             padding: "24px",
                             textAlign: "center",
-                            color: "#64748b",
+                            color: "var(--text-secondary)",
                             fontSize: "14px",
                           }}
                         >
@@ -1517,14 +1517,14 @@ export default function FakturPembelianPage() {
                           fontSize: "16px",
                           fontWeight: "600",
                           margin: "0 0 12px 0",
-                          color: "#1e293b",
+                          color: "var(--text-primary)",
                         }}
                       >
                         Detail Barang
                       </h4>
                       <div
                         style={{
-                          border: "1px solid #e2e8f0",
+                          border: "1px solid var(--border)",
                           borderRadius: "6px",
                           overflowX: "auto",
                         }}
@@ -1537,15 +1537,15 @@ export default function FakturPembelianPage() {
                           }}
                         >
                           <thead>
-                            <tr style={{ backgroundColor: "#f8fafc" }}>
+                            <tr style={{ backgroundColor: "var(--hover-bg)" }}>
                               <th
                                 style={{
                                   padding: "12px",
                                   textAlign: "left",
                                   fontSize: "12px",
                                   fontWeight: "600",
-                                  color: "#475569",
-                                  borderBottom: "1px solid #e2e8f0",
+                                  color: "var(--text-secondary)",
+                                  borderBottom: "1px solid var(--border)",
                                 }}
                               >
                                 Nomor Penerimaan
@@ -1556,8 +1556,8 @@ export default function FakturPembelianPage() {
                                   textAlign: "left",
                                   fontSize: "12px",
                                   fontWeight: "600",
-                                  color: "#475569",
-                                  borderBottom: "1px solid #e2e8f0",
+                                  color: "var(--text-secondary)",
+                                  borderBottom: "1px solid var(--border)",
                                 }}
                               >
                                 No Surat Jalan
@@ -1568,8 +1568,8 @@ export default function FakturPembelianPage() {
                                   textAlign: "left",
                                   fontSize: "12px",
                                   fontWeight: "600",
-                                  color: "#475569",
-                                  borderBottom: "1px solid #e2e8f0",
+                                  color: "var(--text-secondary)",
+                                  borderBottom: "1px solid var(--border)",
                                 }}
                               >
                                 Nama Produk
@@ -1580,8 +1580,8 @@ export default function FakturPembelianPage() {
                                   textAlign: "left",
                                   fontSize: "12px",
                                   fontWeight: "600",
-                                  color: "#475569",
-                                  borderBottom: "1px solid #e2e8f0",
+                                  color: "var(--text-secondary)",
+                                  borderBottom: "1px solid var(--border)",
                                 }}
                               >
                                 Unit
@@ -1592,8 +1592,8 @@ export default function FakturPembelianPage() {
                                   textAlign: "center",
                                   fontSize: "12px",
                                   fontWeight: "600",
-                                  color: "#475569",
-                                  borderBottom: "1px solid #e2e8f0",
+                                  color: "var(--text-secondary)",
+                                  borderBottom: "1px solid var(--border)",
                                 }}
                               >
                                 Qty Terima
@@ -1604,8 +1604,8 @@ export default function FakturPembelianPage() {
                                   textAlign: "right",
                                   fontSize: "12px",
                                   fontWeight: "600",
-                                  color: "#475569",
-                                  borderBottom: "1px solid #e2e8f0",
+                                  color: "var(--text-secondary)",
+                                  borderBottom: "1px solid var(--border)",
                                 }}
                               >
                                 Harga Satuan
@@ -1616,8 +1616,8 @@ export default function FakturPembelianPage() {
                                   textAlign: "right",
                                   fontSize: "12px",
                                   fontWeight: "600",
-                                  color: "#475569",
-                                  borderBottom: "1px solid #e2e8f0",
+                                  color: "var(--text-secondary)",
+                                  borderBottom: "1px solid var(--border)",
                                 }}
                               >
                                 Subtotal
@@ -1640,14 +1640,14 @@ export default function FakturPembelianPage() {
                                     <tr
                                       key={`${penerimaan.id}-${detail.id}`}
                                       style={{
-                                        borderBottom: "1px solid #e2e8f0",
+                                        borderBottom: "1px solid var(--border)",
                                       }}
                                     >
                                       <td
                                         style={{
                                           padding: "12px",
                                           fontSize: "13px",
-                                          color: "#64748b",
+                                          color: "var(--text-secondary)",
                                         }}
                                       >
                                         {penerimaan.nomorPenerimaan}
@@ -1656,7 +1656,7 @@ export default function FakturPembelianPage() {
                                         style={{
                                           padding: "12px",
                                           fontSize: "13px",
-                                          color: "#64748b",
+                                          color: "var(--text-secondary)",
                                         }}
                                       >
                                         {penerimaan.nomorSuratJalan}
@@ -1665,7 +1665,7 @@ export default function FakturPembelianPage() {
                                         style={{
                                           padding: "12px",
                                           fontSize: "13px",
-                                          color: "#1e293b",
+                                          color: "var(--text-primary)",
                                         }}
                                       >
                                         {detail.namaProduk}
@@ -1674,7 +1674,7 @@ export default function FakturPembelianPage() {
                                         style={{
                                           padding: "12px",
                                           fontSize: "13px",
-                                          color: "#64748b",
+                                          color: "var(--text-secondary)",
                                         }}
                                       >
                                         {detail.namaUnit || detail.satuan}
@@ -1684,7 +1684,7 @@ export default function FakturPembelianPage() {
                                           padding: "12px",
                                           fontSize: "13px",
                                           textAlign: "center",
-                                          color: "#64748b",
+                                          color: "var(--text-secondary)",
                                         }}
                                       >
                                         {detail.qtyTerima}
@@ -1711,7 +1711,7 @@ export default function FakturPembelianPage() {
                                           style={{
                                             width: "120px",
                                             padding: "6px 8px",
-                                            border: "1px solid #d1d5db",
+                                            border: "1px solid var(--input-border)",
                                             borderRadius: "4px",
                                             fontSize: "13px",
                                             textAlign: "right",
@@ -1731,7 +1731,7 @@ export default function FakturPembelianPage() {
                                           fontSize: "13px",
                                           textAlign: "right",
                                           fontWeight: "500",
-                                          color: "#1e293b",
+                                          color: "var(--text-primary)",
                                         }}
                                       >
                                         {formatCurrency(finalSubtotal)}
@@ -1764,7 +1764,7 @@ export default function FakturPembelianPage() {
                             marginBottom: "8px",
                             fontSize: "14px",
                             fontWeight: "500",
-                            color: "#374151",
+                            color: "var(--text-primary)",
                           }}
                         >
                           Diskon Global (%)
@@ -1785,7 +1785,7 @@ export default function FakturPembelianPage() {
                           style={{
                             width: "100%",
                             padding: "10px 12px",
-                            border: "1px solid #d1d5db",
+                            border: "1px solid var(--input-border)",
                             borderRadius: "6px",
                             fontSize: "14px",
                             boxSizing: "border-box",
@@ -1800,7 +1800,7 @@ export default function FakturPembelianPage() {
                             marginBottom: "8px",
                             fontSize: "14px",
                             fontWeight: "500",
-                            color: "#374151",
+                            color: "var(--text-primary)",
                           }}
                         >
                           PPN (%)
@@ -1817,7 +1817,7 @@ export default function FakturPembelianPage() {
                           style={{
                             width: "100%",
                             padding: "10px 12px",
-                            border: "1px solid #d1d5db",
+                            border: "1px solid var(--input-border)",
                             borderRadius: "6px",
                             fontSize: "14px",
                             boxSizing: "border-box",
@@ -1834,7 +1834,7 @@ export default function FakturPembelianPage() {
                   {selectedPenerimaanIds.length > 0 && (
                     <div
                       style={{
-                        backgroundColor: "#f8fafc",
+                        backgroundColor: "var(--hover-bg)",
                         padding: "20px",
                         borderRadius: "6px",
                         marginBottom: "24px",
@@ -1847,14 +1847,14 @@ export default function FakturPembelianPage() {
                           marginBottom: "8px",
                         }}
                       >
-                        <span style={{ fontSize: "14px", color: "#64748b" }}>
+                        <span style={{ fontSize: "14px", color: "var(--text-secondary)" }}>
                           Subtotal:
                         </span>
                         <span
                           style={{
                             fontSize: "14px",
                             fontWeight: "500",
-                            color: "#1e293b",
+                            color: "var(--text-primary)",
                           }}
                         >
                           {formatCurrency(totals.subtotal)}
@@ -1867,14 +1867,14 @@ export default function FakturPembelianPage() {
                           marginBottom: "8px",
                         }}
                       >
-                        <span style={{ fontSize: "14px", color: "#64748b" }}>
+                        <span style={{ fontSize: "14px", color: "var(--text-secondary)" }}>
                           Diskon Global ({formData.diskonGlobal}%):
                         </span>
                         <span
                           style={{
                             fontSize: "14px",
                             fontWeight: "500",
-                            color: "#1e293b",
+                            color: "var(--text-primary)",
                           }}
                         >
                           -{formatCurrency(totals.diskonAmount)}
@@ -1887,14 +1887,14 @@ export default function FakturPembelianPage() {
                           marginBottom: "8px",
                         }}
                       >
-                        <span style={{ fontSize: "14px", color: "#64748b" }}>
+                        <span style={{ fontSize: "14px", color: "var(--text-secondary)" }}>
                           PPN ({formData.ppn}%):
                         </span>
                         <span
                           style={{
                             fontSize: "14px",
                             fontWeight: "500",
-                            color: "#1e293b",
+                            color: "var(--text-primary)",
                           }}
                         >
                           {formatCurrency(totals.ppnAmount)}
@@ -1905,14 +1905,14 @@ export default function FakturPembelianPage() {
                           display: "flex",
                           justifyContent: "space-between",
                           paddingTop: "12px",
-                          borderTop: "2px solid #e2e8f0",
+                          borderTop: "2px solid var(--border)",
                         }}
                       >
                         <span
                           style={{
                             fontSize: "16px",
                             fontWeight: "600",
-                            color: "#1e293b",
+                            color: "var(--text-primary)",
                           }}
                         >
                           Total:
@@ -1921,7 +1921,7 @@ export default function FakturPembelianPage() {
                           style={{
                             fontSize: "16px",
                             fontWeight: "600",
-                            color: "#1e293b",
+                            color: "var(--text-primary)",
                           }}
                         >
                           {formatCurrency(totals.total)}
@@ -1950,8 +1950,8 @@ export default function FakturPembelianPage() {
                   <div
                     style={{
                       padding: "20px 24px",
-                      borderTop: "1px solid #e2e8f0",
-                      backgroundColor: "#f8fafc",
+                      borderTop: "1px solid var(--border)",
+                      backgroundColor: "var(--hover-bg)",
                       display: "flex",
                       gap: "12px",
                       justifyContent: "flex-end",
@@ -1965,8 +1965,8 @@ export default function FakturPembelianPage() {
                       style={{
                         padding: "10px 20px",
                         backgroundColor: "transparent",
-                        color: "#64748b",
-                        border: "1px solid #d1d5db",
+                        color: "var(--text-secondary)",
+                        border: "1px solid var(--input-border)",
                         borderRadius: "6px",
                         cursor: "pointer",
                         fontSize: "14px",
@@ -1974,7 +1974,7 @@ export default function FakturPembelianPage() {
                         transition: "background-color 0.2s",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#f3f4f6";
+                        e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = "transparent";

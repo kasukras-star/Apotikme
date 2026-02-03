@@ -1686,7 +1686,7 @@ export default function PersetujuanPengajuanPage() {
                   width: "24px",
                   height: "24px",
                   borderRadius: "50%",
-                  backgroundColor: "#3b82f6",
+                  backgroundColor: "var(--primary)",
                   color: "white",
                   display: "flex",
                   alignItems: "center",
@@ -1749,7 +1749,7 @@ export default function PersetujuanPengajuanPage() {
               }}
               style={{
                 padding: "6px 12px",
-                backgroundColor: "#3b82f6",
+                backgroundColor: "var(--primary)",
                 color: "white",
                 border: "none",
                 borderRadius: "6px",
@@ -1979,7 +1979,7 @@ export default function PersetujuanPengajuanPage() {
         {filteredPengajuan.length > 0 ? (
           <div
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--surface)",
               borderRadius: "8px",
               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               overflow: "hidden",
@@ -2091,19 +2091,19 @@ export default function PersetujuanPengajuanPage() {
                         e.currentTarget.style.backgroundColor = pengajuan.isNew ? "#fef3c7" : "transparent";
                       }}
                     >
-                      <td style={{ padding: "12px", fontSize: "13px", color: "#1e293b" }}>
+                      <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-primary)" }}>
                         {index + 1}
                       </td>
-                      <td style={{ padding: "12px", fontSize: "13px", color: "#1e293b" }}>
+                      <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-primary)" }}>
                         {pengajuan.menuSystem || "-"}
                       </td>
-                      <td style={{ padding: "12px", fontSize: "13px", color: "#1e293b" }}>
+                      <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-primary)" }}>
                         {nomorBukti}
                       </td>
-                      <td style={{ padding: "12px", fontSize: "13px", color: "#1e293b" }}>
+                      <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-primary)" }}>
                         {nama}
                       </td>
-                      <td style={{ padding: "12px", fontSize: "13px", color: "#1e293b" }}>
+                      <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-primary)" }}>
                         <span
                           style={{
                             padding: "4px 12px",
@@ -2117,12 +2117,12 @@ export default function PersetujuanPengajuanPage() {
                           {pengajuan.jenisPengajuan}
                         </span>
                       </td>
-                      <td style={{ padding: "12px", fontSize: "13px", color: "#64748b", maxWidth: "200px" }}>
+                      <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)", maxWidth: "200px" }}>
                         <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={pengajuan.alasanPengajuan}>
                           {pengajuan.alasanPengajuan}
                         </div>
                       </td>
-                      <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>
+                      <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)" }}>
                         {formatDate(pengajuan.createdAt)}
                       </td>
                       <td style={{ padding: "12px", fontSize: "13px" }}>
@@ -2194,7 +2194,7 @@ export default function PersetujuanPengajuanPage() {
                               href="/admin/pembelian/penyesuaian-stok"
                               style={{
                                 padding: "6px 12px",
-                                backgroundColor: "#3b82f6",
+                                backgroundColor: "var(--primary)",
                                 color: "white",
                                 border: "none",
                                 borderRadius: "4px",
@@ -2219,7 +2219,7 @@ export default function PersetujuanPengajuanPage() {
                               href={`/admin/master-data/apotik?edit=${pengajuan.apotikId}`}
                               style={{
                                 padding: "6px 12px",
-                                backgroundColor: "#3b82f6",
+                                backgroundColor: "var(--primary)",
                                 color: "white",
                                 border: "none",
                                 borderRadius: "4px",
@@ -2244,7 +2244,7 @@ export default function PersetujuanPengajuanPage() {
                               href={`/admin/master-data/unit?edit=${pengajuan.unitId}`}
                               style={{
                                 padding: "6px 12px",
-                                backgroundColor: "#3b82f6",
+                                backgroundColor: "var(--primary)",
                                 color: "white",
                                 border: "none",
                                 borderRadius: "4px",
@@ -2269,7 +2269,7 @@ export default function PersetujuanPengajuanPage() {
                               href={`/admin/master-data/supplier?edit=${pengajuan.supplierId}`}
                               style={{
                                 padding: "6px 12px",
-                                backgroundColor: "#3b82f6",
+                                backgroundColor: "var(--primary)",
                                 color: "white",
                                 border: "none",
                                 borderRadius: "4px",
@@ -2294,7 +2294,7 @@ export default function PersetujuanPengajuanPage() {
                               href={`/admin/master-data/customer?edit=${pengajuan.customerId}`}
                               style={{
                                 padding: "6px 12px",
-                                backgroundColor: "#3b82f6",
+                                backgroundColor: "var(--primary)",
                                 color: "white",
                                 border: "none",
                                 borderRadius: "4px",
@@ -2319,7 +2319,7 @@ export default function PersetujuanPengajuanPage() {
                               href={`/admin/master-data/kategori?edit=${pengajuan.kategoriId}`}
                               style={{
                                 padding: "6px 12px",
-                                backgroundColor: "#3b82f6",
+                                backgroundColor: "var(--primary)",
                                 color: "white",
                                 border: "none",
                                 borderRadius: "4px",
@@ -2344,7 +2344,7 @@ export default function PersetujuanPengajuanPage() {
                               href={`/admin/master-data/obat?edit=${pengajuan.produkId}`}
                               style={{
                                 padding: "6px 12px",
-                                backgroundColor: "#3b82f6",
+                                backgroundColor: "var(--primary)",
                                 color: "white",
                                 border: "none",
                                 borderRadius: "4px",
@@ -2369,7 +2369,7 @@ export default function PersetujuanPengajuanPage() {
                               href={`/admin/warehouse/terima-pembelian?edit=${pengajuan.penerimaanId}`}
                               style={{
                                 padding: "6px 12px",
-                                backgroundColor: "#3b82f6",
+                                backgroundColor: "var(--primary)",
                                 color: "white",
                                 border: "none",
                                 borderRadius: "4px",
@@ -2394,7 +2394,7 @@ export default function PersetujuanPengajuanPage() {
                               href={`/admin/pembelian/pesanan?edit=${pengajuan.pesananId}`}
                               style={{
                                 padding: "6px 12px",
-                                backgroundColor: "#3b82f6",
+                                backgroundColor: "var(--primary)",
                                 color: "white",
                                 border: "none",
                                 borderRadius: "4px",
@@ -2416,7 +2416,7 @@ export default function PersetujuanPengajuanPage() {
                             </Link>
                           )
                         ) : (
-                          <span style={{ color: "#64748b", fontSize: "12px" }}>-</span>
+                          <span style={{ color: "var(--text-secondary)", fontSize: "12px" }}>-</span>
                         )}
                       </td>
                     </tr>
@@ -2428,14 +2428,14 @@ export default function PersetujuanPengajuanPage() {
         ) : (
           <div
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--surface)",
               padding: "24px",
               borderRadius: "8px",
               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               textAlign: "center",
             }}
           >
-            <p style={{ color: "#64748b" }}>
+            <p style={{ color: "var(--text-secondary)" }}>
               Tidak ada pengajuan dengan status "{filterStatus}".
             </p>
           </div>

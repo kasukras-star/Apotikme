@@ -745,7 +745,7 @@ export default function PesananPembelianPage() {
             onClick={handleOpenModal}
             style={{
               padding: "10px 20px",
-              backgroundColor: "#3b82f6",
+              backgroundColor: "var(--primary)",
               color: "white",
               border: "none",
               borderRadius: "6px",
@@ -755,10 +755,10 @@ export default function PesananPembelianPage() {
               transition: "background-color 0.2s",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#2563eb";
+              e.currentTarget.style.backgroundColor = "var(--primary)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#3b82f6";
+              e.currentTarget.style.backgroundColor = "var(--primary)";
             }}
           >
             + Buat Pesanan Pembelian
@@ -769,7 +769,7 @@ export default function PesananPembelianPage() {
         {pesananList.length > 0 ? (
           <div
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--surface)",
               borderRadius: "8px",
               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               overflow: "hidden",
@@ -782,15 +782,15 @@ export default function PesananPembelianPage() {
               }}
             >
               <thead>
-                <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
-                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Nomor Pesanan</th>
-                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Tanggal</th>
-                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Supplier</th>
-                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Status Kirim</th>
-                  <th style={{ padding: "12px", textAlign: "right", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Total</th>
-                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Operator</th>
-                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Last Update</th>
-                  <th style={{ padding: "12px", textAlign: "center", fontSize: "13px", fontWeight: "600", color: "#475569", width: "120px" }}>Aksi</th>
+                <tr style={{ backgroundColor: "var(--hover-bg)", borderBottom: "2px solid var(--border)" }}>
+                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "var(--text-secondary)" }}>Nomor Pesanan</th>
+                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "var(--text-secondary)" }}>Tanggal</th>
+                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "var(--text-secondary)" }}>Supplier</th>
+                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "var(--text-secondary)" }}>Status Kirim</th>
+                  <th style={{ padding: "12px", textAlign: "right", fontSize: "13px", fontWeight: "600", color: "var(--text-secondary)" }}>Total</th>
+                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "var(--text-secondary)" }}>Operator</th>
+                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "var(--text-secondary)" }}>Last Update</th>
+                  <th style={{ padding: "12px", textAlign: "center", fontSize: "13px", fontWeight: "600", color: "var(--text-secondary)", width: "120px" }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -798,19 +798,19 @@ export default function PesananPembelianPage() {
                   <tr
                     key={pesanan.id}
                     style={{
-                      borderBottom: "1px solid #e2e8f0",
+                      borderBottom: "1px solid var(--border)",
                       transition: "background-color 0.2s",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#f8fafc";
+                      e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent";
                     }}
                   >
-                    <td style={{ padding: "12px", fontSize: "13px", color: "#1e293b" }}>{pesanan.nomorPesanan}</td>
-                    <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>{pesanan.tanggalPesanan}</td>
-                    <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>
+                    <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-primary)" }}>{pesanan.nomorPesanan}</td>
+                    <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)" }}>{pesanan.tanggalPesanan}</td>
+                    <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)" }}>
                       {suppliers.find(s => s.id === pesanan.supplierId)?.namaSupplier || pesanan.supplierId}
                     </td>
                     <td style={{ padding: "12px", fontSize: "13px" }}>
@@ -837,13 +837,13 @@ export default function PesananPembelianPage() {
                         {pesanan.statusKirim || "Belum Dikirim"}
                       </span>
                     </td>
-                    <td style={{ padding: "12px", fontSize: "13px", textAlign: "right", fontWeight: "500", color: "#1e293b" }}>
+                    <td style={{ padding: "12px", fontSize: "13px", textAlign: "right", fontWeight: "500", color: "var(--text-primary)" }}>
                       {formatCurrency(pesanan.total || 0)}
                     </td>
-                    <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>
+                    <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)" }}>
                       {pesanan.operator || "-"}
                     </td>
-                    <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>
+                    <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)" }}>
                       {pesanan.updatedAt 
                         ? new Date(pesanan.updatedAt).toLocaleDateString("id-ID", {
                             day: "2-digit",
@@ -886,7 +886,7 @@ export default function PesananPembelianPage() {
                             e.currentTarget.style.opacity = "1";
                           }}
                         >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                             <circle cx="12" cy="12" r="3" />
                           </svg>
@@ -913,7 +913,7 @@ export default function PesananPembelianPage() {
                             e.currentTarget.style.opacity = "1";
                           }}
                         >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                           </svg>
@@ -928,14 +928,14 @@ export default function PesananPembelianPage() {
         ) : (
           <div
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--surface)",
               padding: "24px",
               borderRadius: "8px",
               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               textAlign: "center",
             }}
           >
-            <p style={{ color: "#64748b" }}>
+            <p style={{ color: "var(--text-secondary)" }}>
               Belum ada pesanan pembelian. Klik tombol "Buat Pesanan Pembelian" untuk membuat pesanan baru.
             </p>
           </div>
@@ -961,7 +961,7 @@ export default function PesananPembelianPage() {
           >
             <div
               style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 width: "95%",
                 maxWidth: "1200px",
@@ -976,11 +976,11 @@ export default function PesananPembelianPage() {
               <div
                 style={{
                   padding: "20px 24px",
-                  borderBottom: "1px solid #e2e8f0",
+                  borderBottom: "1px solid var(--border)",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  backgroundColor: "#f8fafc",
+                  backgroundColor: "var(--hover-bg)",
                   borderTopLeftRadius: "8px",
                   borderTopRightRadius: "8px",
                 }}
@@ -993,13 +993,13 @@ export default function PesananPembelianPage() {
                       border: "none",
                       fontSize: "20px",
                       cursor: "pointer",
-                      color: "#64748b",
+                      color: "var(--text-secondary)",
                       padding: "4px 8px",
                       borderRadius: "4px",
                       transition: "background-color 0.2s",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#e2e8f0";
+                      e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent";
@@ -1012,7 +1012,7 @@ export default function PesananPembelianPage() {
                       fontSize: "20px",
                       fontWeight: "600",
                       margin: 0,
-                      color: "#1e293b",
+                      color: "var(--text-primary)",
                     }}
                   >
                     {editingPesanan ? "Edit Pesanan Pembelian" : "Purchase Order"}
@@ -1025,7 +1025,7 @@ export default function PesananPembelianPage() {
                     border: "none",
                     fontSize: "24px",
                     cursor: "pointer",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                     padding: 0,
                     width: "32px",
                     height: "32px",
@@ -1036,7 +1036,7 @@ export default function PesananPembelianPage() {
                     transition: "background-color 0.2s",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#e2e8f0";
+                    e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = "transparent";
@@ -1049,10 +1049,10 @@ export default function PesananPembelianPage() {
               <form onSubmit={handleSubmit} className="pesanan-form-modal">
                 <style dangerouslySetInnerHTML={{ __html: `
                   .pesanan-form-modal input::placeholder,
-                  .pesanan-form-modal textarea::placeholder { font-size: 13px; font-weight: 400; color: #9ca3af; }
+                  .pesanan-form-modal textarea::placeholder { font-size: 13px; font-weight: 400; color: var(--text-secondary); }
                   .pesanan-form-modal input,
                   .pesanan-form-modal select,
-                  .pesanan-form-modal textarea { font-size: 13px !important; line-height: 1.4; }
+                  .pesanan-form-modal textarea { font-size: 13px !important; line-height: 1.4; background-color: var(--surface) !important; color: var(--text-primary) !important; border-color: var(--input-border); }
                 ` }} />
                 <div 
                   style={{ padding: "24px", maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
@@ -1065,8 +1065,8 @@ export default function PesananPembelianPage() {
                   {/* Order Details Card */}
                   <div
                     style={{
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #e2e8f0",
+                      backgroundColor: "var(--surface)",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
                       padding: "20px",
                       marginBottom: "20px",
@@ -1077,8 +1077,8 @@ export default function PesananPembelianPage() {
                         fontSize: "16px",
                         fontWeight: "600",
                         margin: "0 0 20px 0",
-                        color: "#1e293b",
-                        borderBottom: "2px solid #3b82f6",
+                        color: "var(--text-primary)",
+                        borderBottom: "2px solid var(--primary)",
                         paddingBottom: "8px",
                       }}
                     >
@@ -1088,8 +1088,8 @@ export default function PesananPembelianPage() {
                     {/* 3 outline group ke samping: Group 1 | Group 2 | Group 3 - rapat, tinggi sama */}
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", alignItems: "stretch" }}>
                     {/* Outline Group 1: Baris 1 = Document No | Date, Baris 2 = Payment Terms | Required Date */}
-                    <div style={{ border: "1px solid #cbd5e1", borderRadius: "8px", padding: "8px", paddingTop: "12px", position: "relative", backgroundColor: "#fafafa", display: "flex", flexDirection: "column", minHeight: "100%" }}>
-                      <span style={{ position: "absolute", top: "-8px", left: "10px", background: "#ffffff", padding: "0 4px", fontSize: "11px", fontWeight: "600", color: "#475569" }}>Detail Order 1</span>
+                    <div style={{ border: "1px solid var(--border)", borderRadius: "8px", padding: "8px", paddingTop: "12px", position: "relative", backgroundColor: "var(--hover-bg)", display: "flex", flexDirection: "column", minHeight: "100%" }}>
+                      <span style={{ position: "absolute", top: "-8px", left: "10px", background: "var(--surface)", padding: "0 4px", fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)" }}>Detail Order 1</span>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "auto auto", gap: "0px 4px", alignItems: "start" }}>
                       {/* Baris 1: Document No (kiri) | Date (kanan) */}
                       <div style={{ gridColumn: "1", gridRow: "1" }}>
@@ -1103,7 +1103,7 @@ export default function PesananPembelianPage() {
                             marginBottom: "0px",
                             fontSize: "12px",
                             fontWeight: "500",
-                            color: "#374151",
+                            color: "var(--text-primary)",
                             width: "fit-content",
                             maxWidth: "200px",
                           }}
@@ -1120,7 +1120,7 @@ export default function PesananPembelianPage() {
                             width: "100%",
                             maxWidth: "180px",
                             padding: "8px 10px",
-                            border: "1px solid #d1d5db",
+                            border: "1px solid var(--input-border)",
                             borderRadius: "6px",
                             fontSize: "13px",
                             fontWeight: "400",
@@ -1129,11 +1129,11 @@ export default function PesananPembelianPage() {
                             transition: "border-color 0.2s",
                           }}
                           onFocus={(e) => {
-                            e.currentTarget.style.borderColor = "#3b82f6";
+                            e.currentTarget.style.borderColor = "var(--primary)";
                             e.currentTarget.style.outline = "none";
                           }}
                           onBlur={(e) => {
-                            e.currentTarget.style.borderColor = "#d1d5db";
+                            e.currentTarget.style.borderColor = "var(--input-border)";
                           }}
                         />
                         </div>
@@ -1150,7 +1150,7 @@ export default function PesananPembelianPage() {
                             marginBottom: "0px",
                             fontSize: "12px",
                             fontWeight: "500",
-                            color: "#374151",
+                            color: "var(--text-primary)",
                             width: "fit-content",
                             maxWidth: "200px",
                           }}
@@ -1167,7 +1167,7 @@ export default function PesananPembelianPage() {
                             width: "100%",
                             maxWidth: "160px",
                             padding: "8px 10px",
-                            border: "1px solid #d1d5db",
+                            border: "1px solid var(--input-border)",
                             borderRadius: "6px",
                             fontSize: "13px",
                             fontWeight: "400",
@@ -1176,11 +1176,11 @@ export default function PesananPembelianPage() {
                             transition: "border-color 0.2s",
                           }}
                           onFocus={(e) => {
-                            e.currentTarget.style.borderColor = "#3b82f6";
+                            e.currentTarget.style.borderColor = "var(--primary)";
                             e.currentTarget.style.outline = "none";
                           }}
                           onBlur={(e) => {
-                            e.currentTarget.style.borderColor = "#d1d5db";
+                            e.currentTarget.style.borderColor = "var(--input-border)";
                           }}
                         />
                         </div>
@@ -1197,7 +1197,7 @@ export default function PesananPembelianPage() {
                             marginBottom: "0px",
                             fontSize: "12px",
                             fontWeight: "500",
-                            color: "#374151",
+                            color: "var(--text-primary)",
                             width: "fit-content",
                             maxWidth: "200px",
                           }}
@@ -1214,21 +1214,21 @@ export default function PesananPembelianPage() {
                             width: "100%",
                             maxWidth: "180px",
                             padding: "8px 10px",
-                            border: "1px solid #d1d5db",
+                            border: "1px solid var(--input-border)",
                             borderRadius: "6px",
                             fontSize: "13px",
                             fontWeight: "400",
                             fontFamily: "inherit",
                             boxSizing: "border-box",
                             transition: "border-color 0.2s",
-                            backgroundColor: "white",
+                            backgroundColor: "var(--surface)",
                           }}
                           onFocus={(e) => {
-                            e.currentTarget.style.borderColor = "#3b82f6";
+                            e.currentTarget.style.borderColor = "var(--primary)";
                             e.currentTarget.style.outline = "none";
                           }}
                           onBlur={(e) => {
-                            e.currentTarget.style.borderColor = "#d1d5db";
+                            e.currentTarget.style.borderColor = "var(--input-border)";
                           }}
                         >
                           <option value="">Select Payment Terms</option>
@@ -1254,7 +1254,7 @@ export default function PesananPembelianPage() {
                             marginBottom: "0px",
                             fontSize: "12px",
                             fontWeight: "500",
-                            color: "#374151",
+                            color: "var(--text-primary)",
                             width: "fit-content",
                             maxWidth: "200px",
                           }}
@@ -1272,7 +1272,7 @@ export default function PesananPembelianPage() {
                             width: "100%",
                             maxWidth: "160px",
                             padding: "8px 10px",
-                            border: "1px solid #d1d5db",
+                            border: "1px solid var(--input-border)",
                             borderRadius: "6px",
                             fontSize: "13px",
                             fontWeight: "400",
@@ -1281,11 +1281,11 @@ export default function PesananPembelianPage() {
                             transition: "border-color 0.2s",
                           }}
                           onFocus={(e) => {
-                            e.currentTarget.style.borderColor = "#3b82f6";
+                            e.currentTarget.style.borderColor = "var(--primary)";
                             e.currentTarget.style.outline = "none";
                           }}
                           onBlur={(e) => {
-                            e.currentTarget.style.borderColor = "#d1d5db";
+                            e.currentTarget.style.borderColor = "var(--input-border)";
                           }}
                         />
                         </div>
@@ -1294,8 +1294,8 @@ export default function PesananPembelianPage() {
                     </div>
 
                     {/* Outline Group 2: Supplier, Alamat */}
-                    <div style={{ border: "1px solid #cbd5e1", borderRadius: "8px", padding: "8px", paddingTop: "12px", position: "relative", backgroundColor: "#fafafa", display: "flex", flexDirection: "column", minHeight: "100%" }}>
-                      <span style={{ position: "absolute", top: "-8px", left: "10px", background: "#ffffff", padding: "0 4px", fontSize: "11px", fontWeight: "600", color: "#475569" }}>Detail Order 2</span>
+                    <div style={{ border: "1px solid var(--border)", borderRadius: "8px", padding: "8px", paddingTop: "12px", position: "relative", backgroundColor: "var(--hover-bg)", display: "flex", flexDirection: "column", minHeight: "100%" }}>
+                      <span style={{ position: "absolute", top: "-8px", left: "10px", background: "var(--surface)", padding: "0 4px", fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)" }}>Detail Order 2</span>
                       <div style={{ display: "flex", flexDirection: "column", gap: "0px", maxWidth: "100%" }}>
                       {/* Supplier, Alamat */}
                         <div style={{ minHeight: "40px" }}>
@@ -1306,7 +1306,7 @@ export default function PesananPembelianPage() {
                             marginBottom: "0px",
                             fontSize: "12px",
                             fontWeight: "500",
-                            color: "#374151",
+                            color: "var(--text-primary)",
                             width: "fit-content",
                             maxWidth: "200px",
                           }}
@@ -1329,7 +1329,7 @@ export default function PesananPembelianPage() {
                             onFocus={(e) => {
                               setShowSupplierDropdown(true);
                               setSupplierSearch("");
-                              e.currentTarget.style.borderColor = "#3b82f6";
+                              e.currentTarget.style.borderColor = "var(--primary)";
                               e.currentTarget.style.outline = "none";
                             }}
                             placeholder="Select Supplier"
@@ -1338,7 +1338,7 @@ export default function PesananPembelianPage() {
                               width: "100%",
                               padding: "8px 10px",
                               paddingRight: "32px",
-                              border: "1px solid #d1d5db",
+                              border: "1px solid var(--input-border)",
                               borderRadius: "6px",
                               fontSize: "13px",
                               fontWeight: "400",
@@ -1346,10 +1346,10 @@ export default function PesananPembelianPage() {
                               boxSizing: "border-box",
                               transition: "border-color 0.2s",
                               cursor: "pointer",
-                              backgroundColor: "white",
+                              backgroundColor: "var(--surface)",
                             }}
                             onBlur={(e) => {
-                              e.currentTarget.style.borderColor = "#d1d5db";
+                              e.currentTarget.style.borderColor = "var(--input-border)";
                             }}
                           />
                           <span
@@ -1359,7 +1359,7 @@ export default function PesananPembelianPage() {
                               top: "50%",
                               transform: "translateY(-50%)",
                               pointerEvents: "none",
-                              color: "#64748b",
+                              color: "var(--text-secondary)",
                               fontSize: "12px",
                             }}
                           >
@@ -1375,8 +1375,8 @@ export default function PesananPembelianPage() {
                                 right: 0,
                                 marginTop: "4px",
                                 zIndex: 20,
-                                backgroundColor: "white",
-                                border: "1px solid #d1d5db",
+                                backgroundColor: "var(--surface)",
+                                border: "1px solid var(--input-border)",
                                 borderRadius: "6px",
                                 boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
                                 maxHeight: "280px",
@@ -1385,9 +1385,9 @@ export default function PesananPembelianPage() {
                                 flexDirection: "column",
                               }}
                             >
-                              <div style={{ padding: "8px", borderBottom: "1px solid #e2e8f0", flexShrink: 0 }}>
+                              <div style={{ padding: "8px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
                                 <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                                  <span style={{ position: "absolute", left: "10px", color: "#94a3b8", fontSize: "14px" }}>🔍</span>
+                                  <span style={{ position: "absolute", left: "10px", color: "var(--text-secondary)", fontSize: "14px" }}>🔍</span>
                                   <input
                                     type="text"
                                     placeholder="Search..."
@@ -1397,7 +1397,7 @@ export default function PesananPembelianPage() {
                                     style={{
                                       width: "100%",
                                       padding: "8px 10px 8px 32px",
-                                      border: "1px solid #e2e8f0",
+                                      border: "1px solid var(--border)",
                                       borderRadius: "6px",
                                       fontSize: "13px",
                                       boxSizing: "border-box",
@@ -1433,19 +1433,19 @@ export default function PesananPembelianPage() {
                                       cursor: "pointer",
                                       fontSize: "13px",
                                       transition: "background-color 0.2s",
-                                      borderBottom: "1px solid #f1f5f9",
+                                      borderBottom: "1px solid var(--border)",
                                     }}
                                     onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor = "#f8fafc";
+                                      e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                                     }}
                                     onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor = "white";
+                                      e.currentTarget.style.backgroundColor = "var(--surface)";
                                     }}
                                   >
-                                    <div style={{ fontWeight: "500", color: "#1e293b" }}>
+                                    <div style={{ fontWeight: "500", color: "var(--text-primary)" }}>
                                       {supplier.namaSupplier}
                                     </div>
-                                    <div style={{ fontSize: "12px", color: "#64748b" }}>
+                                    <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
                                       {supplier.kodeSupplier}
                                     </div>
                                   </div>
@@ -1463,7 +1463,7 @@ export default function PesananPembelianPage() {
                                     style={{
                                       padding: "10px 12px",
                                       fontSize: "13px",
-                                      color: "#64748b",
+                                      color: "var(--text-secondary)",
                                       textAlign: "center",
                                     }}
                                   >
@@ -1483,7 +1483,7 @@ export default function PesananPembelianPage() {
                               marginBottom: "0px",
                               fontSize: "12px",
                               fontWeight: "500",
-                              color: "#374151",
+                              color: "var(--text-primary)",
                               width: "fit-content",
                               maxWidth: "200px",
                             }}
@@ -1514,14 +1514,14 @@ export default function PesananPembelianPage() {
                             style={{
                               width: "100%",
                               padding: "8px 10px",
-                              border: "1px solid #e2e8f0",
+                              border: "1px solid var(--border)",
                               borderRadius: "6px",
                               fontSize: "13px",
                               fontWeight: "400",
                               fontFamily: "inherit",
                               boxSizing: "border-box",
-                              backgroundColor: "#f8fafc",
-                              color: "#374151",
+                              backgroundColor: "var(--hover-bg)",
+                              color: "var(--text-primary)",
                               cursor: "default",
                               resize: "none",
                             }}
@@ -1531,8 +1531,8 @@ export default function PesananPembelianPage() {
                     </div>
 
                     {/* Outline Group 3: Tujuan Pengiriman, Status Kirim, Description */}
-                    <div style={{ border: "1px solid #cbd5e1", borderRadius: "8px", padding: "8px", paddingTop: "12px", position: "relative", backgroundColor: "#fafafa", display: "flex", flexDirection: "column", minHeight: "100%" }}>
-                      <span style={{ position: "absolute", top: "-8px", left: "10px", background: "#ffffff", padding: "0 4px", fontSize: "11px", fontWeight: "600", color: "#475569" }}>Detail Order 3</span>
+                    <div style={{ border: "1px solid var(--border)", borderRadius: "8px", padding: "8px", paddingTop: "12px", position: "relative", backgroundColor: "var(--hover-bg)", display: "flex", flexDirection: "column", minHeight: "100%" }}>
+                      <span style={{ position: "absolute", top: "-8px", left: "10px", background: "var(--surface)", padding: "0 4px", fontSize: "11px", fontWeight: "600", color: "var(--text-secondary)" }}>Detail Order 3</span>
                       <div style={{ display: "flex", flexDirection: "column", gap: "0px", alignItems: "stretch" }}>
                         <div style={{ minHeight: "40px" }}>
                           <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", flexWrap: "nowrap" }}>
@@ -1544,7 +1544,7 @@ export default function PesananPembelianPage() {
                                   marginBottom: "0px",
                                   fontSize: "12px",
                                   fontWeight: "500",
-                                  color: "#374151",
+                                  color: "var(--text-primary)",
                                   width: "fit-content",
                                   minWidth: "120px",
                                   maxWidth: "260px",
@@ -1561,21 +1561,21 @@ export default function PesananPembelianPage() {
                                 width: "100%",
                                 maxWidth: "280px",
                                 padding: "8px 10px",
-                                border: "1px solid #d1d5db",
+                                border: "1px solid var(--input-border)",
                                 borderRadius: "6px",
                                 fontSize: "13px",
                                 fontWeight: "400",
                                 fontFamily: "inherit",
                                 boxSizing: "border-box",
                                 transition: "border-color 0.2s",
-                                backgroundColor: "white",
+                                backgroundColor: "var(--surface)",
                               }}
                               onFocus={(e) => {
-                                e.currentTarget.style.borderColor = "#3b82f6";
+                                e.currentTarget.style.borderColor = "var(--primary)";
                                 e.currentTarget.style.outline = "none";
                               }}
                               onBlur={(e) => {
-                                e.currentTarget.style.borderColor = "#d1d5db";
+                                e.currentTarget.style.borderColor = "var(--input-border)";
                               }}
                             >
                               <option value="">Pilih Apotik</option>
@@ -1594,7 +1594,7 @@ export default function PesananPembelianPage() {
                                 marginBottom: "0px",
                                 fontSize: "12px",
                                 fontWeight: "500",
-                                color: "#374151",
+                                color: "var(--text-primary)",
                                 width: "fit-content",
                                 minWidth: "100px",
                                 maxWidth: "220px",
@@ -1612,21 +1612,21 @@ export default function PesananPembelianPage() {
                                 width: "100%",
                                 maxWidth: "220px",
                                 padding: "8px 10px",
-                                border: "1px solid #d1d5db",
+                                border: "1px solid var(--input-border)",
                                 borderRadius: "6px",
                                 fontSize: "13px",
                                 fontWeight: "400",
                                 fontFamily: "inherit",
                                 boxSizing: "border-box",
                                 transition: "border-color 0.2s",
-                                backgroundColor: "white",
+                                backgroundColor: "var(--surface)",
                               }}
                               onFocus={(e) => {
-                                e.currentTarget.style.borderColor = "#3b82f6";
+                                e.currentTarget.style.borderColor = "var(--primary)";
                                 e.currentTarget.style.outline = "none";
                               }}
                               onBlur={(e) => {
-                                e.currentTarget.style.borderColor = "#d1d5db";
+                                e.currentTarget.style.borderColor = "var(--input-border)";
                               }}
                             >
                               <option value="Belum Dikirim">Belum Dikirim</option>
@@ -1644,7 +1644,7 @@ export default function PesananPembelianPage() {
                               marginBottom: "0px",
                               fontSize: "12px",
                               fontWeight: "500",
-                              color: "#374151",
+                              color: "var(--text-primary)",
                               width: "fit-content",
                               maxWidth: "200px",
                             }}
@@ -1661,7 +1661,7 @@ export default function PesananPembelianPage() {
                             style={{
                               width: "100%",
                               padding: "8px 10px",
-                              border: "1px solid #d1d5db",
+                              border: "1px solid var(--input-border)",
                               borderRadius: "6px",
                               fontSize: "13px",
                               fontWeight: "400",
@@ -1671,11 +1671,11 @@ export default function PesananPembelianPage() {
                               transition: "border-color 0.2s",
                             }}
                             onFocus={(e) => {
-                              e.currentTarget.style.borderColor = "#3b82f6";
+                              e.currentTarget.style.borderColor = "var(--primary)";
                               e.currentTarget.style.outline = "none";
                             }}
                             onBlur={(e) => {
-                              e.currentTarget.style.borderColor = "#d1d5db";
+                              e.currentTarget.style.borderColor = "var(--input-border)";
                             }}
                           />
                         </div>
@@ -1687,8 +1687,8 @@ export default function PesananPembelianPage() {
                   {/* Order Items Card */}
                   <div
                     style={{
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #e2e8f0",
+                      backgroundColor: "var(--surface)",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
                       padding: "20px",
                       marginBottom: "20px",
@@ -1700,7 +1700,7 @@ export default function PesananPembelianPage() {
                         justifyContent: "space-between",
                         alignItems: "center",
                         marginBottom: "16px",
-                        borderBottom: "2px solid #3b82f6",
+                        borderBottom: "2px solid var(--primary)",
                         paddingBottom: "8px",
                       }}
                     >
@@ -1709,7 +1709,7 @@ export default function PesananPembelianPage() {
                           fontSize: "16px",
                           fontWeight: "600",
                           margin: 0,
-                          color: "#1e293b",
+                          color: "var(--text-primary)",
                         }}
                       >
                         Order Items
@@ -1719,7 +1719,7 @@ export default function PesananPembelianPage() {
                         onClick={handleAddDetail}
                         style={{
                           padding: "8px 16px",
-                          backgroundColor: "#3b82f6",
+                          backgroundColor: "var(--primary)",
                           color: "white",
                           border: "none",
                           borderRadius: "6px",
@@ -1732,10 +1732,10 @@ export default function PesananPembelianPage() {
                           gap: "6px",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#2563eb";
+                          e.currentTarget.style.backgroundColor = "var(--primary)";
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "#3b82f6";
+                          e.currentTarget.style.backgroundColor = "var(--primary)";
                         }}
                       >
                         + Add
@@ -1745,7 +1745,7 @@ export default function PesananPembelianPage() {
                     {formData.detailBarang.length > 0 ? (
                       <div
                         style={{
-                          border: "1px solid #e2e8f0",
+                          border: "1px solid var(--border)",
                           borderRadius: "6px",
                           overflowX: "auto",
                         }}
@@ -1758,20 +1758,20 @@ export default function PesananPembelianPage() {
                           }}
                         >
                           <thead>
-                            <tr style={{ backgroundColor: "#f8fafc" }}>
-                              <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>ACTION</th>
-                              <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>DESCRIPTION</th>
-                              <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>CODE</th>
-                              <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>UNIT</th>
-                              <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>MASTER PRICE</th>
-                              <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>PRICE</th>
-                              <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>QTY</th>
-                              <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>%</th>
+                            <tr style={{ backgroundColor: "var(--hover-bg)" }}>
+                              <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>ACTION</th>
+                              <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>DESCRIPTION</th>
+                              <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>CODE</th>
+                              <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>UNIT</th>
+                              <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>MASTER PRICE</th>
+                              <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>PRICE</th>
+                              <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>QTY</th>
+                              <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>%</th>
                             </tr>
                           </thead>
                           <tbody>
                             {formData.detailBarang.map((detail) => (
-                              <tr key={detail.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                              <tr key={detail.id} style={{ borderBottom: "1px solid var(--border)" }}>
                                 <td style={{ padding: "12px", textAlign: "center" }}>
                                   <button
                                     type="button"
@@ -1824,12 +1824,12 @@ export default function PesananPembelianPage() {
                                     style={{
                                       width: "100%",
                                       padding: "8px",
-                                      border: "1px solid #d1d5db",
+                                      border: "1px solid var(--input-border)",
                                       borderRadius: "4px",
                                       fontSize: "13px",
                                       boxSizing: "border-box",
                                       cursor: "pointer",
-                                      backgroundColor: "#fff",
+                                      backgroundColor: "var(--surface)",
                                       minHeight: "36px",
                                       display: "flex",
                                       alignItems: "center",
@@ -1837,10 +1837,10 @@ export default function PesananPembelianPage() {
                                     }}
                                   >
                                     <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{detail.namaProduk || "Select Product"}</span>
-                                    <span style={{ marginLeft: "8px", flexShrink: 0, fontSize: "12px", color: "#94a3b8" }}>▼</span>
+                                    <span style={{ marginLeft: "8px", flexShrink: 0, fontSize: "12px", color: "var(--text-secondary)" }}>▼</span>
                                   </div>
                                 </td>
-                                <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>
+                                <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)" }}>
                                   {detail.kodeProduk || "-"}
                                 </td>
                                 <td style={{ padding: "12px" }}>
@@ -1857,7 +1857,7 @@ export default function PesananPembelianPage() {
                                           style={{
                                             width: "100%",
                                             padding: "8px",
-                                            border: "1px solid #d1d5db",
+                                            border: "1px solid var(--input-border)",
                                             borderRadius: "4px",
                                             fontSize: "13px",
                                             boxSizing: "border-box",
@@ -1873,10 +1873,10 @@ export default function PesananPembelianPage() {
                                         </select>
                                       );
                                     }
-                                    return <span style={{ fontSize: "13px", color: "#64748b" }}>{detail.satuan || "-"}</span>;
+                                    return <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>{detail.satuan || "-"}</span>;
                                   })()}
                                 </td>
-                                <td style={{ padding: "12px", textAlign: "right", fontSize: "13px", color: "#64748b" }}>
+                                <td style={{ padding: "12px", textAlign: "right", fontSize: "13px", color: "var(--text-secondary)" }}>
                                   {formatCurrency(detail.hargaSatuan || 0)}
                                 </td>
                                 <td style={{ padding: "12px" }}>
@@ -1892,7 +1892,7 @@ export default function PesananPembelianPage() {
                                     style={{
                                       width: "120px",
                                       padding: "8px",
-                                      border: "1px solid #d1d5db",
+                                      border: "1px solid var(--input-border)",
                                       borderRadius: "4px",
                                       fontSize: "13px",
                                       textAlign: "right",
@@ -1912,7 +1912,7 @@ export default function PesananPembelianPage() {
                                     style={{
                                       width: "80px",
                                       padding: "8px",
-                                      border: "1px solid #d1d5db",
+                                      border: "1px solid var(--input-border)",
                                       borderRadius: "4px",
                                       fontSize: "13px",
                                       textAlign: "center",
@@ -1933,7 +1933,7 @@ export default function PesananPembelianPage() {
                                     style={{
                                       width: "70px",
                                       padding: "8px",
-                                      border: "1px solid #d1d5db",
+                                      border: "1px solid var(--input-border)",
                                       borderRadius: "4px",
                                       fontSize: "13px",
                                       textAlign: "center",
@@ -1951,9 +1951,9 @@ export default function PesananPembelianPage() {
                         style={{
                           padding: "40px",
                           textAlign: "center",
-                          border: "1px dashed #d1d5db",
+                          border: "1px dashed var(--input-border)",
                           borderRadius: "6px",
-                          color: "#64748b",
+                          color: "var(--text-secondary)",
                           fontSize: "14px",
                         }}
                       >
@@ -1965,8 +1965,8 @@ export default function PesananPembelianPage() {
                   {/* Summary Card */}
                   <div
                     style={{
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #e2e8f0",
+                      backgroundColor: "var(--surface)",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
                       padding: "20px",
                       marginBottom: "20px",
@@ -1977,8 +1977,8 @@ export default function PesananPembelianPage() {
                         fontSize: "16px",
                         fontWeight: "600",
                         margin: "0 0 20px 0",
-                        color: "#1e293b",
-                        borderBottom: "2px solid #3b82f6",
+                        color: "var(--text-primary)",
+                        borderBottom: "2px solid var(--primary)",
                         paddingBottom: "8px",
                       }}
                     >
@@ -1994,7 +1994,7 @@ export default function PesananPembelianPage() {
                             marginBottom: "8px",
                             fontSize: "10px",
                             fontWeight: "500",
-                            color: "#374151",
+                            color: "var(--text-primary)",
                             width: "fit-content",
                             maxWidth: "100%",
                           }}
@@ -2013,7 +2013,7 @@ export default function PesananPembelianPage() {
                           style={{
                             width: "100%",
                             padding: "8px 10px",
-                            border: "1px solid #d1d5db",
+                            border: "1px solid var(--input-border)",
                             borderRadius: "6px",
                             fontSize: "13px",
                             boxSizing: "border-box",
@@ -2028,7 +2028,7 @@ export default function PesananPembelianPage() {
                             marginBottom: "8px",
                             fontSize: "10px",
                             fontWeight: "500",
-                            color: "#374151",
+                            color: "var(--text-primary)",
                             width: "fit-content",
                             maxWidth: "100%",
                           }}
@@ -2044,19 +2044,19 @@ export default function PesananPembelianPage() {
                           style={{
                             width: "100%",
                             padding: "8px 10px",
-                            border: "1px solid #d1d5db",
+                            border: "1px solid var(--input-border)",
                             borderRadius: "6px",
                             fontSize: "13px",
                             boxSizing: "border-box",
-                            backgroundColor: "white",
+                            backgroundColor: "var(--surface)",
                             transition: "border-color 0.2s",
                           }}
                           onFocus={(e) => {
-                            e.currentTarget.style.borderColor = "#3b82f6";
+                            e.currentTarget.style.borderColor = "var(--primary)";
                             e.currentTarget.style.outline = "none";
                           }}
                           onBlur={(e) => {
-                            e.currentTarget.style.borderColor = "#d1d5db";
+                            e.currentTarget.style.borderColor = "var(--input-border)";
                           }}
                         >
                           <option value="11">11%</option>
@@ -2068,24 +2068,24 @@ export default function PesananPembelianPage() {
                     <div
                       style={{
                         paddingTop: "16px",
-                        borderTop: "2px solid #e2e8f0",
+                        borderTop: "2px solid var(--border)",
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "#64748b" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--text-secondary)" }}>
                         <span>Subtotal:</span>
-                        <span style={{ fontWeight: "500", color: "#1e293b" }}>{formatCurrency(totals.subtotal)}</span>
+                        <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{formatCurrency(totals.subtotal)}</span>
                       </div>
                       {totals.diskonAmount > 0 && (
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "#64748b" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--text-secondary)" }}>
                           <span>Discount:</span>
                           <span style={{ fontWeight: "500", color: "#10b981" }}>-{formatCurrency(totals.diskonAmount)}</span>
                         </div>
                       )}
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "#64748b" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--text-secondary)" }}>
                         <span>PPN ({formData.ppn}%):</span>
-                        <span style={{ fontWeight: "500", color: "#1e293b" }}>{formatCurrency(totals.ppnAmount)}</span>
+                        <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{formatCurrency(totals.ppnAmount)}</span>
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px", paddingTop: "12px", borderTop: "2px solid #e2e8f0", fontSize: "18px", fontWeight: "600", color: "#1e293b" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px", paddingTop: "12px", borderTop: "2px solid var(--border)", fontSize: "18px", fontWeight: "600", color: "var(--text-primary)" }}>
                         <span>Total:</span>
                         <span>{formatCurrency(totals.total)}</span>
                       </div>
@@ -2112,8 +2112,8 @@ export default function PesananPembelianPage() {
                 <div
                   style={{
                     padding: "20px 24px",
-                    borderTop: "1px solid #e2e8f0",
-                    backgroundColor: "#f8fafc",
+                    borderTop: "1px solid var(--border)",
+                    backgroundColor: "var(--hover-bg)",
                     display: "flex",
                     gap: "12px",
                     justifyContent: "space-between",
@@ -2198,9 +2198,9 @@ export default function PesananPembelianPage() {
                     disabled={loading}
                     style={{
                       padding: "10px 20px",
-                      backgroundColor: "#f3f4f6",
-                      color: "#374151",
-                      border: "none",
+                      backgroundColor: "var(--surface)",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border)",
                       borderRadius: "6px",
                       cursor: loading ? "not-allowed" : "pointer",
                       fontSize: "14px",
@@ -2209,12 +2209,12 @@ export default function PesananPembelianPage() {
                     }}
                     onMouseEnter={(e) => {
                       if (!loading) {
-                        e.currentTarget.style.backgroundColor = "#e5e7eb";
+                        e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!loading) {
-                        e.currentTarget.style.backgroundColor = "#f3f4f6";
+                        e.currentTarget.style.backgroundColor = "var(--surface)";
                       }
                     }}
                   >
@@ -2338,7 +2338,7 @@ export default function PesananPembelianPage() {
                     disabled={loading}
                     style={{
                       padding: "10px 20px",
-                      backgroundColor: loading ? "#9ca3af" : "#3b82f6",
+                      backgroundColor: loading ? "#9ca3af" : "var(--primary)",
                       color: "white",
                       border: "none",
                       borderRadius: "6px",
@@ -2349,12 +2349,12 @@ export default function PesananPembelianPage() {
                     }}
                     onMouseEnter={(e) => {
                       if (!loading) {
-                        e.currentTarget.style.backgroundColor = "#2563eb";
+                        e.currentTarget.style.backgroundColor = "var(--primary)";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!loading) {
-                        e.currentTarget.style.backgroundColor = "#3b82f6";
+                        e.currentTarget.style.backgroundColor = "var(--primary)";
                       }
                     }}
                   >
@@ -2390,7 +2390,7 @@ export default function PesananPembelianPage() {
               >
                 <div
                   style={{
-                    backgroundColor: "#ffffff",
+                    backgroundColor: "var(--surface)",
                     borderRadius: "8px",
                     padding: "24px",
                     width: "90%",
@@ -2405,24 +2405,24 @@ export default function PesananPembelianPage() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
                     <div>
-                      <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "#1e293b" }}>Pilih Produk</h3>
-                      <p style={{ fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" }}>Pilih produk dari daftar di bawah ini</p>
+                      <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>Pilih Produk</h3>
+                      <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>Pilih produk dari daftar di bawah ini</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => { setShowProductModal(false); setProductModalDetailId(null); }}
-                      style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#64748b", padding: 0, width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}
+                      style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "var(--text-secondary)", padding: 0, width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}
                     >
                       ×
                     </button>
                   </div>
-                  <div style={{ overflow: "auto", flex: 1, border: "1px solid #e2e8f0", borderRadius: "6px" }}>
+                  <div style={{ overflow: "auto", flex: 1, border: "1px solid var(--border)", borderRadius: "6px" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                       <thead>
-                        <tr style={{ backgroundColor: "#f8fafc", position: "sticky", top: 0 }}>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode</th>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "200px" }}>Nama</th>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Satuan</th>
+                        <tr style={{ backgroundColor: "var(--hover-bg)", position: "sticky", top: 0 }}>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Kode</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)", minWidth: "200px" }}>Nama</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Satuan</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2435,7 +2435,7 @@ export default function PesananPembelianPage() {
                           return (
                             <>
                               {paginatedProducts.length === 0 ? (
-                                <tr><td colSpan={3} style={{ padding: "24px", textAlign: "center", color: "#64748b" }}>Tidak ada produk</td></tr>
+                                <tr><td colSpan={3} style={{ padding: "24px", textAlign: "center", color: "var(--text-secondary)" }}>Tidak ada produk</td></tr>
                               ) : (
                                 paginatedProducts.map((p) => (
                                   <tr
@@ -2447,13 +2447,13 @@ export default function PesananPembelianPage() {
                                         setProductModalDetailId(null);
                                       }
                                     }}
-                                    style={{ borderBottom: "1px solid #e2e8f0", cursor: "pointer" }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
+                                    style={{ borderBottom: "1px solid var(--border)", cursor: "pointer" }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--hover-bg)"; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--surface)"; }}
                                   >
-                                    <td style={{ padding: "10px 12px", color: "#1e293b" }}>{p.kodeProduk}</td>
-                                    <td style={{ padding: "10px 12px", color: "#1e293b" }}>{p.namaProduk}</td>
-                                    <td style={{ padding: "10px 12px", color: "#64748b" }}>{p.satuan || "-"}</td>
+                                    <td style={{ padding: "10px 12px", color: "var(--text-primary)" }}>{p.kodeProduk}</td>
+                                    <td style={{ padding: "10px 12px", color: "var(--text-primary)" }}>{p.namaProduk}</td>
+                                    <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{p.satuan || "-"}</td>
                                   </tr>
                                 ))
                               )}
@@ -2470,12 +2470,12 @@ export default function PesananPembelianPage() {
                     const start = (productModalPage - 1) * PRODUCTS_PER_PAGE;
                     const end = Math.min(start + PRODUCTS_PER_PAGE, availableProducts.length);
                     return (
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #e2e8f0", fontSize: "13px", color: "#64748b" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", paddingTop: "12px", borderTop: "1px solid var(--border)", fontSize: "13px", color: "var(--text-secondary)" }}>
                         <span>Menampilkan {availableProducts.length === 0 ? 0 : start + 1} - {end} dari {availableProducts.length} item</span>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <button type="button" onClick={() => setProductModalPage((prev) => Math.max(1, prev - 1))} disabled={productModalPage <= 1} style={{ padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: "6px", backgroundColor: "white", cursor: productModalPage <= 1 ? "not-allowed" : "pointer", fontSize: "13px", opacity: productModalPage <= 1 ? 0.6 : 1 }}>←</button>
-                          <span style={{ fontSize: "13px", color: "#475569" }}>Halaman {productModalPage} dari {totalPages}</span>
-                          <button type="button" onClick={() => setProductModalPage((prev) => Math.min(totalPages, prev + 1))} disabled={productModalPage >= totalPages} style={{ padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: "6px", backgroundColor: "white", cursor: productModalPage >= totalPages ? "not-allowed" : "pointer", fontSize: "13px", opacity: productModalPage >= totalPages ? 0.6 : 1 }}>→</button>
+                          <button type="button" onClick={() => setProductModalPage((prev) => Math.max(1, prev - 1))} disabled={productModalPage <= 1} style={{ padding: "6px 12px", border: "1px solid var(--border)", borderRadius: "6px", backgroundColor: "var(--surface)", cursor: productModalPage <= 1 ? "not-allowed" : "pointer", fontSize: "13px", opacity: productModalPage <= 1 ? 0.6 : 1 }}>←</button>
+                          <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>Halaman {productModalPage} dari {totalPages}</span>
+                          <button type="button" onClick={() => setProductModalPage((prev) => Math.min(totalPages, prev + 1))} disabled={productModalPage >= totalPages} style={{ padding: "6px 12px", border: "1px solid var(--border)", borderRadius: "6px", backgroundColor: "var(--surface)", cursor: productModalPage >= totalPages ? "not-allowed" : "pointer", fontSize: "13px", opacity: productModalPage >= totalPages ? 0.6 : 1 }}>→</button>
                         </div>
                       </div>
                     );
@@ -2507,7 +2507,7 @@ export default function PesananPembelianPage() {
           >
             <div
               style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 width: "95%",
                 maxWidth: "1200px",
@@ -2522,11 +2522,11 @@ export default function PesananPembelianPage() {
               <div
                 style={{
                   padding: "20px 24px",
-                  borderBottom: "1px solid #e2e8f0",
+                  borderBottom: "1px solid var(--border)",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  backgroundColor: "#f8fafc",
+                  backgroundColor: "var(--hover-bg)",
                   borderTopLeftRadius: "8px",
                   borderTopRightRadius: "8px",
                 }}
@@ -2536,7 +2536,7 @@ export default function PesananPembelianPage() {
                     fontSize: "20px",
                     fontWeight: "600",
                     margin: 0,
-                    color: "#1e293b",
+                    color: "var(--text-primary)",
                   }}
                 >
                   Detail Pesanan Pembelian
@@ -2548,7 +2548,7 @@ export default function PesananPembelianPage() {
                     border: "none",
                     fontSize: "24px",
                     cursor: "pointer",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                     padding: 0,
                     width: "32px",
                     height: "32px",
@@ -2559,7 +2559,7 @@ export default function PesananPembelianPage() {
                     transition: "background-color 0.2s",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#e2e8f0";
+                    e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = "transparent";
@@ -2574,8 +2574,8 @@ export default function PesananPembelianPage() {
                 {/* Order Details */}
                 <div
                   style={{
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #e2e8f0",
+                    backgroundColor: "var(--surface)",
+                    border: "1px solid var(--border)",
                     borderRadius: "8px",
                     padding: "20px",
                     marginBottom: "20px",
@@ -2586,8 +2586,8 @@ export default function PesananPembelianPage() {
                       fontSize: "16px",
                       fontWeight: "600",
                       margin: "0 0 20px 0",
-                      color: "#1e293b",
-                      borderBottom: "2px solid #3b82f6",
+                      color: "var(--text-primary)",
+                      borderBottom: "2px solid var(--primary)",
                       paddingBottom: "8px",
                     }}
                   >
@@ -2603,44 +2603,44 @@ export default function PesananPembelianPage() {
                   >
                     {/* Row 1: Document No, Date */}
                     <div>
-                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "var(--text-primary)" }}>
                         Document No
                       </label>
-                      <div style={{ fontSize: "14px", color: "#1e293b", fontWeight: "500" }}>{viewingPesanan.nomorPesanan}</div>
+                      <div style={{ fontSize: "14px", color: "var(--text-primary)", fontWeight: "500" }}>{viewingPesanan.nomorPesanan}</div>
                     </div>
                     <div>
-                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "var(--text-primary)" }}>
                         Date
                       </label>
-                      <div style={{ fontSize: "14px", color: "#1e293b" }}>{formatDateDDMMMYYYY(viewingPesanan.tanggalPesanan)}</div>
+                      <div style={{ fontSize: "14px", color: "var(--text-primary)" }}>{formatDateDDMMMYYYY(viewingPesanan.tanggalPesanan)}</div>
                     </div>
                     {/* Row 2: Payment Terms, Required Date */}
                     <div>
-                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "var(--text-primary)" }}>
                         Payment Terms
                       </label>
-                      <div style={{ fontSize: "14px", color: "#1e293b" }}>{viewingPesanan.jangkaWaktuPembayaran || "-"}</div>
+                      <div style={{ fontSize: "14px", color: "var(--text-primary)" }}>{viewingPesanan.jangkaWaktuPembayaran || "-"}</div>
                     </div>
                     <div>
-                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "var(--text-primary)" }}>
                         Required Date
                       </label>
-                      <div style={{ fontSize: "14px", color: "#1e293b" }}>{formatDateDDMMMYYYY(viewingPesanan.tanggalDibutuhkan)}</div>
+                      <div style={{ fontSize: "14px", color: "var(--text-primary)" }}>{formatDateDDMMMYYYY(viewingPesanan.tanggalDibutuhkan)}</div>
                     </div>
                     {/* Row 3: Supplier, Tujuan Pengiriman */}
                     <div>
-                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "var(--text-primary)" }}>
                         Supplier
                       </label>
-                      <div style={{ fontSize: "14px", color: "#1e293b" }}>
+                      <div style={{ fontSize: "14px", color: "var(--text-primary)" }}>
                         {suppliers.find(s => s.id === viewingPesanan.supplierId)?.namaSupplier || viewingPesanan.supplierId}
                       </div>
                     </div>
                     <div>
-                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "var(--text-primary)" }}>
                         Tujuan Pengiriman
                       </label>
-                      <div style={{ fontSize: "14px", color: "#1e293b" }}>
+                      <div style={{ fontSize: "14px", color: "var(--text-primary)" }}>
                         {viewingPesanan.tujuanPengirimanId 
                           ? apotiks.find((a) => a.id === viewingPesanan.tujuanPengirimanId)?.namaApotik || "-"
                           : "-"}
@@ -2648,14 +2648,14 @@ export default function PesananPembelianPage() {
                     </div>
                     {/* Row 4: Description */}
                     <div style={{ gridColumn: "span 2" }}>
-                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "var(--text-primary)" }}>
                         Description
                       </label>
-                      <div style={{ fontSize: "14px", color: "#1e293b" }}>{viewingPesanan.deskripsi || "-"}</div>
+                      <div style={{ fontSize: "14px", color: "var(--text-primary)" }}>{viewingPesanan.deskripsi || "-"}</div>
                     </div>
                     {/* Status Kirim */}
                     <div>
-                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                      <label style={{ display: "block", marginBottom: "0px", fontSize: "13px", fontWeight: "500", color: "var(--text-primary)" }}>
                         Status Kirim
                       </label>
                       <span
@@ -2687,8 +2687,8 @@ export default function PesananPembelianPage() {
                 {/* Order Items */}
                 <div
                   style={{
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #e2e8f0",
+                    backgroundColor: "var(--surface)",
+                    border: "1px solid var(--border)",
                     borderRadius: "8px",
                     padding: "20px",
                     marginBottom: "20px",
@@ -2699,8 +2699,8 @@ export default function PesananPembelianPage() {
                       fontSize: "16px",
                       fontWeight: "600",
                       margin: "0 0 20px 0",
-                      color: "#1e293b",
-                      borderBottom: "2px solid #3b82f6",
+                      color: "var(--text-primary)",
+                      borderBottom: "2px solid var(--primary)",
                       paddingBottom: "8px",
                     }}
                   >
@@ -2708,36 +2708,36 @@ export default function PesananPembelianPage() {
                   </h4>
 
                   {viewingPesanan.detailBarang && viewingPesanan.detailBarang.length > 0 ? (
-                    <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", overflowX: "auto" }}>
+                    <div style={{ border: "1px solid var(--border)", borderRadius: "6px", overflowX: "auto" }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1000px" }}>
                         <thead>
-                          <tr style={{ backgroundColor: "#f8fafc" }}>
-                            <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>DESCRIPTION</th>
-                            <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>CODE</th>
-                            <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>UNIT</th>
-                            <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>PRICE</th>
-                            <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>QTY</th>
-                            <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>DISKON (%)</th>
-                            <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>SUBTOTAL</th>
+                          <tr style={{ backgroundColor: "var(--hover-bg)" }}>
+                            <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>DESCRIPTION</th>
+                            <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>CODE</th>
+                            <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>UNIT</th>
+                            <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>PRICE</th>
+                            <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>QTY</th>
+                            <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>DISKON (%)</th>
+                            <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>SUBTOTAL</th>
                           </tr>
                         </thead>
                         <tbody>
                           {viewingPesanan.detailBarang.map((detail: DetailBarang, index: number) => (
-                            <tr key={detail.id || index} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                              <td style={{ padding: "12px", fontSize: "13px", color: "#1e293b" }}>{detail.namaProduk}</td>
-                              <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>{detail.kodeProduk || "-"}</td>
-                              <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>{detail.namaUnit || detail.satuan || "-"}</td>
-                              <td style={{ padding: "12px", fontSize: "13px", textAlign: "right", color: "#1e293b" }}>{formatCurrency(detail.hargaSatuan || 0)}</td>
-                              <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "#1e293b" }}>{detail.qty}</td>
-                              <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "#1e293b" }}>{detail.diskon || 0}%</td>
-                              <td style={{ padding: "12px", fontSize: "13px", textAlign: "right", fontWeight: "500", color: "#1e293b" }}>{formatCurrency(detail.subtotal || 0)}</td>
+                            <tr key={detail.id || index} style={{ borderBottom: "1px solid var(--border)" }}>
+                              <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-primary)" }}>{detail.namaProduk}</td>
+                              <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)" }}>{detail.kodeProduk || "-"}</td>
+                              <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)" }}>{detail.namaUnit || detail.satuan || "-"}</td>
+                              <td style={{ padding: "12px", fontSize: "13px", textAlign: "right", color: "var(--text-primary)" }}>{formatCurrency(detail.hargaSatuan || 0)}</td>
+                              <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "var(--text-primary)" }}>{detail.qty}</td>
+                              <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "var(--text-primary)" }}>{detail.diskon || 0}%</td>
+                              <td style={{ padding: "12px", fontSize: "13px", textAlign: "right", fontWeight: "500", color: "var(--text-primary)" }}>{formatCurrency(detail.subtotal || 0)}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                   ) : (
-                    <div style={{ padding: "40px", textAlign: "center", color: "#64748b", fontSize: "14px" }}>
+                    <div style={{ padding: "40px", textAlign: "center", color: "var(--text-secondary)", fontSize: "14px" }}>
                       No items
                     </div>
                   )}
@@ -2746,8 +2746,8 @@ export default function PesananPembelianPage() {
                 {/* Summary */}
                 <div
                   style={{
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #e2e8f0",
+                    backgroundColor: "var(--surface)",
+                    border: "1px solid var(--border)",
                     borderRadius: "8px",
                     padding: "20px",
                   }}
@@ -2757,30 +2757,30 @@ export default function PesananPembelianPage() {
                       fontSize: "16px",
                       fontWeight: "600",
                       margin: "0 0 20px 0",
-                      color: "#1e293b",
-                      borderBottom: "2px solid #3b82f6",
+                      color: "var(--text-primary)",
+                      borderBottom: "2px solid var(--primary)",
                       paddingBottom: "8px",
                     }}
                   >
                     Summary
                   </h4>
 
-                  <div style={{ paddingTop: "16px", borderTop: "2px solid #e2e8f0" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "#64748b" }}>
+                  <div style={{ paddingTop: "16px", borderTop: "2px solid var(--border)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--text-secondary)" }}>
                       <span>Subtotal:</span>
-                      <span style={{ fontWeight: "500", color: "#1e293b" }}>{formatCurrency(viewingPesanan.subtotal || 0)}</span>
+                      <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{formatCurrency(viewingPesanan.subtotal || 0)}</span>
                     </div>
                     {viewingPesanan.diskonAmount > 0 && (
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "#64748b" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--text-secondary)" }}>
                         <span>Discount:</span>
                         <span style={{ fontWeight: "500", color: "#10b981" }}>-{formatCurrency(viewingPesanan.diskonAmount || 0)}</span>
                       </div>
                     )}
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "#64748b" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--text-secondary)" }}>
                       <span>PPN ({viewingPesanan.ppn || 11}%):</span>
-                      <span style={{ fontWeight: "500", color: "#1e293b" }}>{formatCurrency(viewingPesanan.ppnAmount || 0)}</span>
+                      <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{formatCurrency(viewingPesanan.ppnAmount || 0)}</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px", paddingTop: "12px", borderTop: "2px solid #e2e8f0", fontSize: "18px", fontWeight: "600", color: "#1e293b" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px", paddingTop: "12px", borderTop: "2px solid var(--border)", fontSize: "18px", fontWeight: "600", color: "var(--text-primary)" }}>
                       <span>Total:</span>
                       <span>{formatCurrency(viewingPesanan.total || 0)}</span>
                     </div>
@@ -2792,8 +2792,8 @@ export default function PesananPembelianPage() {
               <div
                 style={{
                   padding: "20px 24px",
-                  borderTop: "1px solid #e2e8f0",
-                  backgroundColor: "#f8fafc",
+                  borderTop: "1px solid var(--border)",
+                  backgroundColor: "var(--hover-bg)",
                   display: "flex",
                   gap: "12px",
                   justifyContent: "flex-end",
@@ -2806,7 +2806,7 @@ export default function PesananPembelianPage() {
                   onClick={() => setIsViewModalOpen(false)}
                   style={{
                     padding: "10px 20px",
-                    backgroundColor: "#3b82f6",
+                    backgroundColor: "var(--primary)",
                     color: "white",
                     border: "none",
                     borderRadius: "6px",
@@ -2816,10 +2816,10 @@ export default function PesananPembelianPage() {
                     transition: "background-color 0.2s",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#2563eb";
+                    e.currentTarget.style.backgroundColor = "var(--primary)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#3b82f6";
+                    e.currentTarget.style.backgroundColor = "var(--primary)";
                   }}
                 >
                   Tutup
@@ -2847,7 +2847,7 @@ export default function PesananPembelianPage() {
           >
             <div
               style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 width: "90%",
                 maxWidth: "600px",
@@ -2859,11 +2859,11 @@ export default function PesananPembelianPage() {
               <div
                 style={{
                   padding: "20px 24px",
-                  borderBottom: "1px solid #e2e8f0",
+                  borderBottom: "1px solid var(--border)",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  backgroundColor: "#f8fafc",
+                  backgroundColor: "var(--hover-bg)",
                   borderTopLeftRadius: "8px",
                   borderTopRightRadius: "8px",
                 }}
@@ -2873,7 +2873,7 @@ export default function PesananPembelianPage() {
                     fontSize: "20px",
                     fontWeight: "600",
                     margin: 0,
-                    color: "#1e293b",
+                    color: "var(--text-primary)",
                   }}
                 >
                   Pengajuan Perubahan
@@ -2885,7 +2885,7 @@ export default function PesananPembelianPage() {
                     border: "none",
                     fontSize: "24px",
                     cursor: "pointer",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                     padding: 0,
                     width: "32px",
                     height: "32px",
@@ -2896,7 +2896,7 @@ export default function PesananPembelianPage() {
                     transition: "background-color 0.2s",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#e2e8f0";
+                    e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = "transparent";
@@ -2917,7 +2917,7 @@ export default function PesananPembelianPage() {
                         marginBottom: "8px",
                         fontSize: "14px",
                         fontWeight: "500",
-                        color: "#374151",
+                        color: "var(--text-primary)",
                       }}
                     >
                       Jenis Pengajuan <span style={{ color: "#ef4444" }}>*</span>
@@ -2936,19 +2936,19 @@ export default function PesananPembelianPage() {
                       style={{
                         width: "100%",
                         padding: "10px 12px",
-                        border: "1px solid #d1d5db",
+                        border: "1px solid var(--input-border)",
                         borderRadius: "6px",
                         fontSize: "14px",
                         boxSizing: "border-box",
                         transition: "border-color 0.2s",
-                        backgroundColor: "white",
+                        backgroundColor: "var(--surface)",
                       }}
                       onFocus={(e) => {
-                        e.currentTarget.style.borderColor = "#3b82f6";
+                        e.currentTarget.style.borderColor = "var(--primary)";
                         e.currentTarget.style.outline = "none";
                       }}
                       onBlur={(e) => {
-                        e.currentTarget.style.borderColor = "#d1d5db";
+                        e.currentTarget.style.borderColor = "var(--input-border)";
                       }}
                     >
                       <option value="">Pilih Jenis Pengajuan</option>
@@ -2965,7 +2965,7 @@ export default function PesananPembelianPage() {
                         marginBottom: "8px",
                         fontSize: "14px",
                         fontWeight: "500",
-                        color: "#374151",
+                        color: "var(--text-primary)",
                       }}
                     >
                       Alasan Pengajuan <span style={{ color: "#ef4444" }}>*</span>
@@ -2986,7 +2986,7 @@ export default function PesananPembelianPage() {
                       style={{
                         width: "100%",
                         padding: "10px 12px",
-                        border: "1px solid #d1d5db",
+                        border: "1px solid var(--input-border)",
                         borderRadius: "6px",
                         fontSize: "14px",
                         fontFamily: "inherit",
@@ -2995,11 +2995,11 @@ export default function PesananPembelianPage() {
                         transition: "border-color 0.2s",
                       }}
                       onFocus={(e) => {
-                        e.currentTarget.style.borderColor = "#3b82f6";
+                        e.currentTarget.style.borderColor = "var(--primary)";
                         e.currentTarget.style.outline = "none";
                       }}
                       onBlur={(e) => {
-                        e.currentTarget.style.borderColor = "#d1d5db";
+                        e.currentTarget.style.borderColor = "var(--input-border)";
                       }}
                     />
                   </div>
@@ -3009,8 +3009,8 @@ export default function PesananPembelianPage() {
                 <div
                   style={{
                     padding: "20px 24px",
-                    borderTop: "1px solid #e2e8f0",
-                    backgroundColor: "#f8fafc",
+                    borderTop: "1px solid var(--border)",
+                    backgroundColor: "var(--hover-bg)",
                     display: "flex",
                     gap: "12px",
                     justifyContent: "flex-end",
@@ -3024,7 +3024,7 @@ export default function PesananPembelianPage() {
                     style={{
                       padding: "10px 20px",
                       backgroundColor: "#f3f4f6",
-                      color: "#374151",
+                      color: "var(--text-primary)",
                       border: "none",
                       borderRadius: "6px",
                       cursor: "pointer",
@@ -3045,7 +3045,7 @@ export default function PesananPembelianPage() {
                     type="submit"
                     style={{
                       padding: "10px 20px",
-                      backgroundColor: "#3b82f6",
+                      backgroundColor: "var(--primary)",
                       color: "white",
                       border: "none",
                       borderRadius: "6px",
@@ -3055,10 +3055,10 @@ export default function PesananPembelianPage() {
                       transition: "background-color 0.2s",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#2563eb";
+                      e.currentTarget.style.backgroundColor = "var(--primary)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#3b82f6";
+                      e.currentTarget.style.backgroundColor = "var(--primary)";
                     }}
                   >
                     Submit

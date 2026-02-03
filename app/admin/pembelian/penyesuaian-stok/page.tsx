@@ -715,7 +715,7 @@ export default function PenyesuaianStokPage() {
             onClick={handleOpenModal}
             style={{
               padding: "10px 20px",
-              backgroundColor: "#3b82f6",
+              backgroundColor: "var(--primary)",
               color: "#fff",
               border: "none",
               borderRadius: "8px",
@@ -729,11 +729,11 @@ export default function PenyesuaianStokPage() {
         </div>
 
         <div>
-          <h2 style={{ fontSize: "18px", fontWeight: 600, marginBottom: "12px", color: "#1e293b" }}>
+          <h2 style={{ fontSize: "18px", fontWeight: 600, marginBottom: "12px", color: "var(--text-primary)" }}>
             Riwayat Penyesuaian stok
           </h2>
           {riwayatByNoBukti.length === 0 ? (
-            <p style={{ color: "#64748b", fontSize: "14px" }}>Belum ada riwayat penyesuaian.</p>
+            <p style={{ color: "var(--text-secondary)", fontSize: "14px" }}>Belum ada riwayat penyesuaian.</p>
           ) : (
             <div style={{ overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
               <table
@@ -744,7 +744,7 @@ export default function PenyesuaianStokPage() {
                 }}
               >
                 <thead>
-                  <tr style={{ backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                  <tr style={{ backgroundColor: "var(--hover-bg)", borderBottom: "1px solid var(--border)" }}>
                     <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600 }}>No Bukti</th>
                     <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600 }}>Tanggal</th>
                     <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600 }}>Apotik</th>
@@ -756,7 +756,7 @@ export default function PenyesuaianStokPage() {
                 </thead>
                 <tbody>
                   {riwayatByNoBukti.map(({ noBukti, items, first, lastUpdate }) => (
-                    <tr key={noBukti} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                    <tr key={noBukti} style={{ borderBottom: "1px solid var(--border)" }}>
                       <td style={{ padding: "10px 12px" }}>{first.noBuktiPenyesuaian || "-"}</td>
                       <td style={{ padding: "10px 12px" }}>{formatTanggal(first.tanggal)}</td>
                       <td style={{ padding: "10px 12px" }}>{first.apotikNama}</td>
@@ -770,7 +770,7 @@ export default function PenyesuaianStokPage() {
                           style={{
                             padding: "6px",
                             backgroundColor: "transparent",
-                            color: "#3b82f6",
+                            color: "var(--primary)",
                             border: "none",
                             borderRadius: "4px",
                             cursor: "pointer",
@@ -818,7 +818,7 @@ export default function PenyesuaianStokPage() {
           >
             <div
               style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 padding: "24px",
                 width: "95%",
@@ -830,7 +830,7 @@ export default function PenyesuaianStokPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#1e293b" }}>Detail Penyesuaian Stok</h2>
+                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>Detail Penyesuaian Stok</h2>
                 <button
                   type="button"
                   onClick={() => setViewingGroup(null)}
@@ -839,7 +839,7 @@ export default function PenyesuaianStokPage() {
                     border: "none",
                     fontSize: "24px",
                     cursor: "pointer",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                     padding: 0,
                     width: "32px",
                     height: "32px",
@@ -865,24 +865,24 @@ export default function PenyesuaianStokPage() {
                       border: "1px solid #e2e8f0",
                       borderRadius: "8px",
                       padding: "12px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--hover-bg)",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>No. Penyesuaian</label>
-                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>No. Penyesuaian</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "var(--text-primary)", boxSizing: "border-box" }}>
                         {viewingGroup[0].noBuktiPenyesuaian || "-"}
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>Tanggal</label>
-                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Tanggal</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "var(--text-primary)", boxSizing: "border-box" }}>
                         {formatTanggal(viewingGroup[0].tanggal)}
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>Apotik</label>
-                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Apotik</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "var(--text-primary)", boxSizing: "border-box" }}>
                         {viewingGroup[0].apotikNama}
                       </div>
                     </div>
@@ -899,28 +899,28 @@ export default function PenyesuaianStokPage() {
                       border: "1px solid #e2e8f0",
                       borderRadius: "8px",
                       padding: "12px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--hover-bg)",
                     }}
                   >
-                    <label style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Keterangan</label>
-                    <div style={{ flex: 1, minHeight: "96px", padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#64748b", boxSizing: "border-box" }}>
+                    <label style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Keterangan</label>
+                    <div style={{ flex: 1, minHeight: "96px", padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "var(--text-secondary)", boxSizing: "border-box" }}>
                       {viewingGroup[0].keterangan || "-"}
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h4 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 12px 0", color: "#1e293b" }}>Produk yang disesuaikan</h4>
+                  <h4 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 12px 0", color: "var(--text-primary)" }}>Produk yang disesuaikan</h4>
                   <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "500px", fontSize: "13px" }}>
                       <thead>
-                        <tr style={{ backgroundColor: "#f8fafc" }}>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode Produk</th>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "180px" }}>Nama Produk</th>
-                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Stok Sebelum</th>
-                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Penyesuaian</th>
-                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Stok Sesudah</th>
+                        <tr style={{ backgroundColor: "var(--hover-bg)" }}>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Kode Produk</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)", minWidth: "180px" }}>Nama Produk</th>
+                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Stok Sebelum</th>
+                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Penyesuaian</th>
+                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Stok Sesudah</th>
                           {pengajuanGroupStatus === "Disetujui" && currentPengajuanGroup?.jenisPengajuan === "Edit Data" && (
-                            <th style={{ padding: "10px 12px", textAlign: "center", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", width: "90px" }}>Aksi</th>
+                            <th style={{ padding: "10px 12px", textAlign: "center", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)", width: "90px" }}>Aksi</th>
                           )}
                         </tr>
                       </thead>
@@ -932,10 +932,10 @@ export default function PenyesuaianStokPage() {
                             const jumlahVal = isEditMode ? (pendingGroupJumlah[r.id] ?? r.jumlahPenyesuaian) : r.jumlahPenyesuaian;
                             const stokSesudahDisplay = isEditMode ? r.stokSebelum + (pendingGroupJumlah[r.id] ?? r.jumlahPenyesuaian) : r.stokSesudah;
                             return (
-                              <tr key={r.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                                <td style={{ padding: "10px 12px", color: "#1e293b" }}>{r.kodeProduk}</td>
-                                <td style={{ padding: "10px 12px", color: "#64748b", minWidth: "180px" }}>{r.namaProduk}</td>
-                                <td style={{ padding: "10px 12px", textAlign: "right", color: "#64748b" }}>{r.stokSebelum}</td>
+                              <tr key={r.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                                <td style={{ padding: "10px 12px", color: "var(--text-primary)" }}>{r.kodeProduk}</td>
+                                <td style={{ padding: "10px 12px", color: "var(--text-secondary)", minWidth: "180px" }}>{r.namaProduk}</td>
+                                <td style={{ padding: "10px 12px", textAlign: "right", color: "var(--text-secondary)" }}>{r.stokSebelum}</td>
                                 <td style={{ padding: "8px 12px", textAlign: "right", verticalAlign: "middle" }}>
                                   {isEditMode ? (
                                     <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
@@ -951,7 +951,7 @@ export default function PenyesuaianStokPage() {
                                         style={{
                                           width: "64px",
                                           padding: "4px 6px",
-                                          border: "1px solid #d1d5db",
+                                          border: "1px solid var(--input-border)",
                                           borderRadius: "4px",
                                           fontSize: "13px",
                                           textAlign: "right",
@@ -966,7 +966,7 @@ export default function PenyesuaianStokPage() {
                                           background: "none",
                                           border: "none",
                                           cursor: "pointer",
-                                          color: "#3b82f6",
+                                          color: "var(--primary)",
                                           display: "inline-flex",
                                           alignItems: "center",
                                           justifyContent: "center",
@@ -986,7 +986,7 @@ export default function PenyesuaianStokPage() {
                                     </span>
                                   )}
                                 </td>
-                                <td style={{ padding: "10px 12px", textAlign: "right", color: "#64748b" }}>{stokSesudahDisplay}</td>
+                                <td style={{ padding: "10px 12px", textAlign: "right", color: "var(--text-secondary)" }}>{stokSesudahDisplay}</td>
                                 {isEditMode && (
                                   <td style={{ padding: "8px 12px", textAlign: "center", verticalAlign: "middle" }}>
                                     <button
@@ -1081,7 +1081,7 @@ export default function PenyesuaianStokPage() {
                         onClick={handleSimpanSetujuiGroup}
                         style={{
                           padding: "8px 16px",
-                          backgroundColor: "#3b82f6",
+                          backgroundColor: "var(--primary)",
                           color: "#fff",
                           border: "none",
                           borderRadius: "6px",
@@ -1116,7 +1116,7 @@ export default function PenyesuaianStokPage() {
                       style={{
                         padding: "8px 16px",
                         backgroundColor: "#f1f5f9",
-                        color: "#475569",
+                        color: "var(--text-secondary)",
                         border: "1px solid #e2e8f0",
                         borderRadius: "6px",
                         fontSize: "13px",
@@ -1135,7 +1135,7 @@ export default function PenyesuaianStokPage() {
                     }}
                     style={{
                       padding: "8px 16px",
-                      backgroundColor: "#3b82f6",
+                      backgroundColor: "var(--primary)",
                       color: "#fff",
                       border: "none",
                       borderRadius: "6px",
@@ -1153,7 +1153,7 @@ export default function PenyesuaianStokPage() {
                   style={{
                     padding: "8px 16px",
                     backgroundColor: "#f1f5f9",
-                    color: "#475569",
+                    color: "var(--text-secondary)",
                     border: "1px solid #e2e8f0",
                     borderRadius: "6px",
                     fontSize: "13px",
@@ -1184,7 +1184,7 @@ export default function PenyesuaianStokPage() {
           >
             <div
               style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 padding: "24px",
                 width: "95%",
@@ -1196,7 +1196,7 @@ export default function PenyesuaianStokPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#1e293b" }}>Detail Penyesuaian Stok (Edit / Ajukan)</h2>
+                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>Detail Penyesuaian Stok (Edit / Ajukan)</h2>
                 <button
                   type="button"
                   onClick={() => setViewingRiwayat(null)}
@@ -1205,7 +1205,7 @@ export default function PenyesuaianStokPage() {
                     border: "none",
                     fontSize: "24px",
                     cursor: "pointer",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                     padding: 0,
                     width: "32px",
                     height: "32px",
@@ -1232,27 +1232,27 @@ export default function PenyesuaianStokPage() {
                       border: "1px solid #e2e8f0",
                       borderRadius: "8px",
                       padding: "12px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--hover-bg)",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>No. Penyesuaian</label>
-                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>No. Penyesuaian</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "var(--text-primary)", boxSizing: "border-box" }}>
                         {viewingRiwayat.noBuktiPenyesuaian || "-"}
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>Tanggal <span style={{ color: "#ef4444" }}>*</span></label>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Tanggal <span style={{ color: "#ef4444" }}>*</span></label>
                       <input
                         type="date"
                         value={editFormData.tanggal}
                         onChange={(e) => setEditFormData((prev) => ({ ...prev, tanggal: e.target.value }))}
-                        style={{ flex: 1, padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box" }}
+                        style={{ flex: 1, padding: "6px 8px", border: "1px solid var(--input-border)", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box" }}
                       />
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>Apotik</label>
-                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "#374151", boxSizing: "border-box" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Apotik</label>
+                      <div style={{ flex: 1, padding: "6px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", fontSize: "13px", backgroundColor: "#f9fafb", color: "var(--text-primary)", boxSizing: "border-box" }}>
                         {viewingRiwayat.apotikNama}
                       </div>
                     </div>
@@ -1269,41 +1269,39 @@ export default function PenyesuaianStokPage() {
                       border: "1px solid #e2e8f0",
                       borderRadius: "8px",
                       padding: "12px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--hover-bg)",
                     }}
                   >
-                    <label style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Keterangan</label>
+                    <label style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Keterangan</label>
                     <input
                       type="text"
                       value={editFormData.keterangan}
                       onChange={(e) => setEditFormData((prev) => ({ ...prev, keterangan: e.target.value }))}
                       placeholder="Alasan penyesuaian (opsional)"
-                      style={{ width: "100%", flex: 1, minHeight: "36px", padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box" }}
+                      style={{ width: "100%", flex: 1, minHeight: "36px", padding: "6px 8px", border: "1px solid var(--input-border)", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box" }}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <h4 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 12px 0", color: "#1e293b" }}>Detail Penyesuaian</h4>
+                  <h4 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 12px 0", color: "var(--text-primary)" }}>Detail Penyesuaian</h4>
                   <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "780px", fontSize: "13px" }}>
                       <thead>
-                        <tr style={{ backgroundColor: "#f8fafc" }}>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Produk</th>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode</th>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "180px" }}>Nama</th>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Satuan</th>
-                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Stok saat ini</th>
-                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", width: "110px" }}>Jumlah</th>
+                        <tr style={{ backgroundColor: "var(--hover-bg)" }}>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)", minWidth: "180px" }}>Produk</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Kode</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Satuan</th>
+                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Stok saat ini</th>
+                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)", width: "110px" }}>Jumlah</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
-                          <td style={{ padding: "10px 12px", color: "#1e293b" }}>{viewingRiwayat.kodeProduk} - {viewingRiwayat.namaProduk}</td>
-                          <td style={{ padding: "10px 12px", color: "#64748b" }}>{viewingRiwayat.kodeProduk}</td>
-                          <td style={{ padding: "10px 12px", color: "#64748b", minWidth: "180px" }}>{viewingRiwayat.namaProduk}</td>
-                          <td style={{ padding: "10px 12px", color: "#64748b" }}>-</td>
-                          <td style={{ padding: "10px 12px", textAlign: "right", color: "#64748b" }}>{viewingRiwayat.stokSebelum}</td>
+                        <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                          <td style={{ padding: "10px 12px", color: "var(--text-primary)" }}>{viewingRiwayat.namaProduk}</td>
+                          <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{viewingRiwayat.kodeProduk}</td>
+                          <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>-</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: "var(--text-secondary)" }}>{viewingRiwayat.stokSebelum}</td>
                           <td style={{ padding: "10px 12px", textAlign: "right", verticalAlign: "middle" }}>
                             <input
                               type="number"
@@ -1311,7 +1309,7 @@ export default function PenyesuaianStokPage() {
                               onChange={(e) => setEditFormData((prev) => ({ ...prev, jumlahPenyesuaian: parseInt(e.target.value, 10) || 0 }))}
                               placeholder="0"
                               title="Positif = tambah, negatif = kurangi"
-                              style={{ width: "72px", padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "4px", fontSize: "13px", boxSizing: "border-box", textAlign: "right" }}
+                              style={{ width: "72px", padding: "6px 8px", border: "1px solid var(--input-border)", borderRadius: "4px", fontSize: "13px", boxSizing: "border-box", textAlign: "right" }}
                             />
                           </td>
                         </tr>
@@ -1343,7 +1341,7 @@ export default function PenyesuaianStokPage() {
                   style={{
                     padding: "8px 16px",
                     backgroundColor: "#f1f5f9",
-                    color: "#475569",
+                    color: "var(--text-secondary)",
                     border: "1px solid #e2e8f0",
                     borderRadius: "6px",
                     fontSize: "13px",
@@ -1395,7 +1393,7 @@ export default function PenyesuaianStokPage() {
                         onClick={handleSimpanSetujui}
                         style={{
                           padding: "8px 16px",
-                          backgroundColor: "#3b82f6",
+                          backgroundColor: "var(--primary)",
                           color: "#fff",
                           border: "none",
                           borderRadius: "6px",
@@ -1430,7 +1428,7 @@ export default function PenyesuaianStokPage() {
                       style={{
                         padding: "8px 16px",
                         backgroundColor: "#f1f5f9",
-                        color: "#475569",
+                        color: "var(--text-secondary)",
                         border: "1px solid #e2e8f0",
                         borderRadius: "6px",
                         fontSize: "13px",
@@ -1449,7 +1447,7 @@ export default function PenyesuaianStokPage() {
                     }}
                     style={{
                       padding: "8px 16px",
-                      backgroundColor: "#3b82f6",
+                      backgroundColor: "var(--primary)",
                       color: "#fff",
                       border: "none",
                       borderRadius: "6px",
@@ -1483,7 +1481,7 @@ export default function PenyesuaianStokPage() {
           >
             <div
               style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 padding: "24px",
                 width: "90%",
@@ -1492,10 +1490,10 @@ export default function PenyesuaianStokPage() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 20px 0", color: "#1e293b" }}>Ajukan Perubahan</h3>
+              <h3 style={{ fontSize: "16px", fontWeight: 600, margin: "0 0 20px 0", color: "var(--text-primary)" }}>Ajukan Perubahan</h3>
               <form onSubmit={handleSubmitPengajuan}>
                 <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                     Jenis Pengajuan <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <select
@@ -1505,7 +1503,7 @@ export default function PenyesuaianStokPage() {
                     style={{
                       width: "100%",
                       padding: "8px 10px",
-                      border: "1px solid #d1d5db",
+                      border: "1px solid var(--input-border)",
                       borderRadius: "6px",
                       fontSize: "13px",
                       boxSizing: "border-box",
@@ -1517,7 +1515,7 @@ export default function PenyesuaianStokPage() {
                   </select>
                 </div>
                 <div style={{ marginBottom: "20px" }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                     Alasan Pengajuan <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <textarea
@@ -1529,7 +1527,7 @@ export default function PenyesuaianStokPage() {
                     style={{
                       width: "100%",
                       padding: "8px 10px",
-                      border: "1px solid #d1d5db",
+                      border: "1px solid var(--input-border)",
                       borderRadius: "6px",
                       fontSize: "13px",
                       boxSizing: "border-box",
@@ -1544,7 +1542,7 @@ export default function PenyesuaianStokPage() {
                     style={{
                       padding: "8px 16px",
                       backgroundColor: "#f1f5f9",
-                      color: "#475569",
+                      color: "var(--text-secondary)",
                       border: "1px solid #e2e8f0",
                       borderRadius: "6px",
                       fontSize: "13px",
@@ -1557,7 +1555,7 @@ export default function PenyesuaianStokPage() {
                     type="submit"
                     style={{
                       padding: "8px 16px",
-                      backgroundColor: "#3b82f6",
+                      backgroundColor: "var(--primary)",
                       color: "#fff",
                       border: "none",
                       borderRadius: "6px",
@@ -1591,7 +1589,7 @@ export default function PenyesuaianStokPage() {
           >
             <div
               style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 padding: "24px",
                 width: "95%",
@@ -1610,7 +1608,7 @@ export default function PenyesuaianStokPage() {
                   marginBottom: "24px",
                 }}
               >
-                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#1e293b" }}>
+                <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
                   Tambah Penyesuaian stok
                 </h2>
                 <button
@@ -1620,7 +1618,7 @@ export default function PenyesuaianStokPage() {
                     border: "none",
                     fontSize: "24px",
                     cursor: "pointer",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                     padding: 0,
                     width: "32px",
                     height: "32px",
@@ -1647,11 +1645,11 @@ export default function PenyesuaianStokPage() {
                       border: "1px solid #e2e8f0",
                       borderRadius: "8px",
                       padding: "12px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--hover-bg)",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                         No. Penyesuaian
                       </label>
                       <div style={{ flex: 1 }}>
@@ -1663,7 +1661,7 @@ export default function PenyesuaianStokPage() {
                             borderRadius: "6px",
                             fontSize: "13px",
                             backgroundColor: "#f9fafb",
-                            color: "#64748b",
+                            color: "var(--text-secondary)",
                             boxSizing: "border-box",
                           }}
                         >
@@ -1672,7 +1670,7 @@ export default function PenyesuaianStokPage() {
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                         Tanggal <span style={{ color: "#ef4444" }}>*</span>
                       </label>
                       <input
@@ -1682,7 +1680,7 @@ export default function PenyesuaianStokPage() {
                         style={{
                           flex: 1,
                           padding: "6px 8px",
-                          border: "1px solid #d1d5db",
+                          border: "1px solid var(--input-border)",
                           borderRadius: "6px",
                           fontSize: "13px",
                           boxSizing: "border-box",
@@ -1690,7 +1688,7 @@ export default function PenyesuaianStokPage() {
                       />
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                      <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                         Apotik <span style={{ color: "#ef4444" }}>*</span>
                       </label>
                       <select
@@ -1699,7 +1697,7 @@ export default function PenyesuaianStokPage() {
                         style={{
                           flex: 1,
                           padding: "6px 8px",
-                          border: "1px solid #d1d5db",
+                          border: "1px solid var(--input-border)",
                           borderRadius: "6px",
                           fontSize: "13px",
                           boxSizing: "border-box",
@@ -1727,10 +1725,10 @@ export default function PenyesuaianStokPage() {
                       border: "1px solid #e2e8f0",
                       borderRadius: "8px",
                       padding: "12px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--hover-bg)",
                     }}
                   >
-                    <label style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Keterangan</label>
+                    <label style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Keterangan</label>
                     <textarea
                       value={keterangan}
                       onChange={(e) => setKeterangan(e.target.value)}
@@ -1741,7 +1739,7 @@ export default function PenyesuaianStokPage() {
                         flex: 1,
                         minHeight: "96px",
                         padding: "6px 8px",
-                        border: "1px solid #d1d5db",
+                        border: "1px solid var(--input-border)",
                         borderRadius: "6px",
                         fontSize: "13px",
                         boxSizing: "border-box",
@@ -1761,7 +1759,7 @@ export default function PenyesuaianStokPage() {
                       marginBottom: "12px",
                     }}
                   >
-                    <h4 style={{ fontSize: "16px", fontWeight: 600, margin: 0, color: "#1e293b" }}>
+                    <h4 style={{ fontSize: "16px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
                       Detail Penyesuaian
                     </h4>
                     <button
@@ -1771,7 +1769,7 @@ export default function PenyesuaianStokPage() {
                       title={!selectedApotikId ? "Pilih Apotik terlebih dahulu" : undefined}
                       style={{
                         padding: "8px 16px",
-                        backgroundColor: selectedApotikId ? "#3b82f6" : "#94a3b8",
+                        backgroundColor: selectedApotikId ? "var(--primary)" : "var(--text-secondary)",
                         color: "white",
                         border: "none",
                         borderRadius: "6px",
@@ -1796,14 +1794,13 @@ export default function PenyesuaianStokPage() {
                     >
                       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "780px", fontSize: "13px" }}>
                         <thead>
-                          <tr style={{ backgroundColor: "#f8fafc" }}>
-                            <th style={{ padding: "10px 12px", textAlign: "center", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", width: "56px" }}>Aksi</th>
-                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Produk</th>
-                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode</th>
-                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "180px" }}>Nama</th>
-                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Satuan</th>
-                            <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Stok saat ini</th>
-                            <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", width: "110px" }}>Jumlah</th>
+                          <tr style={{ backgroundColor: "var(--hover-bg)" }}>
+                            <th style={{ padding: "10px 12px", textAlign: "center", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)", width: "56px" }}>Aksi</th>
+                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)", minWidth: "180px" }}>Produk</th>
+                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Kode</th>
+                            <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Satuan</th>
+                            <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Stok saat ini</th>
+                            <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)", width: "110px" }}>Jumlah</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1813,7 +1810,7 @@ export default function PenyesuaianStokPage() {
                               const product = detail.produkId ? products.find((p) => p.id === detail.produkId) : null;
                               const stokSaatIni = product && selectedApotikId ? getStokProduk(product, selectedApotikId) : null;
                               return (
-                                <tr key={detail.id} style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: "#fafbff" }}>
+                                <tr key={detail.id} style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#fafbff" }}>
                                   <td style={{ padding: "10px 12px", textAlign: "center", verticalAlign: "middle" }}>
                                     <button type="button" onClick={() => handleRemoveDetail(detail.id)} title="Hapus" style={{ padding: "6px", backgroundColor: "transparent", color: "#ef4444", border: "none", borderRadius: "4px", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#fef2f2"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}>
                                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
@@ -1823,20 +1820,19 @@ export default function PenyesuaianStokPage() {
                                     <input
                                       type="text"
                                       readOnly
-                                      value={detail.namaProduk ? `${detail.kodeProduk} - ${detail.namaProduk}` : ""}
+                                      value={detail.namaProduk || ""}
                                       placeholder="Klik untuk pilih produk"
                                       onClick={() => { setProductModalDetailId(detail.id); setShowProductModal(true); setProductModalPage(1); }}
                                       onFocus={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.outline = "none"; }}
-                                      onBlur={(e) => { e.currentTarget.style.borderColor = "#d1d5db"; }}
-                                      style={{ width: "100%", padding: "8px 10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", cursor: "pointer", backgroundColor: "white" }}
+                                      onBlur={(e) => { e.currentTarget.style.borderColor = "var(--input-border)"; }}
+                                      style={{ width: "100%", padding: "8px 10px", border: "1px solid var(--input-border)", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", cursor: "pointer", backgroundColor: "white" }}
                                     />
                                   </td>
-                                  <td style={{ padding: "10px 12px", color: "#64748b" }}>{detail.kodeProduk || "-"}</td>
-                                  <td style={{ padding: "10px 12px", color: "#64748b", minWidth: "180px" }}>{detail.namaProduk || "-"}</td>
-                                  <td style={{ padding: "10px 12px", color: "#64748b" }}>{detail.satuan || "-"}</td>
-                                  <td style={{ padding: "10px 12px", textAlign: "right", color: "#64748b" }}>{stokSaatIni !== null ? stokSaatIni : "-"}</td>
+                                  <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{detail.kodeProduk || "-"}</td>
+                                  <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{detail.satuan || "-"}</td>
+                                  <td style={{ padding: "10px 12px", textAlign: "right", color: "var(--text-secondary)" }}>{stokSaatIni !== null ? stokSaatIni : "-"}</td>
                                   <td style={{ padding: "8px 12px", width: "110px", verticalAlign: "middle", textAlign: "right" }}>
-                                    <input type="number" inputMode="numeric" value={detail.jumlahPenyesuaian === 0 ? "" : detail.jumlahPenyesuaian} onChange={(e) => handleDetailChange(detail.id, "jumlahPenyesuaian", parseInt(e.target.value, 10) || 0)} placeholder="0" title="Positif = tambah, negatif = kurangi" style={{ width: "72px", padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "4px", fontSize: "13px", boxSizing: "border-box", textAlign: "right", backgroundColor: "#ffffff", cursor: "text" }} />
+                                    <input type="number" inputMode="numeric" value={detail.jumlahPenyesuaian === 0 ? "" : detail.jumlahPenyesuaian} onChange={(e) => handleDetailChange(detail.id, "jumlahPenyesuaian", parseInt(e.target.value, 10) || 0)} placeholder="0" title="Positif = tambah, negatif = kurangi" style={{ width: "72px", padding: "6px 8px", border: "1px solid var(--input-border)", borderRadius: "4px", fontSize: "13px", boxSizing: "border-box", textAlign: "right", backgroundColor: "var(--surface)", cursor: "text" }} />
                                   </td>
                                 </tr>
                               );
@@ -1846,7 +1842,7 @@ export default function PenyesuaianStokPage() {
                             const product = detail.produkId ? products.find((p) => p.id === detail.produkId) : null;
                             const stokSaatIni = product && selectedApotikId ? getStokProduk(product, selectedApotikId) : null;
                             return (
-                              <tr key={detail.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                              <tr key={detail.id} style={{ borderBottom: "1px solid var(--border)" }}>
                                 <td style={{ padding: "10px 12px", textAlign: "center", verticalAlign: "middle" }}>
                                   <button
                                     type="button"
@@ -1882,18 +1878,17 @@ export default function PenyesuaianStokPage() {
                                   <input
                                     type="text"
                                     readOnly
-                                    value={detail.namaProduk ? `${detail.kodeProduk} - ${detail.namaProduk}` : ""}
+                                    value={detail.namaProduk || ""}
                                     placeholder="Klik untuk pilih produk"
                                     onClick={() => { setProductModalDetailId(detail.id); setShowProductModal(true); setProductModalPage(1); }}
                                     onFocus={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.outline = "none"; }}
-                                    onBlur={(e) => { e.currentTarget.style.borderColor = "#d1d5db"; }}
-                                    style={{ width: "100%", padding: "8px 10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", cursor: "pointer", backgroundColor: "white" }}
+                                    onBlur={(e) => { e.currentTarget.style.borderColor = "var(--input-border)"; }}
+                                    style={{ width: "100%", padding: "8px 10px", border: "1px solid var(--input-border)", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", cursor: "pointer", backgroundColor: "white" }}
                                   />
                                 </td>
-                                <td style={{ padding: "10px 12px", color: "#64748b" }}>{detail.kodeProduk || "-"}</td>
-                                <td style={{ padding: "10px 12px", color: "#64748b", minWidth: "180px" }}>{detail.namaProduk || "-"}</td>
-                                <td style={{ padding: "10px 12px", color: "#64748b" }}>{detail.satuan || "-"}</td>
-                                <td style={{ padding: "10px 12px", textAlign: "right", color: "#64748b" }}>
+                                <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{detail.kodeProduk || "-"}</td>
+                                <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{detail.satuan || "-"}</td>
+                                <td style={{ padding: "10px 12px", textAlign: "right", color: "var(--text-secondary)" }}>
                                   {stokSaatIni !== null ? stokSaatIni : "-"}
                                 </td>
                                 <td style={{ padding: "8px 12px", width: "110px", verticalAlign: "middle", textAlign: "right" }}>
@@ -1907,12 +1902,12 @@ export default function PenyesuaianStokPage() {
                                     style={{
                                       width: "72px",
                                       padding: "6px 8px",
-                                      border: "1px solid #d1d5db",
+                                      border: "1px solid var(--input-border)",
                                       borderRadius: "4px",
                                       fontSize: "13px",
                                       boxSizing: "border-box",
                                       textAlign: "right",
-                                      backgroundColor: "#ffffff",
+                                      backgroundColor: "var(--surface)",
                                       cursor: "text",
                                     }}
                                   />
@@ -1928,9 +1923,9 @@ export default function PenyesuaianStokPage() {
                       style={{
                         padding: "24px",
                         textAlign: "center",
-                        border: "1px dashed #d1d5db",
+                        border: "1px dashed var(--input-border)",
                         borderRadius: "6px",
-                        color: "#64748b",
+                        color: "var(--text-secondary)",
                         fontSize: "14px",
                         flex: 1,
                         minHeight: "360px",
@@ -1952,7 +1947,7 @@ export default function PenyesuaianStokPage() {
                   style={{
                     padding: "8px 16px",
                     backgroundColor: "#f1f5f9",
-                    color: "#475569",
+                    color: "var(--text-secondary)",
                     border: "1px solid #e2e8f0",
                     borderRadius: "6px",
                     fontSize: "13px",
@@ -1999,7 +1994,7 @@ export default function PenyesuaianStokPage() {
               >
                 <div
                   style={{
-                    backgroundColor: "#ffffff",
+                    backgroundColor: "var(--surface)",
                     borderRadius: "8px",
                     padding: "24px",
                     width: "90%",
@@ -2014,13 +2009,13 @@ export default function PenyesuaianStokPage() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
                     <div>
-                      <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "#1e293b" }}>Pilih Produk</h3>
-                      <p style={{ fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" }}>Pilih produk dari daftar di bawah ini</p>
+                      <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>Pilih Produk</h3>
+                      <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>Pilih produk dari daftar di bawah ini</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => { setShowProductModal(false); setProductModalDetailId(null); }}
-                      style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#64748b", padding: 0, width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}
+                      style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "var(--text-secondary)", padding: 0, width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}
                     >
                       ×
                     </button>
@@ -2028,10 +2023,10 @@ export default function PenyesuaianStokPage() {
                   <div style={{ overflow: "auto", flex: 1, border: "1px solid #e2e8f0", borderRadius: "6px" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                       <thead>
-                        <tr style={{ backgroundColor: "#f8fafc", position: "sticky", top: 0 }}>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Kode</th>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0", minWidth: "200px" }}>Nama</th>
-                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#475569", borderBottom: "1px solid #e2e8f0" }}>Satuan</th>
+                        <tr style={{ backgroundColor: "var(--hover-bg)", position: "sticky", top: 0 }}>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Kode</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)", minWidth: "200px" }}>Nama</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Satuan</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2044,7 +2039,7 @@ export default function PenyesuaianStokPage() {
                           return (
                             <>
                               {paginatedProducts.length === 0 ? (
-                                <tr><td colSpan={3} style={{ padding: "24px", textAlign: "center", color: "#64748b" }}>Tidak ada produk</td></tr>
+                                <tr><td colSpan={3} style={{ padding: "24px", textAlign: "center", color: "var(--text-secondary)" }}>Tidak ada produk</td></tr>
                               ) : (
                                 paginatedProducts.map((p) => (
                                   <tr
@@ -2056,13 +2051,13 @@ export default function PenyesuaianStokPage() {
                                         setProductModalDetailId(null);
                                       }
                                     }}
-                                    style={{ borderBottom: "1px solid #e2e8f0", cursor: "pointer" }}
+                                    style={{ borderBottom: "1px solid var(--border)", cursor: "pointer" }}
                                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
                                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
                                   >
-                                    <td style={{ padding: "10px 12px", color: "#1e293b" }}>{p.kodeProduk}</td>
-                                    <td style={{ padding: "10px 12px", color: "#1e293b" }}>{p.namaProduk}</td>
-                                    <td style={{ padding: "10px 12px", color: "#64748b" }}>{p.satuan || "-"}</td>
+                                    <td style={{ padding: "10px 12px", color: "var(--text-primary)" }}>{p.kodeProduk}</td>
+                                    <td style={{ padding: "10px 12px", color: "var(--text-primary)" }}>{p.namaProduk}</td>
+                                    <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{p.satuan || "-"}</td>
                                   </tr>
                                 ))
                               )}
@@ -2079,11 +2074,11 @@ export default function PenyesuaianStokPage() {
                     const start = (productModalPage - 1) * PRODUCTS_PER_PAGE;
                     const end = Math.min(start + PRODUCTS_PER_PAGE, availableProducts.length);
                     return (
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #e2e8f0", fontSize: "13px", color: "#64748b" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #e2e8f0", fontSize: "13px", color: "var(--text-secondary)" }}>
                         <span>Menampilkan {availableProducts.length === 0 ? 0 : start + 1} - {end} dari {availableProducts.length} item</span>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <button type="button" onClick={() => setProductModalPage((prev) => Math.max(1, prev - 1))} disabled={productModalPage <= 1} style={{ padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: "6px", backgroundColor: "white", cursor: productModalPage <= 1 ? "not-allowed" : "pointer", fontSize: "13px", opacity: productModalPage <= 1 ? 0.6 : 1 }}>←</button>
-                          <span style={{ fontSize: "13px", color: "#475569" }}>Halaman {productModalPage} dari {totalPages}</span>
+                          <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>Halaman {productModalPage} dari {totalPages}</span>
                           <button type="button" onClick={() => setProductModalPage((prev) => Math.min(totalPages, prev + 1))} disabled={productModalPage >= totalPages} style={{ padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: "6px", backgroundColor: "white", cursor: productModalPage >= totalPages ? "not-allowed" : "pointer", fontSize: "13px", opacity: productModalPage >= totalPages ? 0.6 : 1 }}>→</button>
                         </div>
                       </div>

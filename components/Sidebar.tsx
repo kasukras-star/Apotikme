@@ -381,7 +381,7 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
         width: isCollapsed ? "80px" : "260px",
         height: "100vh",
         backgroundColor: "transparent",
-        color: "#1e293b",
+        color: "var(--text-primary)",
         padding: "20px 0",
         overflow: isCollapsed ? "visible" : "auto",
         position: "fixed",
@@ -392,10 +392,10 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
         boxSizing: "border-box",
       }}
     >
-      <div style={{ padding: isCollapsed ? "0 10px 20px" : "0 20px 20px", borderBottom: "1px solid #e2e8f0" }}>
+      <div style={{ padding: isCollapsed ? "0 10px 20px" : "0 20px 20px", borderBottom: "1px solid var(--border)" }}>
         <div style={{ display: "flex", justifyContent: isCollapsed ? "center" : "space-between", alignItems: "center" }}>
           {!isCollapsed && (
-            <h2 style={{ fontSize: "20px", fontWeight: "bold", margin: 0, color: "#1e293b" }}>
+            <h2 style={{ fontSize: "20px", fontWeight: "bold", margin: 0, color: "var(--text-primary)" }}>
               Sistem Apotik
             </h2>
           )}
@@ -409,7 +409,7 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#64748b",
+              color: "var(--text-secondary)",
               fontSize: "18px",
             }}
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
@@ -450,10 +450,10 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                     width: "100%",
                     padding: isCollapsed ? "12px" : "12px 20px",
                     textAlign: isCollapsed ? "center" : "left",
-                    backgroundColor: isParentActive(item) ? "#eff6ff" : "transparent",
+                    backgroundColor: isParentActive(item) ? "var(--selected-bg)" : "transparent",
                     border: "none",
-                    borderLeft: isCollapsed ? "none" : (isParentActive(item) ? "3px solid #3b82f6" : "1px solid #e2e8f0"),
-                    color: isParentActive(item) ? "#3b82f6" : "#1e293b",
+                    borderLeft: isCollapsed ? "none" : (isParentActive(item) ? "3px solid var(--primary)" : "1px solid var(--border)"),
+                    color: isParentActive(item) ? "var(--primary)" : "var(--text-primary)",
                     cursor: "pointer",
                     display: "flex",
                     justifyContent: isCollapsed ? "center" : "space-between",
@@ -497,7 +497,7 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                     <span
                       style={{
                         fontSize: "13px",
-                        color: "#1e293b",
+                        color: "var(--text-primary)",
                       }}
                     >
                       {expandedMenus.includes(item.label) ? "▼" : ">"}
@@ -512,8 +512,8 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                       left: "100%",
                       top: "0",
                       marginLeft: "8px",
-                      backgroundColor: "white",
-                      border: "1px solid #e2e8f0",
+                      backgroundColor: "var(--surface)",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
                       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                       minWidth: "200px",
@@ -534,8 +534,8 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                         padding: "8px 16px",
                         fontSize: "12px",
                         fontWeight: "600",
-                        color: "#64748b",
-                        borderBottom: "1px solid #e2e8f0",
+                        color: "var(--text-secondary)",
+                        borderBottom: "1px solid var(--border)",
                         marginBottom: "4px",
                         display: "flex",
                         alignItems: "center",
@@ -566,10 +566,10 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                               display: "flex",
                               alignItems: "center",
                               padding: "10px 16px",
-                              color: isActive(child.href) ? "#3b82f6" : "#64748b",
+                              color: isActive(child.href) ? "var(--primary)" : "var(--text-secondary)",
                               textDecoration: "none",
                               fontSize: "13px",
-                              backgroundColor: isActive(child.href) ? "#eff6ff" : "transparent",
+                              backgroundColor: isActive(child.href) ? "var(--selected-bg)" : "transparent",
                               border: "none",
                               cursor: "pointer",
                               transition: "all 0.2s",
@@ -577,7 +577,7 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                             }}
                             onMouseEnter={(e) => {
                               if (!isActive(child.href)) {
-                                e.currentTarget.style.backgroundColor = "#f8fafc";
+                                e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                               }
                             }}
                             onMouseLeave={(e) => {
@@ -627,15 +627,15 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                             display: "flex",
                             alignItems: "center",
                             padding: "10px 16px",
-                            color: isActive(child.href) ? "#3b82f6" : "#64748b",
+                            color: isActive(child.href) ? "var(--primary)" : "var(--text-secondary)",
                             textDecoration: "none",
                             fontSize: "13px",
-                            backgroundColor: isActive(child.href) ? "#eff6ff" : "transparent",
+                            backgroundColor: isActive(child.href) ? "var(--selected-bg)" : "transparent",
                             transition: "all 0.2s",
                           }}
                           onMouseEnter={(e) => {
                             if (!isActive(child.href)) {
-                              e.currentTarget.style.backgroundColor = "#f8fafc";
+                              e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                             }
                           }}
                           onMouseLeave={(e) => {
@@ -691,15 +691,15 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                               display: "flex",
                               alignItems: "center",
                               padding: "10px 20px 10px 48px",
-                              color: isActive(child.href) ? "#3b82f6" : "#64748b",
+                              color: isActive(child.href) ? "var(--primary)" : "var(--text-secondary)",
                               textDecoration: "none",
                               fontSize: "13px",
                               backgroundColor: isActive(child.href)
-                                ? "#eff6ff"
+                                ? "var(--selected-bg)"
                                 : "transparent",
                               borderLeft: isActive(child.href)
-                                ? "3px solid #3b82f6"
-                                : "1px solid #e2e8f0",
+                                ? "3px solid var(--primary)"
+                                : "1px solid var(--border)",
                               borderRight: "none",
                               borderTop: "none",
                               borderBottom: "none",
@@ -710,7 +710,7 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                             }}
                             onMouseEnter={(e) => {
                               if (!isActive(child.href)) {
-                                e.currentTarget.style.backgroundColor = "#f8fafc";
+                                e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                               }
                             }}
                             onMouseLeave={(e) => {
@@ -758,21 +758,21 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                             display: "flex",
                             alignItems: "center",
                             padding: "10px 20px 10px 48px",
-                            color: isActive(child.href) ? "#3b82f6" : "#64748b",
+                            color: isActive(child.href) ? "var(--primary)" : "var(--text-secondary)",
                             textDecoration: "none",
                             fontSize: "13px",
                             backgroundColor: isActive(child.href)
-                              ? "#eff6ff"
+                              ? "var(--selected-bg)"
                               : "transparent",
                             borderLeft: isActive(child.href)
-                              ? "3px solid #3b82f6"
-                              : "1px solid #e2e8f0",
+                              ? "3px solid var(--primary)"
+                              : "1px solid var(--border)",
                             transition: "all 0.2s",
                             lineHeight: "1.5",
                           }}
                           onMouseEnter={(e) => {
                             if (!isActive(child.href)) {
-                              e.currentTarget.style.backgroundColor = "#f8fafc";
+                              e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                             }
                           }}
                           onMouseLeave={(e) => {
@@ -821,17 +821,17 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                   alignItems: "center",
                   justifyContent: isCollapsed ? "center" : "flex-start",
                   padding: isCollapsed ? "12px" : "12px 20px",
-                  color: isActive(item.href) ? "#3b82f6" : "#1e293b",
+                  color: isActive(item.href) ? "var(--primary)" : "var(--text-primary)",
                   textDecoration: "none",
                   fontSize: "13px",
                   fontWeight: "400",
                   fontFamily: "Calibri, Arial, Helvetica, sans-serif",
                   backgroundColor: isActive(item.href)
-                    ? "#eff6ff"
+                    ? "var(--selected-bg)"
                     : "transparent",
                   borderLeft: isCollapsed ? "none" : (isActive(item.href)
-                    ? "3px solid #3b82f6"
-                    : "1px solid #e2e8f0"),
+                    ? "3px solid var(--primary)"
+                    : "1px solid var(--border)"),
                   transition: "all 0.2s",
                   lineHeight: "1.5",
                   position: "relative",
@@ -839,7 +839,7 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive(item.href)) {
-                    e.currentTarget.style.backgroundColor = "#f8fafc";
+                    e.currentTarget.style.backgroundColor = "var(--hover-bg)";
                   }
                 }}
                 onMouseLeave={(e) => {

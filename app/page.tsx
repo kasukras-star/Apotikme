@@ -11,6 +11,13 @@ export default function Home() {
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  useEffect(() => {
     const supabase = getSupabaseClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -27,20 +34,18 @@ export default function Home() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <div className={styles.intro}>
-          <p className={styles.welcome}>Welcome to</p>
-          <h1 className={styles.brand}>SIMATIK</h1>
-          <p>
-            Mulai dengan masuk untuk mengelola inventori dan penjualan.{" "}
-            <button
-              type="button"
-              className={styles.linkButton}
-              onClick={() => setShowLoginModal(true)}
-            >
-              Masuk
-            </button>
-          </p>
-        </div>
+        <img
+          src="/landing-bg.png"
+          alt="Simatik"
+          className={styles.logoImage}
+        />
+        <button
+          type="button"
+          className={styles.ctaButton}
+          onClick={() => setShowLoginModal(true)}
+        >
+          Masuk
+        </button>
         {showLoginModal && (
           <LoginModal onClose={() => setShowLoginModal(false)} />
         )}
