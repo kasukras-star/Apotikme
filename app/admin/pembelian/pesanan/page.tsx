@@ -1986,7 +1986,7 @@ export default function PesananPembelianPage() {
                     </h4>
 
                     <div style={{ display: "grid", gridTemplateColumns: "10% 10%", gap: "16px", marginBottom: "20px" }}>
-                      <div>
+                      <div style={{ minWidth: 0 }}>
                         <label
                           htmlFor="diskonGlobal"
                           style={{
@@ -1995,8 +1995,7 @@ export default function PesananPembelianPage() {
                             fontSize: "10px",
                             fontWeight: "500",
                             color: "var(--text-primary)",
-                            width: "fit-content",
-                            maxWidth: "100%",
+                            width: "100%",
                           }}
                         >
                           Global Discount (%)
@@ -2020,7 +2019,7 @@ export default function PesananPembelianPage() {
                           }}
                         />
                       </div>
-                      <div>
+                      <div style={{ minWidth: 0 }}>
                         <label
                           htmlFor="ppn"
                           style={{
@@ -2029,8 +2028,7 @@ export default function PesananPembelianPage() {
                             fontSize: "10px",
                             fontWeight: "500",
                             color: "var(--text-primary)",
-                            width: "fit-content",
-                            maxWidth: "100%",
+                            width: "100%",
                           }}
                         >
                           PPN (%) <span style={{ color: "#ef4444" }}>*</span>
