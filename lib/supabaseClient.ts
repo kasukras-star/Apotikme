@@ -35,18 +35,18 @@ export function getSupabaseClient() {
   if (isBrowser) {
     const auth = client.auth;
     const originalGetSession = auth.getSession.bind(auth);
-    (auth as { getSession: () => Promise<{ data: { session: null }; error: unknown }> }).getSession =
-      async () => {
-        try {
-          return await originalGetSession();
-        } catch (e) {
-          if (isInvalidRefreshTokenError(e)) {
-            await auth.signOut();
-            return { data: { session: null }, error: e };
-          }
-          throw e;
+    type SessionResult = Awaited<ReturnType<typeof originalGetSession>>;
+    (auth as { getSession: () => Promise<SessionResult> }).getSession = async (): Promise<SessionResult> => {
+      try {
+        return await originalGetSession();
+      } catch (e) {
+        if (isInvalidRefreshTokenError(e)) {
+          await auth.signOut();
+          return { data: { session: null }, error: e } as SessionResult;
         }
-      };
+        throw e;
+      }
+    };
   }
 
   return client;
