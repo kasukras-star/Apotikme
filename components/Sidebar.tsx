@@ -384,6 +384,7 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
 
   return (
     <div
+      className="sidebar-container"
       style={{
         width: isCollapsed ? "80px" : "260px",
         height: "100vh",

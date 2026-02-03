@@ -195,7 +195,7 @@ export default function HapusDataPage() {
 
   return (
     <DashboardLayout>
-      <div>
+      <div className="hapus-data-page">
         <h2 style={{ fontSize: "24px", fontWeight: "600", marginBottom: "8px", color: "var(--text-primary)" }}>
           Hapus Data
         </h2>
@@ -317,7 +317,7 @@ export default function HapusDataPage() {
                     <span style={{ fontWeight: "600", color: "var(--text-primary)" }}>
                       {counts[item.key] ?? getDataCount(item.key)}
                     </span>
-                    <span style={{ display: "flex", color: "var(--text-secondary)" }}>
+                    <span style={{ display: "flex", alignItems: "center", color: "var(--text-secondary)" }} aria-hidden>
                       <IconDatabase />
                     </span>
                   </div>

@@ -33,6 +33,28 @@
   color-scheme: dark;
 }
 
+/* Ikon SVG di sidebar dan area lain: saat dark mode, invert agar hitam jadi terang */
+[data-theme="dark"] .sidebar-container img[src*="icons"],
+[data-theme="dark-modern"] .sidebar-container img[src*="icons"],
+[data-theme="abyss"] .sidebar-container img[src*="icons"],
+[data-theme="monokai-dimmed"] .sidebar-container img[src*="icons"],
+[data-theme="kimbie-dark"] .sidebar-container img[src*="icons"],
+[data-theme="tomorrow-night-blue"] .sidebar-container img[src*="icons"] {
+  filter: invert(1);
+}
+
+/* Hapus Data: checkbox tetap terlihat di dark mode (border kontras) */
+[data-theme="dark"] .hapus-data-page input[type="checkbox"],
+[data-theme="dark-modern"] .hapus-data-page input[type="checkbox"],
+[data-theme="abyss"] .hapus-data-page input[type="checkbox"],
+[data-theme="monokai-dimmed"] .hapus-data-page input[type="checkbox"],
+[data-theme="kimbie-dark"] .hapus-data-page input[type="checkbox"],
+[data-theme="tomorrow-night-blue"] .hapus-data-page input[type="checkbox"] {
+  border: 1px solid var(--text-secondary);
+  border-radius: 3px;
+  background-color: var(--surface);
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     --background: #0a0a0a;
