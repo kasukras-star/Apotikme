@@ -7,10 +7,10 @@ import { getSupabaseClient } from "../../../../lib/supabaseClient";
 const ALLOWED_API_KEYS = new Set([
   "products", "suppliers", "customers", "apotiks", "units", "kategoris", "types", "jenis", "margins", "racikans",
   "pesananPembelian", "fakturPembelian", "penyesuaianStok", "transferBarang", "penerimaanPembelian", "terimaTransfer",
-  "pengajuanTerimaTransfer", "stokOpname", "penjualan", "pengajuanPembelian", "pengajuanPenerimaanPembelian",
+  "rencanaTransferBarang", "pengajuanTerimaTransfer", "stokOpname", "penjualan", "pengajuanPembelian", "pengajuanPenerimaanPembelian",
   "pengajuanApotik", "pengajuanUnit", "pengajuanSupplier", "pengajuanCustomer", "pengajuanKategori", "pengajuanType",
   "pengajuanJenis", "pengajuanMargin", "pengajuanProduk", "pengajuanRacikan", "pengajuanPenyesuaianStok",
-  "pengajuanTransferBarang", "pengajuanPenerimaanPembelian", "pengajuanPerubahanHargaJual",
+  "pengajuanTransferBarang", "pengajuanPenerimaanPembelian", "pengajuanPerubahanHargaJual", "perubahanHargaJual",
   "pengaturanPerusahaan", "pengaturanSistem",
 ]);
 
@@ -35,9 +35,9 @@ const SECTIONS: { title: string; items: { key: string; label: string; descriptio
     items: [
       { key: "pesananPembelian", label: "Pesanan Pembelian", description: "Data pesanan pembelian" },
       { key: "fakturPembelian", label: "Faktur Pembelian", description: "Data faktur pembelian" },
-      { key: "penerimaanPembelian", label: "Penerimaan Pembelian", description: "Data penerimaan pembelian" },
       { key: "penyesuaianStok", label: "Penyesuaian Stok", description: "Data penyesuaian stok" },
       { key: "perubahanHargaJual", label: "Perubahan Harga Jual", description: "Riwayat perubahan harga jual" },
+      { key: "rencanaTransferBarang", label: "Rencana Transfer Barang", description: "Data rencana transfer barang" },
     ],
   },
   {
@@ -69,6 +69,7 @@ const SECTIONS: { title: string; items: { key: string; label: string; descriptio
   {
     title: "Warehouse",
     items: [
+      { key: "penerimaanPembelian", label: "Penerimaan Pembelian", description: "Data penerimaan pembelian (terima pembelian)" },
       { key: "transferBarang", label: "Transfer Barang", description: "Data transfer barang" },
       { key: "terimaTransfer", label: "Terima Transfer", description: "Data terima transfer" },
       { key: "pengajuanTerimaTransfer", label: "Pengajuan Terima Transfer", description: "Data pengajuan terima transfer" },
@@ -199,16 +200,16 @@ export default function HapusDataPage() {
         <h2 style={{ fontSize: "24px", fontWeight: "600", marginBottom: "8px", color: "var(--text-primary)" }}>
           Hapus Data
         </h2>
-        <p style={{ fontSize: "14px", color: "var(--text-secondary)", marginBottom: "24px" }}>
+        <p style={{ fontSize: "14px", color: "var(--text-secondary)", marginBottom: "16px" }}>
           Pilih data yang akan dihapus. Sistem menampilkan jumlah data dan tabel terkait yang akan ikut terhapus.
         </p>
 
         {message && (
           <div
             style={{
-              padding: "12px 16px",
+              padding: "10px 14px",
               borderRadius: "8px",
-              marginBottom: "20px",
+              marginBottom: "16px",
               backgroundColor: message.type === "success" ? "var(--success-bg, #dcfce7)" : "var(--error-bg, #fee2e2)",
               color: message.type === "success" ? "var(--success-text, #166534)" : "var(--error-text, #b91c1c)",
             }}
@@ -221,7 +222,7 @@ export default function HapusDataPage() {
           <div
             key={section.title}
             style={{
-              marginBottom: "28px",
+              marginBottom: "20px",
               border: "1px solid var(--border)",
               borderRadius: "8px",
               overflow: "hidden",
@@ -230,20 +231,20 @@ export default function HapusDataPage() {
           >
             <div
               style={{
-                padding: "16px 20px",
+                padding: "12px 16px",
                 borderBottom: "1px solid var(--border)",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 flexWrap: "wrap",
-                gap: "12px",
+                gap: "8px",
               }}
             >
               <div>
-                <h3 style={{ fontSize: "16px", fontWeight: "600", margin: 0, color: "var(--text-primary)" }}>
+                <h3 style={{ fontSize: "15px", fontWeight: "600", margin: 0, color: "var(--text-primary)" }}>
                   {section.title}
                 </h3>
-                <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
+                <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: "2px 0 0 0" }}>
                   Select data to delete
                 </p>
               </div>
@@ -255,8 +256,8 @@ export default function HapusDataPage() {
                   else selectAllInSection(section);
                 }}
                 style={{
-                  padding: "8px 16px",
-                  fontSize: "13px",
+                  padding: "6px 12px",
+                  fontSize: "12px",
                   fontWeight: "500",
                   color: "var(--primary, #2563eb)",
                   backgroundColor: "transparent",
@@ -271,9 +272,9 @@ export default function HapusDataPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-                gap: "12px",
-                padding: "16px",
+                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                gap: "8px",
+                padding: "12px",
               }}
             >
               {section.items.map((item) => (
@@ -282,10 +283,10 @@ export default function HapusDataPage() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "12px",
-                    padding: "14px 16px",
+                    gap: "8px",
+                    padding: "10px 12px",
                     border: "1px solid var(--border)",
-                    borderRadius: "8px",
+                    borderRadius: "6px",
                     cursor: "pointer",
                     backgroundColor: selected.has(item.key) ? "var(--selected-bg)" : "transparent",
                   }}
@@ -294,13 +295,13 @@ export default function HapusDataPage() {
                     type="checkbox"
                     checked={selected.has(item.key)}
                     onChange={() => toggle(item.key)}
-                    style={{ width: "18px", height: "18px", accentColor: "var(--primary)" }}
+                    style={{ width: "16px", height: "16px", flexShrink: 0, accentColor: "var(--primary)" }}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--text-primary)" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "600", color: "var(--text-primary)" }}>
                       {item.label}
                     </div>
-                    <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "2px" }}>
+                    <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "1px" }}>
                       {item.description}
                     </div>
                   </div>
@@ -308,9 +309,10 @@ export default function HapusDataPage() {
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "6px",
-                      fontSize: "13px",
+                      gap: "4px",
+                      fontSize: "12px",
                       color: "var(--text-secondary)",
+                      flexShrink: 0,
                     }}
                   >
                     <span>Data Count</span>

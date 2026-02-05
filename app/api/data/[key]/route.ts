@@ -18,6 +18,7 @@ const ALLOWED_KEYS = new Set([
   "penyesuaianStok",
   "transferBarang",
   "rencanaTransferBarang",
+  "perubahanHargaJual",
   "penerimaanPembelian",
   "terimaTransfer",
   "pengajuanTerimaTransfer",
@@ -132,6 +133,32 @@ export async function POST(
     const body = await req.json();
     const value = body?.value !== undefined ? body.value : body;
     const admin = getSupabaseAdmin();
+
+    // Khusus untuk perubahanHargaJual:
+    // Selain menyimpan nilai kosong di app_config, kita juga perlu
+    // menghapus semua baris di tabel riwayat_perubahan_harga_jual
+    // karena halaman perubahan harga jual membaca data langsung dari tabel ini.
+    if (key === "perubahanHargaJual") {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: deleteError } = await (admin as any)
+          .from("riwayat_perubahan_harga_jual")
+          .delete()
+          .not("id", "is", null);
+        if (deleteError) {
+          console.error("data/[key] POST delete riwayat_perubahan_harga_jual error:", deleteError);
+          return NextResponse.json(
+            { error: (deleteError as { message?: string }).message ?? "Database error" },
+            { status: 400 }
+          );
+        }
+      } catch (deleteException) {
+        const msg = deleteException instanceof Error ? deleteException.message : "Server error";
+        console.error("data/[key] POST delete riwayat_perubahan_harga_jual exception:", deleteException);
+        return NextResponse.json({ error: msg }, { status: 500 });
+      }
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (admin as any).from("app_config").upsert({ key, value }, { onConflict: "key" });
     if (error) {
