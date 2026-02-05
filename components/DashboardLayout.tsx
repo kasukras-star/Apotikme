@@ -295,7 +295,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const handleApotikChange = (apotikId: string) => {
     setSelectedApotikId(apotikId);
     sessionStorage.setItem("selectedApotikId", apotikId);
-    setShowApotikDropdown(false);
+    setShowUserMenu(false);
     // Reload page to apply filter
     window.location.reload();
   };
