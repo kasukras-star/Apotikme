@@ -118,6 +118,7 @@ export default function FakturPembelianPage() {
   const [hargaBarang, setHargaBarang] = useState<{ [key: string]: number }>({});
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [viewingFaktur, setViewingFaktur] = useState<FakturPembelian | null>(null);
 
   // Load current user email
   useEffect(() => {
@@ -879,6 +880,18 @@ export default function FakturPembelianPage() {
                   >
                     Status Bayar
                   </th>
+                  <th
+                    style={{
+                      padding: "12px",
+                      textAlign: "center",
+                      fontSize: "13px",
+                      fontWeight: "600",
+                      color: "var(--text-secondary)",
+                      width: "72px",
+                    }}
+                  >
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -1021,6 +1034,35 @@ export default function FakturPembelianPage() {
                       >
                         {faktur.statusBayar}
                       </span>
+                    </td>
+                    <td style={{ padding: "12px", textAlign: "center" }}>
+                      <button
+                        onClick={() => setViewingFaktur(faktur)}
+                        title="Lihat Detail"
+                        style={{
+                          padding: "4px",
+                          backgroundColor: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          transition: "opacity 0.2s",
+                          width: "24px",
+                          height: "24px",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.opacity = "0.7";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.opacity = "1";
+                        }}
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -2018,6 +2060,125 @@ export default function FakturPembelianPage() {
                   </div>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Lihat Detail Faktur */}
+        {viewingFaktur && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "flex-start",
+              zIndex: 1000,
+              overflowY: "auto",
+              padding: "20px",
+            }}
+            onClick={() => setViewingFaktur(null)}
+          >
+            <div
+              style={{
+                backgroundColor: "var(--surface)",
+                borderRadius: "8px",
+                width: "95%",
+                maxWidth: "900px",
+                boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
+                margin: "auto",
+                marginTop: "20px",
+                marginBottom: "20px",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                style={{
+                  padding: "16px 20px",
+                  borderBottom: "1px solid var(--border)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  backgroundColor: "var(--hover-bg)",
+                  borderTopLeftRadius: "8px",
+                  borderTopRightRadius: "8px",
+                }}
+              >
+                <h3 style={{ fontSize: "18px", fontWeight: "600", margin: 0, color: "var(--text-primary)" }}>
+                  Detail Faktur Pembelian
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setViewingFaktur(null)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "24px",
+                    cursor: "pointer",
+                    color: "var(--text-secondary)",
+                    padding: 0,
+                    width: "32px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "4px",
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              <div style={{ padding: "20px 24px", maxHeight: "calc(100vh - 160px)", overflowY: "auto" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px 24px", marginBottom: "24px", fontSize: "13px" }}>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Nomor Faktur</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{viewingFaktur.nomorFaktur}</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Kode Bukti</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{viewingFaktur.nomorBukti || "-"}</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Nomor Faktur Supplier</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{viewingFaktur.nomorFakturSupplier || "-"}</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Tanggal Faktur</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{formatDate(viewingFaktur.tanggalFaktur)}</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Tanggal Jatuh Tempo</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{formatDate(viewingFaktur.tanggalJatuhTempo)}</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Supplier</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{suppliers.find((s) => s.id === viewingFaktur.supplierId)?.namaSupplier || viewingFaktur.supplierId}</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Jumlah Penerimaan</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{viewingFaktur.penerimaanIds.length} penerimaan</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Status Bayar</span><div style={{ marginTop: "4px" }}><span style={{ padding: "4px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: 500, backgroundColor: viewingFaktur.statusBayar === "Lunas" ? "#d1fae5" : "#fee2e2", color: viewingFaktur.statusBayar === "Lunas" ? "#065f46" : "#991b1b" }}>{viewingFaktur.statusBayar}</span></div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Subtotal</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{formatCurrency(viewingFaktur.subtotal)}</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Diskon Global</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{formatCurrency(viewingFaktur.diskonGlobal)}</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>PPN ({viewingFaktur.ppn}%)</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{formatCurrency(viewingFaktur.ppnAmount)}</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Total</span><div style={{ fontWeight: 600, color: "var(--text-primary)", marginTop: "4px" }}>{formatCurrency(viewingFaktur.total)}</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Operator</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{viewingFaktur.operator || "-"}</div></div>
+                  <div><span style={{ color: "var(--text-secondary)" }}>Last Update</span><div style={{ fontWeight: 500, color: "var(--text-primary)", marginTop: "4px" }}>{viewingFaktur.updatedAt ? new Date(viewingFaktur.updatedAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}</div></div>
+                </div>
+                <div style={{ marginTop: "16px" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "600", margin: "0 0 12px 0", color: "var(--text-primary)" }}>Detail Barang</h4>
+                  <div style={{ overflowX: "auto", border: "1px solid var(--border)", borderRadius: "6px" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+                      <thead>
+                        <tr style={{ backgroundColor: "var(--hover-bg)" }}>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Kode</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Nama</th>
+                          <th style={{ padding: "10px 12px", textAlign: "center", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Qty</th>
+                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Harga Satuan</th>
+                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Diskon</th>
+                          <th style={{ padding: "10px 12px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {viewingFaktur.detailBarang.map((d) => (
+                          <tr key={d.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                            <td style={{ padding: "10px 12px", color: "var(--text-primary)" }}>{d.kodeProduk}</td>
+                            <td style={{ padding: "10px 12px", color: "var(--text-primary)" }}>{d.namaProduk}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "center", color: "var(--text-primary)" }}>{d.qtyTerima} {d.namaUnit}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: "var(--text-primary)" }}>{formatCurrency(d.hargaSatuan)}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: "var(--text-primary)" }}>{d.diskon}%</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", fontWeight: 500, color: "var(--text-primary)" }}>{formatCurrency(d.subtotal)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -17,6 +17,7 @@ const ALLOWED_KEYS = new Set([
   "fakturPembelian",
   "penyesuaianStok",
   "transferBarang",
+  "rencanaTransferBarang",
   "penerimaanPembelian",
   "terimaTransfer",
   "pengajuanTerimaTransfer",

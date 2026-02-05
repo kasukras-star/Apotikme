@@ -178,7 +178,7 @@ export default function PerubahanHargaJualPage() {
       }
       // Supabase kosong: coba migrasi sekali dari localStorage ke Supabase (agar data di perangkat ini tampil via URL)
       const savedRiwayat = localStorage.getItem("perubahanHargaJual");
-      if (savedRiwayat) {
+    if (savedRiwayat) {
         let localList: RiwayatPerubahanHarga[] = [];
         try {
           localList = JSON.parse(savedRiwayat);
@@ -215,7 +215,7 @@ export default function PerubahanHargaJualPage() {
         }
       }
       setRiwayatList([]);
-    } catch (err) {
+      } catch (err) {
       console.error("Error loading riwayat from Supabase:", err);
       setRiwayatError(err instanceof Error ? err.message : "Gagal memuat dari server. Pastikan SQL di Supabase sudah dijalankan dan env Vercel di-set.");
       const savedRiwayat = localStorage.getItem("perubahanHargaJual");
@@ -458,12 +458,12 @@ export default function PerubahanHargaJualPage() {
 
         productsUpdated = productsUpdated.map((p) => {
           if (p.id !== d.produkId) return p;
-          const next: Product = { ...p, hargaJual: numHarga };
-          if (next.units && next.units.length > 0) {
-            next.units = next.units.map((u) => ({ ...u, hargaJual: numHarga }));
-          }
-          return next;
-        });
+        const next: Product = { ...p, hargaJual: numHarga };
+        if (next.units && next.units.length > 0) {
+          next.units = next.units.map((u) => ({ ...u, hargaJual: numHarga }));
+        }
+        return next;
+      });
 
         rowsToInsert.push({
           no_transaksi: noTransaksi,
@@ -567,36 +567,36 @@ export default function PerubahanHargaJualPage() {
         </p>
 
         <div style={{ marginBottom: "24px" }}>
-          <button
-            type="button"
-            onClick={handleOpenModal}
-            style={{
-              padding: "10px 20px",
+            <button
+              type="button"
+              onClick={handleOpenModal}
+              style={{
+                padding: "10px 20px",
               backgroundColor: "var(--primary)",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: 500,
-              cursor: "pointer",
-            }}
-          >
-            Tambah perubahan harga
-          </button>
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
+            >
+              Tambah perubahan harga
+            </button>
         </div>
 
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
-            <h2
-              style={{
-                fontSize: "18px",
-                fontWeight: 600,
+          <h2
+            style={{
+              fontSize: "18px",
+              fontWeight: 600,
                 margin: 0,
                 color: "var(--text-primary)",
-              }}
-            >
-              Riwayat Perubahan harga jual
-            </h2>
+            }}
+          >
+            Riwayat Perubahan harga jual
+          </h2>
             <button
               type="button"
               onClick={() => loadRiwayat()}
@@ -756,12 +756,12 @@ export default function PerubahanHargaJualPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "16px" }}>
                 <div style={{ display: "flex", gap: "16px", alignItems: "stretch", flexWrap: "wrap" }}>
                   {/* Side kiri - outline group */}
-                  <div
-                    style={{
+              <div
+                style={{
                       flex: "1",
                       minWidth: "280px",
-                      display: "flex",
-                      flexDirection: "column",
+                  display: "flex",
+                  flexDirection: "column",
                       gap: "8px",
                       border: "1px solid var(--border)",
                       borderRadius: "8px",
@@ -872,8 +872,8 @@ export default function PerubahanHargaJualPage() {
                         color: "#fff",
                         border: "none",
                         borderRadius: "6px",
-                        fontSize: "13px",
-                        fontWeight: 500,
+                      fontSize: "13px",
+                      fontWeight: 500,
                         cursor: "pointer",
                       }}
                     >
@@ -1100,41 +1100,34 @@ export default function PerubahanHargaJualPage() {
           </div>
         )}
         </div>
+        </div>
 
         {isModalOpen && (
           <div
             style={{
               position: "fixed",
               top: 0,
-              left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
+              left: "var(--sidebar-width, 260px)",
+              backgroundColor: "var(--surface)",
               zIndex: 1000,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              boxShadow: "-4px 0 24px rgba(0,0,0,0.08)",
             }}
           >
-            <div
-              style={{
-                backgroundColor: "var(--surface)",
-                borderRadius: "8px",
-                padding: "24px",
-                width: "95%",
-                maxWidth: "1200px",
-                maxHeight: "90vh",
-                overflowY: "auto",
-                boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  marginBottom: "24px",
+                  padding: "12px 20px",
+                  borderBottom: "1px solid var(--border)",
+                  backgroundColor: "var(--surface-hover)",
+                  flexShrink: 0,
                 }}
               >
                 <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
@@ -1160,12 +1153,13 @@ export default function PerubahanHargaJualPage() {
                 </button>
               </div>
 
+              <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "24px" }}>
               {/* Layout: 2 side - No. Bukti, Tanggal, Tanggal Berlaku | Keterangan */}
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "16px" }}>
                 <div style={{ display: "flex", gap: "16px", alignItems: "stretch", flexWrap: "wrap" }}>
                   {/* Side kiri - outline group */}
                   <div
-                    style={{
+                      style={{
                       flex: "1",
                       minWidth: "280px",
                       display: "flex",
@@ -1180,15 +1174,15 @@ export default function PerubahanHargaJualPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                         No. Bukti
-                      </label>
-                      <div
-                        style={{
+                    </label>
+                    <div
+                      style={{
                           flex: 1,
                           padding: "6px 8px",
-                          border: "1px solid #e5e7eb",
-                          borderRadius: "6px",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "6px",
                           fontSize: "13px",
-                          backgroundColor: "#f9fafb",
+                        backgroundColor: "#f9fafb",
                           color: "var(--text-secondary)",
                           boxSizing: "border-box",
                         }}
@@ -1209,7 +1203,7 @@ export default function PerubahanHargaJualPage() {
                           padding: "6px 8px",
                           border: "1px solid var(--input-border)",
                           borderRadius: "6px",
-                          fontSize: "13px",
+                        fontSize: "13px",
                           boxSizing: "border-box",
                         }}
                       />
@@ -1266,8 +1260,8 @@ export default function PerubahanHargaJualPage() {
                         resize: "vertical",
                       }}
                     />
+                    </div>
                   </div>
-                </div>
 
                 {/* Detail Perubahan Harga - seperti Detail Penyesuaian */}
                 <div style={{ display: "flex", flexDirection: "column", minHeight: "360px" }}>
@@ -1292,8 +1286,8 @@ export default function PerubahanHargaJualPage() {
                         border: "none",
                         borderRadius: "6px",
                         cursor: "pointer",
-                        fontSize: "13px",
-                        fontWeight: 500,
+                      fontSize: "13px",
+                      fontWeight: 500,
                       }}
                     >
                       + Tambah Barang
@@ -1350,8 +1344,8 @@ export default function PerubahanHargaJualPage() {
                                 </button>
                               </td>
                               <td style={{ padding: "10px 12px", minWidth: "200px" }}>
-                                <input
-                                  type="text"
+                  <input
+                    type="text"
                                   readOnly
                                   value={d.namaProduk || ""}
                                   placeholder="Klik untuk pilih produk"
@@ -1360,13 +1354,13 @@ export default function PerubahanHargaJualPage() {
                                     setShowProductModal(true);
                                     setProductModalPage(1);
                                   }}
-                                  style={{
-                                    width: "100%",
-                                    padding: "8px 10px",
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
                                     border: "1px solid var(--input-border)",
-                                    borderRadius: "6px",
-                                    fontSize: "13px",
-                                    boxSizing: "border-box",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      boxSizing: "border-box",
                                     cursor: "pointer",
                                     backgroundColor: "white",
                                   }}
@@ -1397,11 +1391,11 @@ export default function PerubahanHargaJualPage() {
                           ))}
                         </tbody>
                       </table>
-                    </div>
+                </div>
                   ) : (
-                    <div
+              <div
                       onClick={handleAddDetail}
-                      style={{
+                style={{
                         padding: "24px",
                         textAlign: "center",
                         border: "1px dashed #d1d5db",
@@ -1410,7 +1404,7 @@ export default function PerubahanHargaJualPage() {
                         fontSize: "14px",
                         flex: 1,
                         minHeight: "360px",
-                        display: "flex",
+                  display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         cursor: "pointer",
@@ -1422,44 +1416,50 @@ export default function PerubahanHargaJualPage() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  style={{
-                    padding: "8px 16px",
-                    backgroundColor: "#f1f5f9",
-                    color: "#475569",
-                    border: "1px solid var(--border)",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Batal
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  style={{
-                    padding: "8px 16px",
-                    backgroundColor: loading ? "#94a3b8" : "#3b82f6",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    cursor: loading ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {loading ? "Menyimpan..." : "Simpan"}
-                </button>
+              </div>
+
+              <div style={{ borderTop: "1px solid var(--border)", padding: "12px 24px", flexShrink: 0, backgroundColor: "var(--surface-hover)" }}>
+                <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    style={{
+                      padding: "8px 16px",
+                      backgroundColor: "#f1f5f9",
+                      color: "#475569",
+                      border: "1px solid var(--border)",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    style={{
+                      padding: "8px 16px",
+                      backgroundColor: loading ? "#94a3b8" : "#3b82f6",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      cursor: loading ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {loading ? "Menyimpan..." : "Simpan"}
+                  </button>
+                </div>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Modal Pilih Produk - seperti Penyesuaian stok */}
-            {showProductModal && productModalDetailId && (
+        {/* Modal Pilih Produk - seperti Penyesuaian stok */}
+        {showProductModal && productModalDetailId && (
               <div
                 style={{
                   position: "fixed",
@@ -1497,7 +1497,7 @@ export default function PerubahanHargaJualPage() {
                     <div>
                       <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>Pilih Produk</h3>
                       <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>Pilih produk dari daftar di bawah ini</p>
-                    </div>
+          </div>
                     <button
                       type="button"
                       onClick={() => {
@@ -1646,9 +1646,6 @@ export default function PerubahanHargaJualPage() {
                 </div>
               </div>
             )}
-          </div>
-        )}
-      </div>
     </DashboardLayout>
   );
 }

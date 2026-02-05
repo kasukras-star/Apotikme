@@ -253,11 +253,11 @@ export default function PenyesuaianStokPage() {
       const stokSebelum = getStokProduk(product, selectedApotikId);
       const stokSesudah = stokSebelum + detail.jumlahPenyesuaian;
       if (stokSesudah < 0) {
-        const ok = confirm(
+      const ok = confirm(
           `Stok "${product.namaProduk}" setelah penyesuaian akan menjadi ${stokSesudah}. Lanjutkan?`
-        );
-        if (!ok) return;
-      }
+      );
+      if (!ok) return;
+    }
       entries.push({ detail, product, stokSebelum, stokSesudah });
     }
 
@@ -284,31 +284,31 @@ export default function PenyesuaianStokPage() {
       for (const { detail, product, stokSebelum, stokSesudah } of entries) {
         productsUpdated = productsUpdated.map((p) => {
           if (p.id !== product.id) return p;
-          const next: Product = { ...p };
-          if (next.stokPerApotik && selectedApotikId) {
+        const next: Product = { ...p };
+        if (next.stokPerApotik && selectedApotikId) {
             next.stokPerApotik = { ...next.stokPerApotik, [selectedApotikId]: stokSesudah };
-          } else {
+        } else {
             next.stokAwal = stokSesudah;
-            if (!next.stokPerApotik) next.stokPerApotik = {};
+          if (!next.stokPerApotik) next.stokPerApotik = {};
             next.stokPerApotik[selectedApotikId] = stokSesudah;
-          }
-          return next;
-        });
+        }
+        return next;
+      });
         riwayatArr.push({
           id: `${Date.now()}-${detail.id}`,
           noBuktiPenyesuaian,
           tanggal: tanggalIso,
           updatedAt: tanggalIso,
-          apotikId: selectedApotikId,
-          apotikNama,
+        apotikId: selectedApotikId,
+        apotikNama,
           produkId: detail.produkId,
           kodeProduk: detail.kodeProduk,
           namaProduk: detail.namaProduk,
-          stokSebelum,
+        stokSebelum,
           jumlahPenyesuaian: detail.jumlahPenyesuaian,
           stokSesudah,
-          keterangan: keterangan.trim(),
-          operator: currentUserEmail || "System",
+        keterangan: keterangan.trim(),
+        operator: currentUserEmail || "System",
         });
       }
 
@@ -855,11 +855,11 @@ export default function PenyesuaianStokPage() {
                 {/* Layout seperti form input: 2 side + outline group */}
                 <div style={{ display: "flex", gap: "16px", alignItems: "stretch", flexWrap: "wrap" }}>
                   {/* Side kiri - outline group */}
-                  <div
-                    style={{
+              <div
+                style={{
                       flex: "1",
                       minWidth: "280px",
-                      display: "flex",
+                  display: "flex",
                       flexDirection: "column",
                       gap: "8px",
                       border: "1px solid #e2e8f0",
@@ -968,7 +968,7 @@ export default function PenyesuaianStokPage() {
                                           cursor: "pointer",
                                           color: "var(--primary)",
                                           display: "inline-flex",
-                                          alignItems: "center",
+                  alignItems: "center",
                                           justifyContent: "center",
                                         }}
                                         onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#eff6ff"; e.currentTarget.style.borderRadius = "4px"; }}
@@ -989,7 +989,7 @@ export default function PenyesuaianStokPage() {
                                 <td style={{ padding: "10px 12px", textAlign: "right", color: "var(--text-secondary)" }}>{stokSesudahDisplay}</td>
                                 {isEditMode && (
                                   <td style={{ padding: "8px 12px", textAlign: "center", verticalAlign: "middle" }}>
-                                    <button
+                <button
                                       type="button"
                                       onClick={() => setRemovedGroupRiwayatIds((prev) => new Set(prev).add(r.id))}
                                       title="Hapus baris"
@@ -1573,12 +1573,12 @@ export default function PenyesuaianStokPage() {
         )}
 
         {isModalOpen && (
-          <div
-            style={{
+                    <div
+                      style={{
               position: "fixed",
               top: 0,
-              left: 0,
-              right: 0,
+                        left: 0,
+                        right: 0,
               bottom: 0,
               backgroundColor: "rgba(0, 0, 0, 0.5)",
               display: "flex",
@@ -1595,7 +1595,7 @@ export default function PenyesuaianStokPage() {
                 width: "95%",
                 maxWidth: "1200px",
                 maxHeight: "90vh",
-                overflowY: "auto",
+                        overflowY: "auto",
                 boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
               }}
               onClick={(e) => e.stopPropagation()}
@@ -1611,13 +1611,13 @@ export default function PenyesuaianStokPage() {
                 <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
                   Tambah Penyesuaian stok
                 </h2>
-                <button
+                          <button
                   onClick={handleCloseModal}
-                  style={{
+                            style={{
                     background: "none",
-                    border: "none",
+                              border: "none",
                     fontSize: "24px",
-                    cursor: "pointer",
+                              cursor: "pointer",
                     color: "var(--text-secondary)",
                     padding: 0,
                     width: "32px",
@@ -1628,8 +1628,8 @@ export default function PenyesuaianStokPage() {
                   }}
                 >
                   ×
-                </button>
-              </div>
+                          </button>
+                </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "16px" }}>
                 {/* 2 side: kiri = No. Penyesuaian, Tanggal, Apotik | kanan = Keterangan */}
@@ -1651,46 +1651,46 @@ export default function PenyesuaianStokPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                         No. Penyesuaian
-                      </label>
+                    </label>
                       <div style={{ flex: 1 }}>
-                        <div
-                          style={{
+                    <div
+                      style={{
                             width: "100%",
                             padding: "6px 8px",
-                            border: "1px solid #e5e7eb",
-                            borderRadius: "6px",
-                            fontSize: "13px",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "6px",
+                        fontSize: "13px",
                             backgroundColor: "#f9fafb",
                             color: "var(--text-secondary)",
                             boxSizing: "border-box",
-                          }}
-                        >
+                      }}
+                    >
                           -
-                        </div>
-                      </div>
+                    </div>
+                  </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                         Tanggal <span style={{ color: "#ef4444" }}>*</span>
-                      </label>
-                      <input
+                  </label>
+                  <input
                         type="date"
                         value={tanggalPenyesuaian}
                         onChange={(e) => setTanggalPenyesuaian(e.target.value)}
-                        style={{
+                    style={{
                           flex: 1,
                           padding: "6px 8px",
                           border: "1px solid var(--input-border)",
-                          borderRadius: "6px",
-                          fontSize: "13px",
-                          boxSizing: "border-box",
-                        }}
-                      />
-                    </div>
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <label style={{ width: "10%", minWidth: "110px", flexShrink: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                         Apotik <span style={{ color: "#ef4444" }}>*</span>
-                      </label>
+                  </label>
                       <select
                         value={selectedApotikId}
                         onChange={(e) => setSelectedApotikId(e.target.value)}
@@ -1730,19 +1730,19 @@ export default function PenyesuaianStokPage() {
                   >
                     <label style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>Keterangan</label>
                     <textarea
-                      value={keterangan}
-                      onChange={(e) => setKeterangan(e.target.value)}
-                      placeholder="Alasan penyesuaian (opsional)"
+                    value={keterangan}
+                    onChange={(e) => setKeterangan(e.target.value)}
+                    placeholder="Alasan penyesuaian (opsional)"
                       rows={4}
-                      style={{
-                        width: "100%",
+                    style={{
+                      width: "100%",
                         flex: 1,
                         minHeight: "96px",
                         padding: "6px 8px",
                         border: "1px solid var(--input-border)",
-                        borderRadius: "6px",
-                        fontSize: "13px",
-                        boxSizing: "border-box",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      boxSizing: "border-box",
                         resize: "vertical",
                       }}
                     />
@@ -2011,7 +2011,7 @@ export default function PenyesuaianStokPage() {
                     <div>
                       <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>Pilih Produk</h3>
                       <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>Pilih produk dari daftar di bawah ini</p>
-                    </div>
+          </div>
                     <button
                       type="button"
                       onClick={() => { setShowProductModal(false); setProductModalDetailId(null); }}

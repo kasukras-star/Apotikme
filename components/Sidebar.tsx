@@ -163,6 +163,7 @@ const menuItems: MenuItem[] = [
       { label: "Faktur Pembelian", href: "/admin/pembelian/faktur", icon: "faktur-pembelian" },
       { label: "Penyesuaian stok", href: "/admin/pembelian/penyesuaian-stok", icon: "inventory" },
       { label: "Perubahan harga jual", href: "/admin/pembelian/perubahan-harga-jual", icon: "laporan" },
+      { label: "Rencana Transfer Barang", href: "/admin/pembelian/rencana-transfer-barang", icon: "transfer-barang" },
     ],
   },
   {
@@ -174,6 +175,7 @@ const menuItems: MenuItem[] = [
     label: "Warehouse",
     icon: "warehouse",
     children: [
+      { label: "Dashboard", href: "/admin/warehouse/dashboard", icon: "warehouse" },
       { label: "Terima Pembelian", href: "/admin/warehouse/terima-pembelian", icon: "terima-pembelian" },
       { label: "Transfer Barang", href: "/admin/warehouse/transfer-barang", icon: "transfer-barang" },
       { label: "Terima Transfer", href: "/admin/warehouse/terima-transfer", icon: "terima-transfer" },
@@ -252,6 +254,8 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
       "pengajuanPembelian",
       "pengajuanPenerimaanPembelian",
       "pengajuanPenyesuaianStok",
+      "pengajuanTransferBarang",
+      "pengajuanTerimaTransfer",
     ];
 
     pengajuanKeys.forEach((key) => {
@@ -269,6 +273,20 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
       }
     });
 
+    // Pengajuan Rencana Transfer Barang (ada pengajuan belum disetujui)
+    try {
+      const saved = localStorage.getItem("rencanaTransferBarang");
+      if (saved) {
+        const list = JSON.parse(saved);
+        const pending = (Array.isArray(list) ? list : []).filter(
+          (r: any) => r.pengajuanSubmittedAt && !r.pengajuanDisetujuiAt
+        );
+        count += pending.length;
+      }
+    } catch (err) {
+      console.error("Error counting pengajuan rencana transfer:", err);
+    }
+
     return count;
   };
 
@@ -283,7 +301,7 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
 
     // Listen for storage changes
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key && e.key.startsWith("pengajuan")) {
+      if (e.key && (e.key.startsWith("pengajuan") || e.key === "rencanaTransferBarang")) {
         updateCount();
       }
     };

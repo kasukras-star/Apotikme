@@ -941,48 +941,41 @@ export default function PesananPembelianPage() {
           </div>
         )}
 
-        {/* Modal */}
+        {/* Modal - full page panel di sebelah kanan sidebar */}
         {isModalOpen && (
           <div
             style={{
               position: "fixed",
               top: 0,
-              left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "flex-start",
+              left: "var(--sidebar-width, 260px)",
+              backgroundColor: "var(--surface)",
               zIndex: 1000,
-              overflowY: "auto",
-              padding: "20px",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              boxShadow: "-4px 0 24px rgba(0,0,0,0.08)",
             }}
           >
             <div
               style={{
-                backgroundColor: "var(--surface)",
-                borderRadius: "8px",
-                width: "95%",
-                maxWidth: "1200px",
-                boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
-                margin: "auto",
-                marginTop: "20px",
-                marginBottom: "20px",
+                width: "100%",
+                height: "100%",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
               }}
-              onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
               <div
                 style={{
-                  padding: "20px 24px",
+                  padding: "12px 20px",
                   borderBottom: "1px solid var(--border)",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                   backgroundColor: "var(--hover-bg)",
-                  borderTopLeftRadius: "8px",
-                  borderTopRightRadius: "8px",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -1046,7 +1039,7 @@ export default function PesananPembelianPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="pesanan-form-modal">
+              <form onSubmit={handleSubmit} className="pesanan-form-modal" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
                 <style dangerouslySetInnerHTML={{ __html: `
                   .pesanan-form-modal input::placeholder,
                   .pesanan-form-modal textarea::placeholder { font-size: 13px; font-weight: 400; color: var(--text-secondary); }
@@ -1055,10 +1048,10 @@ export default function PesananPembelianPage() {
                   .pesanan-form-modal textarea { font-size: 13px !important; line-height: 1.4; background-color: var(--surface) !important; color: var(--text-primary) !important; border-color: var(--input-border); }
                 ` }} />
                 <div 
-                  style={{ padding: "24px", maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
+                  style={{ padding: "24px", flex: 1, minHeight: 0, overflowY: "auto" }}
                   onClick={(e) => {
                     if (showSupplierDropdown && supplierDropdownRef.current && !supplierDropdownRef.current.contains(e.target as Node)) {
-                      setShowSupplierDropdown(false);
+                    setShowSupplierDropdown(false);
                     }
                   }}
                 >
@@ -1084,7 +1077,7 @@ export default function PesananPembelianPage() {
                     >
                       Order Details
                     </h4>
-
+                    
                     {/* 3 outline group ke samping: Group 1 | Group 2 | Group 3 - rapat, tinggi sama */}
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", alignItems: "stretch" }}>
                     {/* Outline Group 1: Baris 1 = Document No | Date, Baris 2 = Payment Terms | Required Date */}
@@ -1136,7 +1129,7 @@ export default function PesananPembelianPage() {
                             e.currentTarget.style.borderColor = "var(--input-border)";
                           }}
                         />
-                        </div>
+                      </div>
                       </div>
                       {/* Date - di samping Document No (baris 1, kolom 2) */}
                       <div style={{ gridColumn: "2", gridRow: "1" }}>
@@ -1157,40 +1150,40 @@ export default function PesananPembelianPage() {
                         >
                           Date
                         </label>
-                        <input
+                          <input
                           type="date"
-                          id="tanggalPesanan"
-                          name="tanggalPesanan"
-                          value={formData.tanggalPesanan}
+                            id="tanggalPesanan"
+                            name="tanggalPesanan"
+                            value={formData.tanggalPesanan}
                           onChange={handleChange}
-                          style={{
-                            width: "100%",
+                            style={{
+                              width: "100%",
                             maxWidth: "160px",
                             padding: "8px 10px",
                             border: "1px solid var(--input-border)",
-                            borderRadius: "6px",
+                              borderRadius: "6px",
                             fontSize: "13px",
                             fontWeight: "400",
                             fontFamily: "inherit",
-                            boxSizing: "border-box",
-                            transition: "border-color 0.2s",
-                          }}
-                          onFocus={(e) => {
+                              boxSizing: "border-box",
+                              transition: "border-color 0.2s",
+                            }}
+                            onFocus={(e) => {
                             e.currentTarget.style.borderColor = "var(--primary)";
-                            e.currentTarget.style.outline = "none";
-                          }}
-                          onBlur={(e) => {
+                              e.currentTarget.style.outline = "none";
+                            }}
+                            onBlur={(e) => {
                             e.currentTarget.style.borderColor = "var(--input-border)";
-                          }}
-                        />
-                        </div>
+                            }}
+                          />
+                      </div>
                       </div>
                       {/* Payment Terms - baris 2, kolom 1 */}
                       <div style={{ gridColumn: "1", gridRow: "2" }}>
                         <div style={{ minHeight: "40px" }}>
                         <label
                           htmlFor="jangkaWaktuPembayaran"
-                          style={{
+                              style={{
                             display: "flex",
                             alignItems: "center",
                             minHeight: "22px",
@@ -1450,26 +1443,26 @@ export default function PesananPembelianPage() {
                                     </div>
                                   </div>
                                 ))}
-                                {suppliers.filter(
-                                  (supplier) =>
-                                    supplier.namaSupplier
-                                      .toLowerCase()
-                                      .includes(supplierSearch.toLowerCase()) ||
-                                    supplier.kodeSupplier
-                                      .toLowerCase()
-                                      .includes(supplierSearch.toLowerCase())
-                                ).length === 0 && (
-                                  <div
-                                    style={{
-                                      padding: "10px 12px",
+                              {suppliers.filter(
+                                (supplier) =>
+                                  supplier.namaSupplier
+                                    .toLowerCase()
+                                    .includes(supplierSearch.toLowerCase()) ||
+                                  supplier.kodeSupplier
+                                    .toLowerCase()
+                                    .includes(supplierSearch.toLowerCase())
+                              ).length === 0 && (
+                                <div
+                                  style={{
+                                    padding: "10px 12px",
                                       fontSize: "13px",
                                       color: "var(--text-secondary)",
-                                      textAlign: "center",
-                                    }}
-                                  >
-                                    No supplier found
-                                  </div>
-                                )}
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  No supplier found
+                                </div>
+                              )}
                               </div>
                             </div>
                           )}
@@ -1478,10 +1471,10 @@ export default function PesananPembelianPage() {
                         <div>
                           <label
                             htmlFor="alamatSupplier"
-                            style={{
+                              style={{
                               display: "block",
                               marginBottom: "0px",
-                              fontSize: "12px",
+                                fontSize: "12px",
                               fontWeight: "500",
                               color: "var(--text-primary)",
                               width: "fit-content",
@@ -1497,15 +1490,15 @@ export default function PesananPembelianPage() {
                             value={
                               formData.supplierId
                                 ? (() => {
-                                    const selectedSupplier = suppliers.find((s) => s.id === formData.supplierId);
+                                  const selectedSupplier = suppliers.find((s) => s.id === formData.supplierId);
                                     if (selectedSupplier) {
-                                      const alamatParts = [
-                                        selectedSupplier.alamat,
-                                        selectedSupplier.kota,
-                                        selectedSupplier.provinsi,
-                                      ].filter(Boolean);
-                                      return alamatParts.join(", ") || "-";
-                                    }
+                                    const alamatParts = [
+                                      selectedSupplier.alamat,
+                                      selectedSupplier.kota,
+                                      selectedSupplier.provinsi,
+                                    ].filter(Boolean);
+                                    return alamatParts.join(", ") || "-";
+                                  }
                                     return "";
                                   })()
                                 : ""
@@ -1526,9 +1519,9 @@ export default function PesananPembelianPage() {
                               resize: "none",
                             }}
                           />
-                        </div>
+                              </div>
+                            </div>
                       </div>
-                    </div>
 
                     {/* Outline Group 3: Tujuan Pengiriman, Status Kirim, Description */}
                     <div style={{ border: "1px solid var(--border)", borderRadius: "8px", padding: "8px", paddingTop: "12px", position: "relative", backgroundColor: "var(--hover-bg)", display: "flex", flexDirection: "column", minHeight: "100%" }}>
@@ -1537,63 +1530,63 @@ export default function PesananPembelianPage() {
                         <div style={{ minHeight: "40px" }}>
                           <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", flexWrap: "nowrap" }}>
                             <div style={{ flex: "1 1 200px", minWidth: "140px", maxWidth: "280px" }}>
-                              <label
-                                htmlFor="tujuanPengirimanId"
-                                style={{
-                                  display: "block",
+                          <label
+                            htmlFor="tujuanPengirimanId"
+                            style={{
+                              display: "block",
                                   marginBottom: "0px",
                                   fontSize: "12px",
-                                  fontWeight: "500",
+                              fontWeight: "500",
                                   color: "var(--text-primary)",
                                   width: "fit-content",
                                   minWidth: "120px",
                                   maxWidth: "260px",
-                                }}
-                              >
-                                Tujuan Pengiriman
-                              </label>
-                            <select
-                              id="tujuanPengirimanId"
-                              name="tujuanPengirimanId"
-                              value={formData.tujuanPengirimanId}
-                              onChange={handleChange}
-                              style={{
-                                width: "100%",
+                            }}
+                          >
+                            Tujuan Pengiriman
+                          </label>
+                          <select
+                            id="tujuanPengirimanId"
+                            name="tujuanPengirimanId"
+                            value={formData.tujuanPengirimanId}
+                            onChange={handleChange}
+                            style={{
+                              width: "100%",
                                 maxWidth: "280px",
                                 padding: "8px 10px",
                                 border: "1px solid var(--input-border)",
-                                borderRadius: "6px",
+                              borderRadius: "6px",
                                 fontSize: "13px",
                                 fontWeight: "400",
                                 fontFamily: "inherit",
-                                boxSizing: "border-box",
-                                transition: "border-color 0.2s",
+                              boxSizing: "border-box",
+                              transition: "border-color 0.2s",
                                 backgroundColor: "var(--surface)",
-                              }}
-                              onFocus={(e) => {
+                            }}
+                            onFocus={(e) => {
                                 e.currentTarget.style.borderColor = "var(--primary)";
-                                e.currentTarget.style.outline = "none";
-                              }}
-                              onBlur={(e) => {
+                              e.currentTarget.style.outline = "none";
+                            }}
+                            onBlur={(e) => {
                                 e.currentTarget.style.borderColor = "var(--input-border)";
-                              }}
-                            >
-                              <option value="">Pilih Apotik</option>
-                              {apotiks.map((apotik) => (
-                                <option key={apotik.id} value={apotik.id}>
-                                  {apotik.namaApotik}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
+                            }}
+                          >
+                            <option value="">Pilih Apotik</option>
+                            {apotiks.map((apotik) => (
+                              <option key={apotik.id} value={apotik.id}>
+                                {apotik.namaApotik}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                           <div style={{ flex: "1 1 160px", minWidth: "120px", maxWidth: "220px" }}>
-                            <label
+                        <label
                               htmlFor="statusKirim"
-                              style={{
-                                display: "block",
+                          style={{
+                            display: "block",
                                 marginBottom: "0px",
                                 fontSize: "12px",
-                                fontWeight: "500",
+                            fontWeight: "500",
                                 color: "var(--text-primary)",
                                 width: "fit-content",
                                 minWidth: "100px",
@@ -1601,31 +1594,31 @@ export default function PesananPembelianPage() {
                               }}
                             >
                               Status Kirim <span style={{ color: "#ef4444" }}>*</span>
-                            </label>
+                        </label>
                             <select
                               id="statusKirim"
                               name="statusKirim"
                               value={formData.statusKirim || "Belum Dikirim"}
-                              onChange={handleChange}
+                          onChange={handleChange}
                               required
-                              style={{
-                                width: "100%",
+                          style={{
+                            width: "100%",
                                 maxWidth: "220px",
                                 padding: "8px 10px",
                                 border: "1px solid var(--input-border)",
-                                borderRadius: "6px",
+                            borderRadius: "6px",
                                 fontSize: "13px",
                                 fontWeight: "400",
-                                fontFamily: "inherit",
-                                boxSizing: "border-box",
-                                transition: "border-color 0.2s",
+                            fontFamily: "inherit",
+                            boxSizing: "border-box",
+                            transition: "border-color 0.2s",
                                 backgroundColor: "var(--surface)",
-                              }}
-                              onFocus={(e) => {
+                          }}
+                          onFocus={(e) => {
                                 e.currentTarget.style.borderColor = "var(--primary)";
-                                e.currentTarget.style.outline = "none";
-                              }}
-                              onBlur={(e) => {
+                            e.currentTarget.style.outline = "none";
+                          }}
+                          onBlur={(e) => {
                                 e.currentTarget.style.borderColor = "var(--input-border)";
                               }}
                             >
@@ -1633,54 +1626,54 @@ export default function PesananPembelianPage() {
                               <option value="Sudah Dikirim">Sudah Dikirim</option>
                               <option value="PO Terkirim">PO Terkirim</option>
                             </select>
-                          </div>
-                          </div>
                         </div>
-                        <div>
+                      </div>
+                        </div>
+                      <div>
                         <label
                           htmlFor="deskripsi"
-                            style={{
-                              display: "block",
+                          style={{
+                            display: "block",
                               marginBottom: "0px",
                               fontSize: "12px",
-                              fontWeight: "500",
+                            fontWeight: "500",
                               color: "var(--text-primary)",
                               width: "fit-content",
                               maxWidth: "200px",
-                            }}
-                          >
+                          }}
+                        >
                             Description
-                          </label>
+                        </label>
                           <textarea
                             id="deskripsi"
                             name="deskripsi"
                             value={formData.deskripsi}
-                            onChange={handleChange}
+                          onChange={handleChange}
                             rows={2}
                             placeholder="Enter Description"
-                            style={{
-                              width: "100%",
+                                style={{
+                            width: "100%",
                               padding: "8px 10px",
                               border: "1px solid var(--input-border)",
-                              borderRadius: "6px",
+                            borderRadius: "6px",
                               fontSize: "13px",
                               fontWeight: "400",
                               fontFamily: "inherit",
                               resize: "vertical",
-                              boxSizing: "border-box",
-                              transition: "border-color 0.2s",
-                            }}
-                            onFocus={(e) => {
+                            boxSizing: "border-box",
+                            transition: "border-color 0.2s",
+                          }}
+                          onFocus={(e) => {
                               e.currentTarget.style.borderColor = "var(--primary)";
-                              e.currentTarget.style.outline = "none";
-                            }}
-                            onBlur={(e) => {
+                            e.currentTarget.style.outline = "none";
+                          }}
+                          onBlur={(e) => {
                               e.currentTarget.style.borderColor = "var(--input-border)";
-                            }}
-                          />
-                        </div>
+                          }}
+                        />
                       </div>
-                    </div>
+                      </div>
+                      </div>
                     </div>
                   </div>
 
@@ -2364,12 +2357,14 @@ export default function PesananPembelianPage() {
                   </button>
                     )}
                   </div>
-                </div>
+                  </div>
                 </div>
               </form>
             </div>
+          </div>
+        )}
 
-            {/* Modal Pilih Produk */}
+        {/* Modal Pilih Produk */}
             {showProductModal && productModalDetailId && (
               <div
                 style={{
@@ -2481,8 +2476,6 @@ export default function PesananPembelianPage() {
                 </div>
               </div>
             )}
-          </div>
-        )}
 
         {/* View Modal */}
         {isViewModalOpen && viewingPesanan && (

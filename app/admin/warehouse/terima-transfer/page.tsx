@@ -289,6 +289,16 @@ export default function TerimaTransferPage() {
       }
     });
   }, [pengajuanList, isLoadingData]);
+  // Sync transferBarang to API when status diubah (mis. jadi Diterima) agar halaman Transfer Barang menampilkan status terbaru
+  useEffect(() => {
+    if (isLoadingData) return;
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (data.session?.access_token) {
+        const payload = transferList.map((t) => ({ ...t, createdAt: t.createdAt instanceof Date ? t.createdAt.toISOString() : t.createdAt, updatedAt: t.updatedAt instanceof Date ? t.updatedAt.toISOString() : t.updatedAt }));
+        fetch("/api/data/transferBarang", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ value: payload }) }).catch(() => {});
+      }
+    });
+  }, [transferList, isLoadingData]);
 
   // Get transfers that are sent and not yet received
   // For transfer antar apotik, tidak perlu filter berdasarkan apotik tertentu
@@ -397,6 +407,7 @@ export default function TerimaTransferPage() {
       disetujuiPada: undefined,
       ditolakPada: undefined,
       alasanTolak: undefined,
+      isNew: true,
     };
 
     const updatedPengajuanList = [...pengajuanList, newPengajuan];
@@ -1139,232 +1150,81 @@ export default function TerimaTransferPage() {
           </>
         )}
 
-        {/* Modal */}
+        {/* Modal - panel penuh seperti Transfer Barang */}
         {isModalOpen && selectedTransfer && (
           <div
             style={{
               position: "fixed",
               top: 0,
-              left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "flex-start",
+              left: "var(--sidebar-width, 260px)",
+              backgroundColor: "var(--surface)",
               zIndex: 1000,
-              overflowY: "auto",
-              padding: "20px",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              boxShadow: "-4px 0 24px rgba(0,0,0,0.08)",
             }}
           >
-            <div
-              style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "8px",
-                width: "95%",
-                maxWidth: "1000px",
-                boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
-                margin: "auto",
-                marginTop: "20px",
-                marginBottom: "20px",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div
-                style={{
-                  padding: "20px 24px",
-                  borderBottom: "1px solid #e2e8f0",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  backgroundColor: "#f8fafc",
-                  borderTopLeftRadius: "8px",
-                  borderTopRightRadius: "8px",
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: "600",
-                    margin: 0,
-                    color: "#1e293b",
-                  }}
-                >
+            <div style={{ width: "100%", height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <div style={{ padding: "12px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--surface-hover)" }}>
+                <h3 style={{ fontSize: "17px", fontWeight: "600", margin: 0, color: "var(--text-primary)" }}>
                   {editingTerima ? "Edit Terima Transfer" : "Terima Transfer"}
                 </h3>
-                <button
-                  onClick={handleCloseModal}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    fontSize: "24px",
-                    cursor: "pointer",
-                    color: "#64748b",
-                    padding: 0,
-                    width: "32px",
-                    height: "32px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "4px",
-                    transition: "background-color 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#e2e8f0";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                  }}
-                >
-                  ×
-                </button>
+                <button type="button" onClick={handleCloseModal} style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "var(--text-secondary)", padding: 0, lineHeight: 1 }}>×</button>
               </div>
 
-              {/* Content */}
-              <form onSubmit={handleSubmit}>
-                <div style={{ padding: "24px" }}>
-                  {/* Informasi Transfer */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, 1fr)",
-                      gap: "20px",
-                      marginBottom: "24px",
-                    }}
-                  >
-                    <div>
-                      <label
-                        htmlFor="nomorBukti"
-                        style={{
-                          display: "block",
-                          marginBottom: "6px",
-                          fontSize: "13px",
-                          fontWeight: "500",
-                          color: "#374151",
-                        }}
-                      >
-                        Nomor Bukti
-                      </label>
-                      <input
-                        type="text"
-                        id="nomorBukti"
-                        name="nomorBukti"
-                        value={formData.nomorBukti}
-                        readOnly
-                        style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          border: "1px solid #d1d5db",
-                          borderRadius: "6px",
-                          fontSize: "14px",
-                          boxSizing: "border-box",
-                          backgroundColor: "#f3f4f6",
-                          color: "#64748b",
-                        }}
-                      />
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+                <div style={{ padding: "16px 20px", flex: 1, minHeight: 0, overflowY: "auto" }}>
+                  {error && (
+                    <div style={{ padding: "8px 12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "6px", marginBottom: "12px", color: "#dc2626", fontSize: "13px" }}>
+                      {error}
                     </div>
+                  )}
 
-                    <div>
-                      <label
-                        htmlFor="tanggalTerima"
-                        style={{
-                          display: "block",
-                          marginBottom: "6px",
-                          fontSize: "13px",
-                          fontWeight: "500",
-                          color: "#374151",
-                        }}
-                      >
-                        Tanggal Terima <span style={{ color: "#ef4444" }}>*</span>
-                      </label>
-                      <input
-                        type="date"
-                        id="tanggalTerima"
-                        name="tanggalTerima"
-                        value={formData.tanggalTerima}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            tanggalTerima: e.target.value,
-                          }))
-                        }
-                        required
-                        style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          border: "1px solid #d1d5db",
-                          borderRadius: "6px",
-                          fontSize: "14px",
-                          boxSizing: "border-box",
-                        }}
-                      />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "8px", marginBottom: "12px", alignItems: "stretch" }}>
+                    <div style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "8px", backgroundColor: "var(--surface)", display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+                        <div>
+                          <label style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "var(--text-secondary)" }}>Nomor Bukti</label>
+                          <input type="text" value={formData.nomorBukti} readOnly style={{ width: "100%", padding: "6px 8px", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "13px", backgroundColor: "var(--surface-hover)", color: "var(--text-secondary)", boxSizing: "border-box", cursor: "not-allowed" }} />
+                        </div>
+                        <div>
+                          <label style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "var(--text-secondary)" }}>Tanggal Terima <span style={{ color: "#ef4444" }}>*</span></label>
+                          <input type="date" value={formData.tanggalTerima} onChange={(e) => setFormData((prev) => ({ ...prev, tanggalTerima: e.target.value }))} required style={{ width: "100%", padding: "6px 8px", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "13px", backgroundColor: "var(--surface)", color: "var(--text-primary)", boxSizing: "border-box" }} />
+                        </div>
+                      </div>
                     </div>
-
-                    <div>
-                      <label
-                        style={{
-                          display: "block",
-                          marginBottom: "6px",
-                          fontSize: "13px",
-                          fontWeight: "500",
-                          color: "#374151",
-                        }}
-                      >
-                        Nomor Bukti
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedTransfer.nomorBukti || "-"}
-                        readOnly
-                        style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          border: "1px solid #d1d5db",
-                          borderRadius: "6px",
-                          fontSize: "14px",
-                          boxSizing: "border-box",
-                          backgroundColor: "#f3f4f6",
-                          color: "#64748b",
-                        }}
-                      />
+                    <div style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "8px", backgroundColor: "var(--surface)", display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <label style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "var(--text-secondary)" }}>Nomor Bukti Transfer</label>
+                      <input type="text" value={selectedTransfer.nomorBukti || "-"} readOnly style={{ width: "100%", padding: "6px 8px", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "13px", backgroundColor: "var(--surface-hover)", color: "var(--text-secondary)", boxSizing: "border-box", cursor: "not-allowed" }} />
+                    </div>
+                    <div style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "8px", backgroundColor: "var(--surface)", display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <label style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "var(--text-secondary)" }}>Apotik Asal</label>
+                      <div style={{ padding: "6px 8px", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "13px", backgroundColor: "var(--surface-hover)", color: "var(--text-secondary)" }}>{apotiks.find((a) => a.id === selectedTransfer.apotikAsalId)?.namaApotik || selectedTransfer.apotikAsalId}</div>
+                    </div>
+                    <div style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "8px", backgroundColor: "var(--surface)", display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <label style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "var(--text-secondary)" }}>Apotik Tujuan</label>
+                      <div style={{ padding: "6px 8px", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "13px", backgroundColor: "var(--surface-hover)", color: "var(--text-secondary)" }}>{apotiks.find((a) => a.id === selectedTransfer.apotikTujuanId)?.namaApotik || selectedTransfer.apotikTujuanId}</div>
                     </div>
                   </div>
 
-                  {/* Detail Barang */}
-                  <div
-                    style={{
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "8px",
-                      padding: "20px",
-                      marginBottom: "20px",
-                    }}
-                  >
-                    <h4
-                      style={{
-                        fontSize: "16px",
-                        fontWeight: "600",
-                        margin: "0 0 20px 0",
-                        color: "#1e293b",
-                        borderBottom: "2px solid #3b82f6",
-                        paddingBottom: "8px",
-                      }}
-                    >
-                      Detail Barang Diterima
-                    </h4>
-
+                  <div style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "12px", marginBottom: "12px", backgroundColor: "var(--surface)" }}>
+                    <div style={{ marginBottom: "10px" }}>
+                      <span style={{ fontSize: "13px", fontWeight: "600", color: "var(--text-primary)" }}>Detail Barang Diterima</span>
+                    </div>
                     {formData.detailBarang && formData.detailBarang.length > 0 ? (
-                      <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", overflowX: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "800px" }}>
+                      <div style={{ border: "1px solid var(--border)", borderRadius: "6px", overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
                           <thead>
-                            <tr style={{ backgroundColor: "#f8fafc" }}>
-                              <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>DESCRIPTION</th>
-                              <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>CODE</th>
-                              <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>UNIT</th>
-                              <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>KONVERSI</th>
-                              <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>QTY TRANSFER</th>
-                              <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>QTY TERIMA</th>
+                            <tr style={{ backgroundColor: "var(--surface-hover)" }}>
+                              <th style={{ padding: "8px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Produk</th>
+                              <th style={{ padding: "8px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Kode</th>
+                              <th style={{ padding: "8px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Unit</th>
+                              <th style={{ padding: "8px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Konversi</th>
+                              <th style={{ padding: "8px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Qty Transfer</th>
+                              <th style={{ padding: "8px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Qty Terima</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1380,13 +1240,13 @@ export default function TerimaTransferPage() {
                               const qtyTerimaInPieces = unit && unit.konversi ? detail.qtyTerima * unit.konversi : detail.qtyTerima;
                               
                               return (
-                                <tr key={detail.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                                  <td style={{ padding: "12px", fontSize: "13px", color: "#1e293b" }}>{detail.namaProduk}</td>
-                                  <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>{detail.kodeProduk || "-"}</td>
-                                  <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>{detail.namaUnit || "-"}</td>
-                                  <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>{konversiText}</td>
-                                  <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "#64748b" }}>{detail.qtyTransfer}</td>
-                                  <td style={{ padding: "12px", textAlign: "center" }}>
+                                <tr key={detail.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                                  <td style={{ padding: "8px", fontSize: "13px", color: "var(--text-primary)" }}>{detail.namaProduk}</td>
+                                  <td style={{ padding: "8px", fontSize: "13px", color: "var(--text-secondary)" }}>{detail.kodeProduk || "-"}</td>
+                                  <td style={{ padding: "8px", fontSize: "13px", color: "var(--text-secondary)" }}>{detail.namaUnit || "-"}</td>
+                                  <td style={{ padding: "8px", fontSize: "13px", color: "var(--text-secondary)" }}>{konversiText}</td>
+                                  <td style={{ padding: "8px", fontSize: "13px", textAlign: "center", color: "var(--text-secondary)" }}>{detail.qtyTransfer}</td>
+                                  <td style={{ padding: "8px", textAlign: "center" }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -1403,14 +1263,16 @@ export default function TerimaTransferPage() {
                                       style={{
                                         width: "80px",
                                         padding: "8px",
-                                        border: "1px solid #d1d5db",
+                                        border: "1px solid var(--border)",
                                         borderRadius: "4px",
                                         fontSize: "13px",
                                         textAlign: "center",
                                         boxSizing: "border-box",
+                                        backgroundColor: "var(--surface)",
+                                        color: "var(--text-primary)",
                                       }}
                                     />
-                                    <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", textAlign: "center" }}>
+                                    <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "4px", textAlign: "center" }}>
                                       = {qtyTerimaInPieces} pcs
                                     </div>
                                   </td>
@@ -1421,51 +1283,14 @@ export default function TerimaTransferPage() {
                         </table>
                       </div>
                     ) : (
-                      <div
-                        style={{
-                          padding: "40px",
-                          textAlign: "center",
-                          border: "1px dashed #d1d5db",
-                          borderRadius: "6px",
-                          color: "#64748b",
-                          fontSize: "14px",
-                        }}
-                      >
-                        No items.
+                      <div style={{ padding: "24px", textAlign: "center", border: "1px dashed var(--border)", borderRadius: "6px", color: "var(--text-secondary)", fontSize: "13px" }}>
+                        Tidak ada barang.
                       </div>
                     )}
                   </div>
-
-                  {error && (
-                    <div
-                      style={{
-                        padding: "12px",
-                        backgroundColor: "#fef2f2",
-                        border: "1px solid #fecaca",
-                        borderRadius: "6px",
-                        marginBottom: "20px",
-                        color: "#dc2626",
-                        fontSize: "14px",
-                      }}
-                    >
-                      {error}
-                    </div>
-                  )}
                 </div>
 
-                {/* Footer */}
-                <div
-                  style={{
-                    padding: "20px 24px",
-                    borderTop: "1px solid #e2e8f0",
-                    backgroundColor: "#f8fafc",
-                    display: "flex",
-                    gap: "12px",
-                    justifyContent: "flex-end",
-                    borderBottomLeftRadius: "8px",
-                    borderBottomRightRadius: "8px",
-                  }}
-                >
+                <div style={{ padding: "12px 20px", borderTop: "1px solid var(--border)", backgroundColor: "var(--surface-hover)", display: "flex", gap: "10px", justifyContent: "flex-end", flexShrink: 0 }}>
                   {(() => {
                     const approvedPengajuan = editingTerima
                       ? pengajuanList.find(
@@ -1489,28 +1314,17 @@ export default function TerimaTransferPage() {
                           onClick={handleCloseModal}
                           disabled={loading}
                           style={{
-                            padding: "10px 20px",
-                            backgroundColor: "#f3f4f6",
-                            color: "#374151",
-                            border: "none",
+                            padding: "8px 16px",
+                            backgroundColor: "var(--surface)",
+                            color: "var(--text-primary)",
+                            border: "1px solid var(--border)",
                             borderRadius: "6px",
                             cursor: loading ? "not-allowed" : "pointer",
-                            fontSize: "14px",
+                            fontSize: "13px",
                             fontWeight: "500",
-                            transition: "background-color 0.2s",
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!loading) {
-                              e.currentTarget.style.backgroundColor = "#e5e7eb";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!loading) {
-                              e.currentTarget.style.backgroundColor = "#f3f4f6";
-                            }
                           }}
                         >
-                          Cancel
+                          Batal
                         </button>
                         {approvedPengajuan ? (
                           <>
@@ -1540,7 +1354,7 @@ export default function TerimaTransferPage() {
                                   }
                                 }}
                               >
-                                {loading ? "Saving..." : "Simpan"}
+                                {loading ? "Menyimpan..." : "Simpan"}
                               </button>
                             ) : (
                               <button
@@ -1574,6 +1388,20 @@ export default function TerimaTransferPage() {
                                     const updatedTerimaList = terimaList.filter((t) => t.id !== editingTerima?.id);
                                     setTerimaList(updatedTerimaList);
                                     localStorage.setItem("terimaTransfer", JSON.stringify(updatedTerimaList));
+                                    // Kembalikan status transfer barang ke "Dikirim" agar muncul lagi di daftar dengan tombol Terima
+                                    if (editingTerima?.transferId) {
+                                      const savedTransfers = localStorage.getItem("transferBarang");
+                                      if (savedTransfers) {
+                                        const transfers: TransferBarang[] = JSON.parse(savedTransfers);
+                                        const updatedTransfers = transfers.map((t) =>
+                                          t.id === editingTerima.transferId
+                                            ? { ...t, status: "Dikirim" as const, updatedAt: new Date() }
+                                            : t
+                                        );
+                                        localStorage.setItem("transferBarang", JSON.stringify(updatedTransfers));
+                                        setTransferList(updatedTransfers);
+                                      }
+                                    }
                                     // Update pengajuan status
                                     const updatedPengajuanList = pengajuanList.map((p) =>
                                       p.id === approvedPengajuan.id ? { ...p, status: "Selesai" } : p
@@ -1755,7 +1583,7 @@ export default function TerimaTransferPage() {
                               }
                             }}
                           >
-                            {loading ? "Saving..." : "Simpan Terima Transfer"}
+                            {loading ? "Menyimpan..." : "Simpan Terima Transfer"}
                           </button>
                         )}
                       </>

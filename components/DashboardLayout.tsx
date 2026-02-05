@@ -125,7 +125,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [apotiks, setApotiks] = useState<Apotik[]>([]);
   const [selectedApotikId, setSelectedApotikId] = useState<string | null>(null);
-  const [showApotikDropdown, setShowApotikDropdown] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -158,7 +157,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       "/admin/pembelian/faktur": "Faktur Pembelian",
       "/admin/pembelian/penyesuaian-stok": "Penyesuaian stok",
       "/admin/pembelian/perubahan-harga-jual": "Perubahan harga jual",
+      "/admin/pembelian/rencana-transfer-barang": "Rencana Transfer Barang",
       "/admin/pembelian/persetujuan-pengajuan": "Persetujuan Pengajuan",
+      "/admin/warehouse/dashboard": "Dashboard Gudang",
       "/admin/warehouse/terima-pembelian": "Terima Pembelian",
       "/admin/warehouse/transfer-barang": "Transfer Barang",
       "/admin/warehouse/terima-transfer": "Terima Transfer",
@@ -367,6 +368,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           backgroundColor: "var(--page-bg)",
           minHeight: "100vh",
           transition: "margin-left 0.3s ease",
+          ["--sidebar-width" as string]: isSidebarCollapsed ? "80px" : "260px",
         }}
       >
         <header
@@ -385,128 +387,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <h1 style={{ fontSize: "20px", fontWeight: "600", margin: 0, color: "var(--text-primary)" }}>
             {getPageTitle()}
           </h1>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            {/* Apotik Selector - Only show if user has multiple apotiks or is super admin */}
-            {(isSuperAdmin || (userApotikIds.length > 1 && selectedApotikId)) && (
-              <div style={{ position: "relative" }}>
-                <button
-                  onClick={() => setShowApotikDropdown(!showApotikDropdown)}
-                  style={{
-                    padding: "8px 12px",
-                    backgroundColor: "var(--hover-bg)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    fontSize: "13px",
-                    fontWeight: "500",
-                    color: "var(--text-primary)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    minWidth: "150px",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <span>
-                    {selectedApotikId === "all"
-                      ? "Semua Apotik"
-                      : apotiks.find((a) => a.id === selectedApotikId)?.namaApotik || "Pilih Apotik"}
-                  </span>
-                  <span style={{ fontSize: "10px" }}>▼</span>
-                </button>
-                {showApotikDropdown && (
-                  <>
-                    <div
-                      style={{
-                        position: "fixed",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        zIndex: 998,
-                      }}
-                      onClick={() => setShowApotikDropdown(false)}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "100%",
-                        right: 0,
-                        marginTop: "4px",
-                        backgroundColor: "var(--surface)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "6px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                        minWidth: "200px",
-                        zIndex: 999,
-                        maxHeight: "300px",
-                        overflowY: "auto",
-                      }}
-                    >
-                      {isSuperAdmin && (
-                        <button
-                          onClick={() => handleApotikChange("all")}
-                          style={{
-                            width: "100%",
-                            padding: "10px 12px",
-                            textAlign: "left",
-                            border: "none",
-                            backgroundColor: selectedApotikId === "all" ? "var(--selected-bg)" : "transparent",
-                            color: selectedApotikId === "all" ? "var(--primary)" : "var(--text-primary)",
-                            cursor: "pointer",
-                            fontSize: "13px",
-                            fontWeight: selectedApotikId === "all" ? "600" : "400",
-                          }}
-                          onMouseEnter={(e) => {
-                            if (selectedApotikId !== "all") {
-                              e.currentTarget.style.backgroundColor = "var(--hover-bg)";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (selectedApotikId !== "all") {
-                              e.currentTarget.style.backgroundColor = "transparent";
-                            }
-                          }}
-                        >
-                          Semua Apotik
-                        </button>
-                      )}
-                      {(isSuperAdmin ? apotiks : apotiks.filter((a) => userApotikIds.includes(a.id))).map((apotik) => (
-                        <button
-                          key={apotik.id}
-                          onClick={() => handleApotikChange(apotik.id)}
-                          style={{
-                            width: "100%",
-                            padding: "10px 12px",
-                            textAlign: "left",
-                            border: "none",
-                            borderTop: isSuperAdmin && apotik.id === apotiks[0]?.id ? "1px solid var(--border)" : "none",
-                            backgroundColor: selectedApotikId === apotik.id ? "var(--selected-bg)" : "transparent",
-                            color: selectedApotikId === apotik.id ? "var(--primary)" : "var(--text-primary)",
-                            cursor: "pointer",
-                            fontSize: "13px",
-                            fontWeight: selectedApotikId === apotik.id ? "600" : "400",
-                          }}
-                          onMouseEnter={(e) => {
-                            if (selectedApotikId !== apotik.id) {
-                              e.currentTarget.style.backgroundColor = "var(--hover-bg)";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (selectedApotikId !== apotik.id) {
-                              e.currentTarget.style.backgroundColor = "transparent";
-                            }
-                          }}
-                        >
-                          {apotik.namaApotik}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }} />
         </header>
         <main style={{ padding: "24px" }}>{children}</main>
 
@@ -552,6 +433,71 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     {email || ""}
                   </div>
                 </div>
+                {(isSuperAdmin || (userApotikIds.length > 1 && selectedApotikId)) && (
+                  <div style={{ borderBottom: "1px solid var(--border)", padding: "8px 0" }}>
+                    <div style={{ padding: "8px 16px", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase" }}>
+                      Akses Apotik
+                    </div>
+                    {isSuperAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleApotikChange("all");
+                          setShowUserMenu(false);
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "10px 16px",
+                          textAlign: "left",
+                          border: "none",
+                          backgroundColor: selectedApotikId === "all" ? "var(--selected-bg)" : "transparent",
+                          color: selectedApotikId === "all" ? "var(--primary)" : "var(--text-primary)",
+                          cursor: "pointer",
+                          fontSize: "14px",
+                          fontWeight: selectedApotikId === "all" ? "600" : "400",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedApotikId !== "all") e.currentTarget.style.backgroundColor = "var(--hover-bg)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedApotikId !== "all") e.currentTarget.style.backgroundColor = "transparent";
+                        }}
+                      >
+                        Semua Apotik
+                      </button>
+                    )}
+                    {(isSuperAdmin ? apotiks : apotiks.filter((a) => userApotikIds.includes(a.id))).map((apotik) => (
+                      <button
+                        key={apotik.id}
+                        type="button"
+                        onClick={() => {
+                          handleApotikChange(apotik.id);
+                          setShowUserMenu(false);
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "10px 16px",
+                          textAlign: "left",
+                          border: "none",
+                          borderTop: isSuperAdmin && apotik.id === apotiks[0]?.id ? "1px solid var(--border)" : "none",
+                          backgroundColor: selectedApotikId === apotik.id ? "var(--selected-bg)" : "transparent",
+                          color: selectedApotikId === apotik.id ? "var(--primary)" : "var(--text-primary)",
+                          cursor: "pointer",
+                          fontSize: "14px",
+                          fontWeight: selectedApotikId === apotik.id ? "600" : "400",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedApotikId !== apotik.id) e.currentTarget.style.backgroundColor = "var(--hover-bg)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedApotikId !== apotik.id) e.currentTarget.style.backgroundColor = "transparent";
+                        }}
+                      >
+                        {apotik.namaApotik}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div style={{ padding: "8px 0", position: "relative" }}>
                   <MenuItem
                     icon={<IconShield />}

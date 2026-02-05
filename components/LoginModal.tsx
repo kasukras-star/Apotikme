@@ -128,7 +128,7 @@ export default function LoginModal({ onClose }: Props) {
           </button>
         </div>
         <div className={styles.logoWrap}>
-          <img src="/landing-bg.png" alt="Simatik" className={styles.logoImage} />
+          <img src="/logo_simatik.png.png" alt="Simatik App" className={styles.logoImage} />
         </div>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>

@@ -56,6 +56,14 @@ interface Pengajuan {
   menuSystem?: string; // Menu system: "Data Master", "Merchandise", "Warehouse", dll
   isNew?: boolean; // Flag untuk notifikasi baru
   isGlobal?: boolean; // Pengajuan penyesuaian stok untuk seluruh produk dalam satu No Bukti
+  sourceRencanaTransfer?: boolean;
+  rencanaId?: string;
+  nomorRencana?: string;
+  sourceTransferBarang?: boolean;
+  transferId?: string;
+  nomorTransfer?: string;
+  sourceTerimaTransfer?: boolean;
+  terimaTransferId?: string;
 }
 
 interface Pesanan {
@@ -80,6 +88,9 @@ export default function PersetujuanPengajuanPage() {
   const [pengajuanRacikanList, setPengajuanRacikanList] = useState<Pengajuan[]>([]);
   const [pengajuanProdukList, setPengajuanProdukList] = useState<Pengajuan[]>([]);
   const [pengajuanPenyesuaianStokList, setPengajuanPenyesuaianStokList] = useState<Pengajuan[]>([]);
+  const [pengajuanTransferBarangList, setPengajuanTransferBarangList] = useState<Pengajuan[]>([]);
+  const [pengajuanTerimaTransferList, setPengajuanTerimaTransferList] = useState<Pengajuan[]>([]);
+  const [rencanaTransferList, setRencanaTransferList] = useState<any[]>([]);
   const [pesananList, setPesananList] = useState<Pesanan[]>([]);
   const [penerimaanList, setPenerimaanList] = useState<any[]>([]);
   const [apotiks, setApotiks] = useState<any[]>([]);
@@ -331,6 +342,39 @@ export default function PersetujuanPengajuanPage() {
       }
     }
 
+    try {
+      const savedRencanaTransfer = localStorage.getItem("rencanaTransferBarang");
+      if (savedRencanaTransfer) {
+        const parsed = JSON.parse(savedRencanaTransfer);
+        setRencanaTransferList(Array.isArray(parsed) ? parsed : []);
+      }
+    } catch (err) {
+      console.error("Error loading rencana transfer:", err);
+      setRencanaTransferList([]);
+    }
+
+    // Load pengajuan transfer barang
+    try {
+      const saved = localStorage.getItem("pengajuanTransferBarang");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setPengajuanTransferBarangList(Array.isArray(parsed) ? parsed : []);
+      }
+    } catch (err) {
+      console.error("Error loading pengajuan transfer barang:", err);
+    }
+
+    // Load pengajuan terima transfer
+    try {
+      const saved = localStorage.getItem("pengajuanTerimaTransfer");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setPengajuanTerimaTransferList(Array.isArray(parsed) ? parsed : []);
+      }
+    } catch (err) {
+      console.error("Error loading pengajuan terima transfer:", err);
+    }
+
     // Load customers
     const savedCustomers = localStorage.getItem("customers");
     if (savedCustomers) {
@@ -365,9 +409,31 @@ export default function PersetujuanPengajuanPage() {
     getSupabaseClient().auth.getSession().then(({ data }) => {
       if (!data.session?.access_token) return;
       const token = data.session.access_token;
-      const keys = ["pengajuanPembelian", "pengajuanPenerimaanPembelian", "penerimaanPembelian", "pesananPembelian", "suppliers", "pengajuanApotik", "pengajuanUnit", "pengajuanSupplier", "apotiks", "units", "pengajuanCustomer", "pengajuanKategori", "pengajuanProduk", "pengajuanType", "pengajuanJenis", "pengajuanMargin", "pengajuanRacikan", "pengajuanPenyesuaianStok", "customers", "kategoris", "products"];
+      const keys = ["pengajuanPembelian", "pengajuanPenerimaanPembelian", "pengajuanTransferBarang", "pengajuanTerimaTransfer", "penerimaanPembelian", "pesananPembelian", "suppliers", "pengajuanApotik", "pengajuanUnit", "pengajuanSupplier", "apotiks", "units", "pengajuanCustomer", "pengajuanKategori", "pengajuanProduk", "pengajuanType", "pengajuanJenis", "pengajuanMargin", "pengajuanRacikan", "pengajuanPenyesuaianStok", "rencanaTransferBarang", "customers", "kategoris", "products"];
       Promise.all(keys.map((k) => fetch("/api/data/" + k, { headers: { Authorization: `Bearer ${token}` } }).then((r) => (r.ok ? r.json() : null)).then((v) => ({ key: k, value: v })))).then((results) => {
         results.forEach(({ key, value }) => {
+          if (key === "rencanaTransferBarang") {
+            if (Array.isArray(value)) {
+              const fromStorage = (() => {
+                try {
+                  const s = localStorage.getItem("rencanaTransferBarang");
+                  if (!s) return [];
+                  const p = JSON.parse(s);
+                  return Array.isArray(p) ? p : [];
+                } catch {
+                  return [];
+                }
+              })();
+              const byId = new Map(value.map((r: any) => [r.id, r]));
+              fromStorage.forEach((r: any) => {
+                if (r.pengajuanSubmittedAt && !r.pengajuanDisetujuiAt) byId.set(r.id, r);
+              });
+              const merged = Array.from(byId.values());
+              localStorage.setItem(key, JSON.stringify(merged));
+              setRencanaTransferList(merged);
+            }
+            return;
+          }
           if (!Array.isArray(value) || value.length === 0) return;
           localStorage.setItem(key, JSON.stringify(value));
           const withMenu = (arr: any[], menu: string) => arr.map((p: any) => ({ ...p, menuSystem: p.menuSystem || menu }));
@@ -390,6 +456,8 @@ export default function PersetujuanPengajuanPage() {
             case "pengajuanMargin": setPengajuanMarginList(withMenu(value, "Data Master")); break;
             case "pengajuanRacikan": setPengajuanRacikanList(withMenu(value, "Data Master")); break;
             case "pengajuanPenyesuaianStok": setPengajuanPenyesuaianStokList(withMenu(Array.isArray(value) ? value : [value], "Merchandise")); break;
+            case "pengajuanTransferBarang": setPengajuanTransferBarangList(withMenu(Array.isArray(value) ? value : [], "Warehouse")); break;
+            case "pengajuanTerimaTransfer": setPengajuanTerimaTransferList(withMenu(Array.isArray(value) ? value : [], "Warehouse")); break;
             case "customers": setCustomers(value); break;
             case "kategoris": setKategoris(value); break;
             case "products": setProducts(value); break;
@@ -428,6 +496,39 @@ export default function PersetujuanPengajuanPage() {
           setPengajuanPenerimaanList(JSON.parse(savedPenerimaan));
         } catch (err) {
           console.error("Error loading pengajuan penerimaan on focus:", err);
+        }
+      }
+      const savedRencanaTransfer = localStorage.getItem("rencanaTransferBarang");
+      if (savedRencanaTransfer) {
+        try {
+          const parsed = JSON.parse(savedRencanaTransfer);
+          setRencanaTransferList(Array.isArray(parsed) ? parsed : []);
+        } catch (err) {
+          console.error("Error loading rencana transfer on focus:", err);
+        }
+      }
+      const savedTransferBarang = localStorage.getItem("pengajuanTransferBarang");
+      if (savedTransferBarang) {
+        try {
+          const parsed = JSON.parse(savedTransferBarang);
+          const arr = Array.isArray(parsed) ? parsed : [];
+          setPengajuanTransferBarangList(
+            arr.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Warehouse" }))
+          );
+        } catch (err) {
+          console.error("Error loading pengajuan transfer barang on focus:", err);
+        }
+      }
+      const savedTerimaTransfer = localStorage.getItem("pengajuanTerimaTransfer");
+      if (savedTerimaTransfer) {
+        try {
+          const parsed = JSON.parse(savedTerimaTransfer);
+          const arr = Array.isArray(parsed) ? parsed : [];
+          setPengajuanTerimaTransferList(
+            arr.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Warehouse" }))
+          );
+        } catch (err) {
+          console.error("Error loading pengajuan terima transfer on focus:", err);
         }
       }
     };
@@ -690,6 +791,62 @@ export default function PersetujuanPengajuanPage() {
           console.error("Error loading pengajuan penyesuaian stok:", err);
         }
       }
+
+      // Reload pengajuan transfer barang list
+      const savedPengajuanTransferBarang = localStorage.getItem("pengajuanTransferBarang");
+      if (savedPengajuanTransferBarang) {
+        try {
+          const parsed = JSON.parse(savedPengajuanTransferBarang);
+          const arr = Array.isArray(parsed) ? parsed : [];
+          const transferBarangPengajuanWithMenu = arr.map((p: any) => ({
+            ...p,
+            menuSystem: p.menuSystem || "Warehouse",
+          }));
+          setPengajuanTransferBarangList((prevList) => {
+            if (JSON.stringify(transferBarangPengajuanWithMenu) !== JSON.stringify(prevList)) {
+              return transferBarangPengajuanWithMenu;
+            }
+            return prevList;
+          });
+        } catch (err) {
+          console.error("Error loading pengajuan transfer barang:", err);
+        }
+      }
+
+      // Reload pengajuan terima transfer list
+      const savedPengajuanTerimaTransfer = localStorage.getItem("pengajuanTerimaTransfer");
+      if (savedPengajuanTerimaTransfer) {
+        try {
+          const parsed = JSON.parse(savedPengajuanTerimaTransfer);
+          const arr = Array.isArray(parsed) ? parsed : [];
+          const terimaTransferPengajuanWithMenu = arr.map((p: any) => ({
+            ...p,
+            menuSystem: p.menuSystem || "Warehouse",
+          }));
+          setPengajuanTerimaTransferList((prevList) => {
+            if (JSON.stringify(terimaTransferPengajuanWithMenu) !== JSON.stringify(prevList)) {
+              return terimaTransferPengajuanWithMenu;
+            }
+            return prevList;
+          });
+        } catch (err) {
+          console.error("Error loading pengajuan terima transfer:", err);
+        }
+      }
+
+      const savedRencanaTransfer = localStorage.getItem("rencanaTransferBarang");
+      if (savedRencanaTransfer) {
+        try {
+          const parsed = JSON.parse(savedRencanaTransfer);
+          const arr = Array.isArray(parsed) ? parsed : [];
+          setRencanaTransferList((prevList) => {
+            if (JSON.stringify(arr) !== JSON.stringify(prevList)) return arr;
+            return prevList;
+          });
+        } catch (err) {
+          console.error("Error loading rencana transfer:", err);
+        }
+      }
     }, 1000); // Check every second
 
     return () => clearInterval(interval);
@@ -797,9 +954,29 @@ export default function PersetujuanPengajuanPage() {
         count++;
       }
     });
+
+    // Check pengajuan transfer barang
+    pengajuanTransferBarangList.forEach((p) => {
+      if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
+        count++;
+      }
+    });
+
+    // Check pengajuan terima transfer
+    pengajuanTerimaTransferList.forEach((p) => {
+      if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
+        count++;
+      }
+    });
+
+    rencanaTransferList.forEach((r: any) => {
+      if (r.pengajuanSubmittedAt && !r.pengajuanDisetujuiAt && isRecentPengajuan(r.pengajuanSubmittedAt)) {
+        count++;
+      }
+    });
     
     setNewPengajuanCount(count);
-  }, [pengajuanList, pengajuanPenerimaanList, pengajuanApotikList, pengajuanUnitList, pengajuanSupplierList, pengajuanCustomerList, pengajuanKategoriList, pengajuanProdukList, pengajuanTypeList, pengajuanJenisList, pengajuanMarginList, pengajuanRacikanList, pengajuanPenyesuaianStokList]);
+  }, [pengajuanList, pengajuanPenerimaanList, pengajuanApotikList, pengajuanUnitList, pengajuanSupplierList, pengajuanCustomerList, pengajuanKategoriList, pengajuanProdukList, pengajuanTypeList, pengajuanJenisList, pengajuanMarginList, pengajuanRacikanList, pengajuanPenyesuaianStokList, pengajuanTransferBarangList, pengajuanTerimaTransferList, rencanaTransferList]);
 
   // Check for new pengajuan periodically
   useEffect(() => {
@@ -904,14 +1081,89 @@ export default function PersetujuanPengajuanPage() {
           count++;
         }
       });
+
+      // Check pengajuan transfer barang
+      pengajuanTransferBarangList.forEach((p) => {
+        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
+          count++;
+        }
+      });
+
+      // Check pengajuan terima transfer
+      pengajuanTerimaTransferList.forEach((p) => {
+        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
+          count++;
+        }
+      });
       
       setNewPengajuanCount(count);
     }, 3000); // Check every 3 seconds
 
     return () => clearInterval(interval);
-  }, [pengajuanList, pengajuanPenerimaanList, pengajuanApotikList, pengajuanUnitList, pengajuanSupplierList, pengajuanCustomerList, pengajuanKategoriList, pengajuanProdukList, pengajuanTypeList, pengajuanJenisList, pengajuanMarginList, pengajuanRacikanList, pengajuanPenyesuaianStokList]);
+  }, [pengajuanList, pengajuanPenerimaanList, pengajuanApotikList, pengajuanUnitList, pengajuanSupplierList, pengajuanCustomerList, pengajuanKategoriList, pengajuanProdukList, pengajuanTypeList, pengajuanJenisList, pengajuanMarginList, pengajuanRacikanList, pengajuanPenyesuaianStokList, pengajuanTransferBarangList, pengajuanTerimaTransferList]);
 
   const handleSetujui = (pengajuan: Pengajuan) => {
+    if (pengajuan.sourceRencanaTransfer && pengajuan.rencanaId) {
+      const rencana = rencanaTransferList.find((r: any) => r.id === pengajuan.rencanaId);
+      if (!rencana) return;
+      if (!confirm(`Setujui pengajuan ${pengajuan.jenisPengajuan} untuk Rencana Transfer ${rencana.nomorRencana}?`)) return;
+      const updated = { ...rencana, pengajuanDisetujuiAt: new Date().toISOString() };
+      const nextList = rencanaTransferList.map((r: any) => (r.id === pengajuan.rencanaId ? updated : r));
+      setRencanaTransferList(nextList);
+      localStorage.setItem("rencanaTransferBarang", JSON.stringify(nextList));
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/rencanaTransferBarang", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+            body: JSON.stringify({ value: nextList }),
+          }).catch(() => {});
+        }
+      });
+      alert("Pengajuan Rencana Transfer telah disetujui.");
+      return;
+    }
+
+    if ((pengajuan as any).sourceTerimaTransfer && (pengajuan as any).terimaTransferId) {
+      if (!confirm(`Setujui pengajuan ${pengajuan.jenisPengajuan} untuk Terima Transfer ${(pengajuan as any).nomorBukti || pengajuan.nomorPesanan}?`)) return;
+      const updatedList = pengajuanTerimaTransferList.map((p) =>
+        p.id === pengajuan.id ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false } : p
+      );
+      setPengajuanTerimaTransferList(updatedList);
+      localStorage.setItem("pengajuanTerimaTransfer", JSON.stringify(updatedList));
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanTerimaTransfer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+            body: JSON.stringify({ value: updatedList }),
+          }).catch(() => {});
+        }
+      });
+      alert("Pengajuan Terima Transfer telah disetujui.");
+      return;
+    }
+
+    if ((pengajuan as any).sourceTransferBarang && (pengajuan as any).transferId) {
+      if (!confirm(`Setujui pengajuan ${pengajuan.jenisPengajuan} untuk Transfer Barang ${(pengajuan as any).nomorTransfer || pengajuan.nomorPesanan}?`)) return;
+      const updatedList = pengajuanTransferBarangList.map((p) =>
+        p.id === pengajuan.id ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false } : p
+      );
+      setPengajuanTransferBarangList(updatedList);
+      localStorage.setItem("pengajuanTransferBarang", JSON.stringify(updatedList));
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanTransferBarang", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+            body: JSON.stringify({ value: updatedList }),
+          }).catch(() => {});
+        }
+      });
+      alert("Pengajuan Transfer Barang telah disetujui.");
+      return;
+    }
+
     const isApotik = pengajuan.menuSystem === "Data Master" && pengajuan.apotikId;
     const isUnit = pengajuan.menuSystem === "Data Master" && pengajuan.unitId;
     const isSupplier = pengajuan.menuSystem === "Data Master" && pengajuan.supplierId;
@@ -1384,6 +1636,70 @@ export default function PersetujuanPengajuanPage() {
       return; // User cancelled, exit early
     }
 
+    if (pengajuan.sourceRencanaTransfer && pengajuan.rencanaId) {
+      const rencana = rencanaTransferList.find((r: any) => r.id === pengajuan.rencanaId);
+      if (!rencana) return;
+      const updated = {
+        ...rencana,
+        pengajuanSubmittedAt: undefined,
+        pengajuanType: undefined,
+        pengajuanKeterangan: undefined,
+        pengajuanDisetujuiAt: undefined,
+      };
+      const nextList = rencanaTransferList.map((r: any) => (r.id === pengajuan.rencanaId ? updated : r));
+      setRencanaTransferList(nextList);
+      localStorage.setItem("rencanaTransferBarang", JSON.stringify(nextList));
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/rencanaTransferBarang", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+            body: JSON.stringify({ value: nextList }),
+          }).catch(() => {});
+        }
+      });
+      alert("Pengajuan Rencana Transfer telah ditolak.");
+      return;
+    }
+
+    if ((pengajuan as any).sourceTerimaTransfer && pengajuan.id) {
+      const updatedList = pengajuanTerimaTransferList.map((p) =>
+        p.id === pengajuan.id ? { ...p, status: "Ditolak", ditolakPada: new Date().toISOString(), alasanTolak, isNew: false } : p
+      );
+      setPengajuanTerimaTransferList(updatedList);
+      localStorage.setItem("pengajuanTerimaTransfer", JSON.stringify(updatedList));
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanTerimaTransfer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+            body: JSON.stringify({ value: updatedList }),
+          }).catch(() => {});
+        }
+      });
+      alert("Pengajuan Terima Transfer telah ditolak.");
+      return;
+    }
+
+    if ((pengajuan as any).sourceTransferBarang && pengajuan.id) {
+      const updatedList = pengajuanTransferBarangList.map((p) =>
+        p.id === pengajuan.id ? { ...p, status: "Ditolak", ditolakPada: new Date().toISOString(), alasanTolak, isNew: false } : p
+      );
+      setPengajuanTransferBarangList(updatedList);
+      localStorage.setItem("pengajuanTransferBarang", JSON.stringify(updatedList));
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanTransferBarang", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+            body: JSON.stringify({ value: updatedList }),
+          }).catch(() => {});
+        }
+      });
+      alert("Pengajuan Transfer Barang telah ditolak.");
+      return;
+    }
+
     const isApotik = pengajuan.menuSystem === "Data Master" && pengajuan.apotikId;
     const isUnit = pengajuan.menuSystem === "Data Master" && pengajuan.unitId;
     const isSupplier = pengajuan.menuSystem === "Data Master" && pengajuan.supplierId;
@@ -1610,6 +1926,47 @@ export default function PersetujuanPengajuanPage() {
       all.push({
         ...p,
         menuSystem: p.menuSystem || "Merchandise",
+      });
+    });
+
+    // Pengajuan Rencana Transfer Barang (menunggu disetujui)
+    rencanaTransferList.forEach((r: any) => {
+      if (r.pengajuanSubmittedAt && !r.pengajuanDisetujuiAt) {
+        all.push({
+          id: "rencana-" + r.id,
+          menuSystem: "Merchandise",
+          status: "Menunggu Persetujuan",
+          jenisPengajuan: r.pengajuanType || "",
+          alasanPengajuan: r.pengajuanKeterangan || "",
+          createdAt: r.pengajuanSubmittedAt || "",
+          nomorPesanan: r.nomorRencana,
+          sourceRencanaTransfer: true,
+          rencanaId: r.id,
+          nomorRencana: r.nomorRencana,
+        });
+      }
+    });
+
+    // Pengajuan Transfer Barang (menu Warehouse)
+    pengajuanTransferBarangList.forEach((p) => {
+      all.push({
+        ...p,
+        menuSystem: p.menuSystem || "Warehouse",
+        nomorPesanan: (p as any).nomorTransfer || p.nomorPesanan || "-",
+        sourceTransferBarang: true,
+        transferId: (p as any).transferId,
+        nomorTransfer: (p as any).nomorTransfer,
+      });
+    });
+
+    // Pengajuan Terima Transfer (menu Warehouse)
+    pengajuanTerimaTransferList.forEach((p) => {
+      all.push({
+        ...p,
+        menuSystem: p.menuSystem || "Warehouse",
+        nomorPesanan: (p as any).nomorBukti || p.nomorPesanan || "-",
+        sourceTerimaTransfer: true,
+        terimaTransferId: (p as any).terimaTransferId,
       });
     });
     
@@ -2006,7 +2363,10 @@ export default function PersetujuanPengajuanPage() {
               </thead>
               <tbody>
                 {filteredPengajuan.map((pengajuan, index) => {
-                  const isPenerimaan = pengajuan.menuSystem === "Warehouse" && pengajuan.penerimaanId;
+                  const isRencanaTransfer = !!(pengajuan as any).sourceRencanaTransfer;
+                  const isTransferBarang = !!(pengajuan as any).sourceTransferBarang;
+                  const isTerimaTransfer = !!(pengajuan as any).sourceTerimaTransfer;
+                  const isPenerimaan = pengajuan.menuSystem === "Warehouse" && pengajuan.penerimaanId && !isTransferBarang && !isTerimaTransfer;
                   const isPenyesuaianStokGlobal = pengajuan.menuSystem === "Merchandise" && pengajuan.isGlobal && Array.isArray(pengajuan.riwayatData);
                   const isPenyesuaianStok = pengajuan.menuSystem === "Merchandise" && (pengajuan.penyesuaianStokId || isPenyesuaianStokGlobal);
                   const isApotik = pengajuan.menuSystem === "Data Master" && pengajuan.apotikId;
@@ -2019,9 +2379,15 @@ export default function PersetujuanPengajuanPage() {
                   const isMargin = pengajuan.menuSystem === "Data Master" && pengajuan.marginId;
                   const isRacikan = pengajuan.menuSystem === "Data Master" && pengajuan.racikanId;
                   const isProduk = pengajuan.menuSystem === "Data Master" && pengajuan.produkId;
-                  const isPesanan = pengajuan.menuSystem === "Merchandise" && !pengajuan.penyesuaianStokId;
+                  const isPesanan = pengajuan.menuSystem === "Merchandise" && !pengajuan.penyesuaianStokId && !isRencanaTransfer;
                   
-                  const nomorBukti = isPenyesuaianStok
+                  const nomorBukti = isRencanaTransfer
+                    ? ((pengajuan as any).nomorRencana || pengajuan.nomorPesanan || "-")
+                    : isTransferBarang
+                    ? ((pengajuan as any).nomorTransfer || pengajuan.nomorPesanan || "-")
+                    : isTerimaTransfer
+                    ? ((pengajuan as any).nomorBukti || pengajuan.nomorPesanan || "-")
+                    : isPenyesuaianStok
                     ? (pengajuan.noBuktiPenyesuaian || (Array.isArray((pengajuan as any).riwayatData) ? (pengajuan as any).riwayatData[0]?.noBuktiPenyesuaian : (pengajuan as any).riwayatData?.noBuktiPenyesuaian) || "-")
                     : isApotik 
                     ? pengajuan.kodeApotik || "-"
@@ -2047,7 +2413,13 @@ export default function PersetujuanPengajuanPage() {
                     ? pengajuan.nomorPenerimaan || "-"
                     : pengajuan.nomorPesanan || "-";
                   
-                  const nama = isPenyesuaianStokGlobal
+                  const nama = isRencanaTransfer
+                    ? "Rencana Transfer Barang"
+                    : isTransferBarang
+                    ? "Transfer Barang"
+                    : isTerimaTransfer
+                    ? "Terima Transfer"
+                    : isPenyesuaianStokGlobal
                     ? "Penyesuaian Stok (seluruh produk)"
                     : isPenyesuaianStok
                     ? ((pengajuan as any).riwayatData?.namaProduk || pengajuan.noBuktiPenyesuaian || "Penyesuaian Stok")
@@ -2075,7 +2447,7 @@ export default function PersetujuanPengajuanPage() {
                     ? "-" // Could be supplier name or other
                     : "-";
                   
-                  const isEditType = pengajuan.jenisPengajuan === "Edit Transaksi" || pengajuan.jenisPengajuan === "Edit Data";
+                  const isEditType = pengajuan.jenisPengajuan === "Edit Transaksi" || pengajuan.jenisPengajuan === "Edit transaksi" || pengajuan.jenisPengajuan === "Edit Data";
                   return (
                     <tr
                       key={pengajuan.id}

@@ -46,7 +46,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
   min-height: 36px;
 }
 
@@ -86,15 +86,17 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  margin-top: 0;
+  width: 100%;
 }
 
 .logoImage {
   display: block;
-  max-width: 100%;
-  max-height: 220px;
-  min-height: 140px;
-  width: auto;
+  width: 80%;
+  max-width: 80%;
+  max-height: 320px;
+  min-height: 200px;
   height: auto;
   object-fit: contain;
 }
