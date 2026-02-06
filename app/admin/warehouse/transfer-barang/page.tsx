@@ -68,6 +68,7 @@ interface TransferBarang {
   createdAt: Date;
   updatedAt: Date;
   operator?: string;
+  stockDeductedOnSend?: boolean; // Flag untuk menandai apakah stok sudah dikurangi saat Kirim
 }
 
 // Sementara: izinkan transfer meskipun stok tidak mencukupi (set false untuk aktifkan cek stok)
@@ -236,8 +237,39 @@ export default function TransferBarangPage() {
         else { const sp = localStorage.getItem("pengajuanTransferBarang"); if (sp) try { setPengajuanList(JSON.parse(sp)); } catch (_) {} }
         if (Array.isArray(apotiksData) && apotiksData.length > 0) { setApotiks(apotiksData.filter((a: Apotik) => a.statusAktif)); localStorage.setItem("apotiks", JSON.stringify(apotiksData)); }
         else { const sa = localStorage.getItem("apotiks"); if (sa) try { setApotiks(JSON.parse(sa).filter((a: Apotik) => a.statusAktif)); } catch (_) {} }
-        if (Array.isArray(productsData) && productsData.length > 0) { setProducts(productsData.filter((p: Product) => p.statusAktif)); localStorage.setItem("products", JSON.stringify(productsData)); }
-        else { const spr = localStorage.getItem("products"); if (spr) try { setProducts(JSON.parse(spr).filter((p: Product) => p.statusAktif)); } catch (_) {} }
+        if (Array.isArray(productsData) && productsData.length > 0) {
+          // Merge dengan localStorage: prioritaskan stokPerApotik dari localStorage jika berbeda (karena data lokal lebih baru setelah update stok)
+          let mergedProducts = productsData;
+          try {
+            const sp = localStorage.getItem("products");
+            if (sp) {
+              const fromStorage = JSON.parse(sp);
+              const arr = Array.isArray(fromStorage) ? fromStorage : [];
+              const byId = new Map(arr.map((p: any) => [p.id, p]));
+              mergedProducts = productsData.map((p: any) => {
+                const local = byId.get(p.id);
+                if (local) {
+                  // If local has stokPerApotik, prioritize it completely (overwrite API data)
+                  if (local.stokPerApotik && Object.keys(local.stokPerApotik).length > 0) {
+                    // Use local stokPerApotik completely, but also include any apotik from API that's not in local
+                    const mergedStokPerApotik = { ...(p.stokPerApotik || {}) };
+                    // Overwrite with local data (prioritize local)
+                    Object.keys(local.stokPerApotik).forEach((apotikId) => {
+                      mergedStokPerApotik[apotikId] = local.stokPerApotik[apotikId];
+                    });
+                    return { ...p, stokPerApotik: mergedStokPerApotik };
+                  }
+                  // If local doesn't have stokPerApotik but API does, use API
+                  // But if local has the product, we should still use local as base
+                  return { ...local, ...p, stokPerApotik: p.stokPerApotik || local.stokPerApotik };
+                }
+                return p;
+              });
+            }
+          } catch (_) {}
+          setProducts(mergedProducts.filter((p: Product) => p.statusAktif));
+          localStorage.setItem("products", JSON.stringify(mergedProducts));
+        } else { const spr = localStorage.getItem("products"); if (spr) try { setProducts(JSON.parse(spr).filter((p: Product) => p.statusAktif)); } catch (_) {} }
         if (Array.isArray(unitsData) && unitsData.length > 0) { setUnits(unitsData); localStorage.setItem("units", JSON.stringify(unitsData)); }
         else { const su = localStorage.getItem("units"); if (su) try { setUnits(JSON.parse(su)); } catch (_) {} }
         if (!cancelled) setIsLoadingData(false);
@@ -570,14 +602,106 @@ export default function TransferBarangPage() {
     ? pengajuanList.some((p) => p.transferId === editingTransfer.id && p.status !== "Disetujui" && p.status !== "Selesai" && p.status !== "Dibatalkan")
     : false;
 
+  // Handle cancel transfer (batal kirim)
+  const handleBatalTransfer = (transfer: TransferBarang) => {
+    if (!confirm(`Apakah Anda yakin ingin membatalkan transfer ${transfer.nomorTransfer}?`)) {
+      return;
+    }
+    
+    try {
+      // Revert stock changes only if transfer was sent AND stock was actually deducted
+      // This prevents double-counting when stock was never reduced in the first place
+      if (transfer.status === "Dikirim" && transfer.stockDeductedOnSend === true) {
+        const savedProducts = localStorage.getItem("products");
+        if (savedProducts) {
+          const allProducts = JSON.parse(savedProducts);
+          
+          // Revert stock: add back to apotik asal
+          for (const detail of transfer.detailBarang) {
+            const product = allProducts.find((p: Product) => p.id === detail.produkId);
+            if (product) {
+              let qtyInPieces = detail.qtyTransfer;
+              if (product.units && product.units.length > 0) {
+                const unit = product.units.find((u: ProductUnit) => u.id === detail.unitId);
+                if (unit) {
+                  qtyInPieces = detail.qtyTransfer * unit.konversi;
+                }
+              }
+              
+              // Add back to apotik asal
+              if (!product.stokPerApotik) {
+                product.stokPerApotik = {};
+              }
+              const currentStokAsal = product.stokPerApotik[transfer.apotikAsalId] || 0;
+              product.stokPerApotik[transfer.apotikAsalId] = currentStokAsal + qtyInPieces;
+            }
+          }
+          
+          localStorage.setItem("products", JSON.stringify(allProducts));
+          
+          // Sync products to API after reverting stock
+          getSupabaseClient().auth.getSession().then(({ data }) => {
+            if (data.session?.access_token) {
+              fetch("/api/data/products", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${data.session.access_token}`,
+                },
+                body: JSON.stringify({ value: allProducts }),
+              }).catch(() => {});
+            }
+          });
+        }
+      }
+      
+      // Update transfer status to "Dibatalkan"
+      const updatedTransfer = { ...transfer, status: "Dibatalkan" as const, updatedAt: new Date() };
+      const updatedTransfers = transferList.map((t) =>
+        t.id === transfer.id ? updatedTransfer : t
+      );
+      setTransferList(updatedTransfers);
+      localStorage.setItem("transferBarang", JSON.stringify(updatedTransfers));
+      
+      // Sync transferBarang to API
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          const payload = updatedTransfers.map((t) => ({ ...t, createdAt: t.createdAt instanceof Date ? t.createdAt.toISOString() : t.createdAt, updatedAt: t.updatedAt instanceof Date ? t.updatedAt.toISOString() : t.updatedAt }));
+          fetch("/api/data/transferBarang", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${data.session.access_token}`,
+            },
+            body: JSON.stringify({ value: payload }),
+          }).catch(() => {});
+        }
+      });
+      
+      // Update pengajuan status if approved for batal kirim
+      if (approvedPengajuan && approvedPengajuan.jenisPengajuan === "Batal Kirim") {
+        const updatedPengajuanList = pengajuanList.map((p) =>
+          p.id === approvedPengajuan.id ? { ...p, status: "Selesai" } : p
+        );
+        setPengajuanList(updatedPengajuanList);
+        localStorage.setItem("pengajuanTransferBarang", JSON.stringify(updatedPengajuanList));
+      }
+      
+      alert("Transfer berhasil dibatalkan");
+      handleCloseModal();
+    } catch (err: any) {
+      alert(err.message || "Terjadi kesalahan saat membatalkan transfer");
+    }
+  };
+
   // Handle delete transfer
   const handleDeleteTransfer = (transfer: TransferBarang) => {
     if (!confirm(`Apakah Anda yakin ingin menghapus transfer ${transfer.nomorTransfer}?`)) {
       return;
     }
     
-    // Revert stock changes if transfer was already sent
-    if (transfer.status === "Dikirim") {
+    // Revert stock changes only if transfer was sent AND stock was actually deducted
+    if (transfer.status === "Dikirim" && transfer.stockDeductedOnSend === true) {
       try {
         const savedProducts = localStorage.getItem("products");
         if (savedProducts) {
@@ -609,6 +733,20 @@ export default function TransferBarangPage() {
           }
           
           localStorage.setItem("products", JSON.stringify(allProducts));
+          
+          // Sync products to API after reverting stock
+          getSupabaseClient().auth.getSession().then(({ data }) => {
+            if (data.session?.access_token) {
+              fetch("/api/data/products", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${data.session.access_token}`,
+                },
+                body: JSON.stringify({ value: allProducts }),
+              }).catch(() => {});
+            }
+          });
         }
       } catch (err) {
         console.error("Error reverting stock:", err);
@@ -647,57 +785,57 @@ export default function TransferBarangPage() {
       // Validate stock availability (only for new transfers or editing draft transfers)
       // Dilewati sementara jika SKIP_STOCK_CHECK = true
       if (!SKIP_STOCK_CHECK) {
-        if (!editingTransfer || editingTransfer.status === "Draft") {
+      if (!editingTransfer || editingTransfer.status === "Draft") {
+        for (const detail of detailBarang) {
+          const product = products.find((p) => p.id === detail.produkId);
+          if (!product) {
+            throw new Error(`Produk ${detail.namaProduk} tidak ditemukan`);
+          }
+
+          const availableStock = getStockPerApotik(product, formData.apotikAsalId);
+          if (detail.qtyTransfer > availableStock) {
+            throw new Error(
+              `Stok ${detail.namaProduk} di apotik asal tidak mencukupi. Tersedia: ${availableStock}, Dibutuhkan: ${detail.qtyTransfer}`
+            );
+          }
+        }
+      } else if (editingTransfer && editingTransfer.status === "Dikirim") {
+        // For editing "Dikirim" transfers, check if we have enough stock after reverting old transfer
+        const savedProducts = localStorage.getItem("products");
+        if (savedProducts) {
+          const allProducts = JSON.parse(savedProducts);
+          
           for (const detail of detailBarang) {
-            const product = products.find((p) => p.id === detail.produkId);
+            const product = allProducts.find((p: Product) => p.id === detail.produkId);
             if (!product) {
               throw new Error(`Produk ${detail.namaProduk} tidak ditemukan`);
             }
-
-            const availableStock = getStockPerApotik(product, formData.apotikAsalId);
-            if (detail.qtyTransfer > availableStock) {
-              throw new Error(
-                `Stok ${detail.namaProduk} di apotik asal tidak mencukupi. Tersedia: ${availableStock}, Dibutuhkan: ${detail.qtyTransfer}`
-              );
-            }
-          }
-        } else if (editingTransfer && editingTransfer.status === "Dikirim") {
-          // For editing "Dikirim" transfers, check if we have enough stock after reverting old transfer
-          const savedProducts = localStorage.getItem("products");
-          if (savedProducts) {
-            const allProducts = JSON.parse(savedProducts);
             
-            for (const detail of detailBarang) {
-              const product = allProducts.find((p: Product) => p.id === detail.produkId);
-              if (!product) {
-                throw new Error(`Produk ${detail.namaProduk} tidak ditemukan`);
-              }
-              
-              let currentStock = getStockPerApotik(product, formData.apotikAsalId);
-              const oldDetail = editingTransfer.detailBarang.find((d) => d.produkId === detail.produkId);
-              if (oldDetail && formData.apotikAsalId === editingTransfer.apotikAsalId) {
-                let qtyInPieces = oldDetail.qtyTransfer;
-                if (product.units && product.units.length > 0) {
-                  const unit = product.units.find((u: ProductUnit) => u.id === oldDetail.unitId);
-                  if (unit) {
-                    qtyInPieces = oldDetail.qtyTransfer * unit.konversi;
-                  }
-                }
-                currentStock += qtyInPieces;
-              }
-              
-              let qtyInPieces = detail.qtyTransfer;
+            let currentStock = getStockPerApotik(product, formData.apotikAsalId);
+            const oldDetail = editingTransfer.detailBarang.find((d) => d.produkId === detail.produkId);
+            if (oldDetail && formData.apotikAsalId === editingTransfer.apotikAsalId) {
+              let qtyInPieces = oldDetail.qtyTransfer;
               if (product.units && product.units.length > 0) {
-                const unit = product.units.find((u: ProductUnit) => u.id === detail.unitId);
+                const unit = product.units.find((u: ProductUnit) => u.id === oldDetail.unitId);
                 if (unit) {
-                  qtyInPieces = detail.qtyTransfer * unit.konversi;
+                  qtyInPieces = oldDetail.qtyTransfer * unit.konversi;
                 }
               }
-              
-              if (qtyInPieces > currentStock) {
-                throw new Error(
-                  `Stok ${detail.namaProduk} di apotik asal tidak mencukupi. Tersedia: ${currentStock}, Dibutuhkan: ${qtyInPieces}`
-                );
+              currentStock += qtyInPieces;
+            }
+            
+            let qtyInPieces = detail.qtyTransfer;
+            if (product.units && product.units.length > 0) {
+              const unit = product.units.find((u: ProductUnit) => u.id === detail.unitId);
+              if (unit) {
+                qtyInPieces = detail.qtyTransfer * unit.konversi;
+              }
+            }
+            
+            if (qtyInPieces > currentStock) {
+              throw new Error(
+                `Stok ${detail.namaProduk} di apotik asal tidak mencukupi. Tersedia: ${currentStock}, Dibutuhkan: ${qtyInPieces}`
+              );
               }
             }
           }
@@ -789,6 +927,20 @@ export default function TransferBarangPage() {
             }
             
             localStorage.setItem("products", JSON.stringify(allProducts));
+            
+            // Sync products to API after stock update
+            getSupabaseClient().auth.getSession().then(({ data }) => {
+              if (data.session?.access_token) {
+                fetch("/api/data/products", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${data.session.access_token}`,
+                  },
+                  body: JSON.stringify({ value: allProducts }),
+                }).catch(() => {});
+              }
+            });
           }
         }
         
@@ -917,8 +1069,22 @@ export default function TransferBarangPage() {
       localStorage.setItem("products", JSON.stringify(allProducts));
       setProducts(allProducts.filter((p: Product) => p.statusAktif));
 
-      // Update transfer status
-      const updatedTransfer = { ...transfer, status: "Dikirim" as const, updatedAt: new Date() };
+      // Sync products to API after stock update
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/products", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${data.session.access_token}`,
+            },
+            body: JSON.stringify({ value: allProducts }),
+          }).catch(() => {});
+        }
+      });
+
+      // Update transfer status and set flag that stock was deducted
+      const updatedTransfer = { ...transfer, status: "Dikirim" as const, stockDeductedOnSend: true, updatedAt: new Date() };
       const updatedTransfers = transferList.map((t) =>
         t.id === transfer.id ? updatedTransfer : t
       );
@@ -1308,36 +1474,36 @@ export default function TransferBarangPage() {
                               </svg>
                             </button>
                             {transfer.status !== "Diterima" && (
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteTransfer(transfer)}
-                                title="Hapus"
-                                style={{
-                                  padding: "4px",
-                                  backgroundColor: "transparent",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  transition: "opacity 0.2s",
-                                  width: "24px",
-                                  height: "24px",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.opacity = "0.7";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.opacity = "1";
-                                }}
-                              >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                  <line x1="10" y1="11" x2="10" y2="17" />
-                                  <line x1="14" y1="11" x2="14" y2="17" />
-                                </svg>
-                              </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTransfer(transfer)}
+                              title="Hapus"
+                              style={{
+                                padding: "4px",
+                                backgroundColor: "transparent",
+                                border: "none",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "opacity 0.2s",
+                                width: "24px",
+                                height: "24px",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.opacity = "0.7";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.opacity = "1";
+                              }}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                <line x1="10" y1="11" x2="10" y2="17" />
+                                <line x1="14" y1="11" x2="14" y2="17" />
+                              </svg>
+                            </button>
                             )}
         </div>
                         </td>
@@ -1380,8 +1546,8 @@ export default function TransferBarangPage() {
             }}
           >
             <div style={{ width: "100%", height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-              <div
-                style={{
+            <div
+              style={{
                   padding: "12px 20px",
                   borderBottom: "1px solid var(--border)",
                   display: "flex",
@@ -1432,45 +1598,45 @@ export default function TransferBarangPage() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "8px", marginBottom: "12px", alignItems: "stretch" }}>
                     <div style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "8px", backgroundColor: "var(--surface)", display: "flex", flexDirection: "column", gap: "6px" }}>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
-                        <div>
+      <div>
                           <label style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "var(--text-secondary)" }}>Nomor Bukti</label>
-                          <input
-                            type="text"
+                        <input
+                          type="text"
                             value={editingTransfer ? editingTransfer.nomorBukti : generateNomorBukti()}
-                            readOnly
-                            style={{
-                              width: "100%",
+                          readOnly
+                          style={{
+                            width: "100%",
                               padding: "6px 8px",
                               border: "1px solid var(--border)",
-                              borderRadius: "6px",
+                            borderRadius: "6px",
                               fontSize: "13px",
                               backgroundColor: "var(--surface-hover)",
                               color: "var(--text-secondary)",
-                              boxSizing: "border-box",
-                              cursor: "not-allowed",
-                            }}
-                          />
-                        </div>
-                        <div>
+                            boxSizing: "border-box",
+                            cursor: "not-allowed",
+                          }}
+                        />
+                      </div>
+                      <div>
                           <label style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "var(--text-secondary)" }}>Tanggal Transfer <span style={{ color: "#ef4444" }}>*</span></label>
-                          <input
-                            type="date"
-                            value={formData.tanggalTransfer}
-                            onChange={(e) => setFormData({ ...formData, tanggalTransfer: e.target.value })}
-                            required
-                            style={{
-                              width: "100%",
+                        <input
+                          type="date"
+                          value={formData.tanggalTransfer}
+                          onChange={(e) => setFormData({ ...formData, tanggalTransfer: e.target.value })}
+                          required
+                          style={{
+                            width: "100%",
                               padding: "6px 8px",
                               border: "1px solid var(--border)",
-                              borderRadius: "6px",
+                            borderRadius: "6px",
                               fontSize: "13px",
                               backgroundColor: "var(--surface)",
                               color: "var(--text-primary)",
-                              boxSizing: "border-box",
-                            }}
-                          />
-                        </div>
+                            boxSizing: "border-box",
+                          }}
+                        />
                       </div>
+                    </div>
                     </div>
                     <div style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "8px", backgroundColor: "var(--surface)", display: "flex", flexDirection: "column", gap: "6px" }}>
                       <div>
@@ -1527,7 +1693,7 @@ export default function TransferBarangPage() {
                           <option value="">Pilih Apotik Tujuan</option>
                           {apotiks.filter((a) => a.id !== formData.apotikAsalId).map((a) => (
                             <option key={a.id} value={a.id}>{a.namaApotik}</option>
-                          ))}
+                            ))}
                         </select>
                       </div>
                       <div style={{ flex: 1, minHeight: "28px" }}>
@@ -1537,7 +1703,7 @@ export default function TransferBarangPage() {
                             const a = apotiks.find((x) => x.id === formData.apotikTujuanId);
                             return a ? [a.alamat, a.kota, a.provinsi].filter(Boolean).join(", ") || "-" : "-";
                           })() : "-"}
-                        </div>
+                    </div>
                       </div>
                     </div>
                     <div style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "8px", backgroundColor: "var(--surface)", display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -1795,13 +1961,13 @@ export default function TransferBarangPage() {
                                             required
                                             style={{
                                               width: "100%",
-                                            padding: "8px",
+                                              padding: "8px",
                                             border: "1px solid var(--border)",
-                                            borderRadius: "4px",
-                                            fontSize: "13px",
-                                            boxSizing: "border-box",
-                                          }}
-                                        >
+                                              borderRadius: "4px",
+                                              fontSize: "13px",
+                                              boxSizing: "border-box",
+                                            }}
+                                          >
                                           <option value="">Pilih Unit</option>
                                             {productUnits
                                               .sort((a, b) => a.urutan - b.urutan)
@@ -1877,23 +2043,45 @@ export default function TransferBarangPage() {
 
                 {/* Footer */}
                 <div style={{ padding: "12px 20px", borderTop: "1px solid var(--border)", backgroundColor: "var(--surface-hover)", display: "flex", gap: "10px", justifyContent: "flex-end", flexShrink: 0 }}>
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    disabled={loading}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor: "var(--surface)",
-                      color: "var(--text-primary)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "6px",
-                      cursor: loading ? "not-allowed" : "pointer",
-                      fontSize: "13px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Batal
-                  </button>
+                  {/* Show Batal button for canceling transfer if pengajuan "Batal Kirim" is approved, otherwise show close button */}
+                  {editingTransfer && approvedPengajuan && approvedPengajuan.jenisPengajuan === "Batal Kirim" && editingTransfer.status === "Dikirim" ? (
+                    <button
+                      type="button"
+                      onClick={() => handleBatalTransfer(editingTransfer)}
+                      disabled={loading}
+                      style={{
+                        padding: "8px 16px",
+                        backgroundColor: loading ? "var(--text-secondary)" : "#dc2626",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: loading ? "not-allowed" : "pointer",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {loading ? "Membatalkan..." : "Batal"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      disabled={loading || (editingTransfer && editingTransfer.status === "Dikirim" && !approvedPengajuan)}
+                      style={{
+                        padding: "8px 16px",
+                        backgroundColor: "var(--surface)",
+                        color: "var(--text-primary)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "6px",
+                        cursor: (loading || (editingTransfer && editingTransfer.status === "Dikirim" && !approvedPengajuan)) ? "not-allowed" : "pointer",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                        opacity: (editingTransfer && editingTransfer.status === "Dikirim" && !approvedPengajuan) ? 0.5 : 1,
+                      }}
+                    >
+                      Batal
+                    </button>
+                  )}
                   {!editingTransfer ? (
                     <button
                       type="submit"
@@ -1952,7 +2140,7 @@ export default function TransferBarangPage() {
                                 fontWeight: "500",
                               }}
                             >
-                              Transfer Barang
+          Transfer Barang
                             </button>
                           ) : editingTransfer.status === "Dikirim" ? (
                             <button
@@ -2338,6 +2526,7 @@ export default function TransferBarangPage() {
                       <option value="">Pilih Jenis Pengajuan</option>
                       <option value="Edit Transaksi">Edit Transaksi</option>
                       <option value="Hapus Transaksi">Hapus Transaksi</option>
+                      <option value="Batal Kirim">Batal Kirim</option>
                     </select>
                   </div>
 

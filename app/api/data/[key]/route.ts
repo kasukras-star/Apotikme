@@ -42,6 +42,7 @@ const ALLOWED_KEYS = new Set([
   "pengajuanPerubahanHargaJual",
   "pengaturanPerusahaan",
   "pengaturanSistem",
+  "returPembelian",
 ]);
 
 function checkAuth(req: Request): Promise<{ authorized: boolean; token?: string }> {

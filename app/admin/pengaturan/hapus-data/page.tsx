@@ -12,6 +12,7 @@ const ALLOWED_API_KEYS = new Set([
   "pengajuanJenis", "pengajuanMargin", "pengajuanProduk", "pengajuanRacikan", "pengajuanPenyesuaianStok",
   "pengajuanTransferBarang", "pengajuanPenerimaanPembelian", "pengajuanPerubahanHargaJual", "perubahanHargaJual",
   "pengaturanPerusahaan", "pengaturanSistem",
+  "returPembelian",
 ]);
 
 const SECTIONS: { title: string; items: { key: string; label: string; description: string }[] }[] = [
@@ -47,6 +48,12 @@ const SECTIONS: { title: string; items: { key: string; label: string; descriptio
     ],
   },
   {
+    title: "Finance",
+    items: [
+      { key: "fakturPembelian", label: "Hutang", description: "Data hutang (berdasarkan faktur pembelian)" },
+    ],
+  },
+  {
     title: "Pengajuan",
     items: [
       { key: "pengajuanPembelian", label: "Pengajuan Pembelian", description: "Data pengajuan pembelian" },
@@ -74,6 +81,7 @@ const SECTIONS: { title: string; items: { key: string; label: string; descriptio
       { key: "terimaTransfer", label: "Terima Transfer", description: "Data terima transfer" },
       { key: "pengajuanTerimaTransfer", label: "Pengajuan Terima Transfer", description: "Data pengajuan terima transfer" },
       { key: "stokOpname", label: "Stok Opname", description: "Data stok opname" },
+      { key: "returPembelian", label: "Retur Pembelian", description: "Data retur pembelian (berdasarkan PO)" },
     ],
   },
   {

@@ -180,6 +180,7 @@ const menuItems: MenuItem[] = [
       { label: "Transfer Barang", href: "/admin/warehouse/transfer-barang", icon: "transfer-barang" },
       { label: "Terima Transfer", href: "/admin/warehouse/terima-transfer", icon: "terima-transfer" },
       { label: "Stok Opname", href: "/admin/warehouse/stok-opname", icon: "inventory" },
+      { label: "Retur Pembelian", href: "/admin/warehouse/retur-pembelian", icon: "terima-pembelian" },
     ],
   },
   {
@@ -225,6 +226,7 @@ const menuItems: MenuItem[] = [
       { label: "Pengaturan Sistem", href: "/admin/pengaturan/sistem", icon: "pengaturan-sistem" },
       { label: "Backup & Restore", href: "/admin/pengaturan/backup", icon: "backup-restore" },
       { label: "Hapus Data", href: "/admin/pengaturan/hapus-data", icon: "backup-restore" },
+      { label: "Reset Data", href: "/admin/tools/reset-data", icon: "backup-restore" },
     ],
   },
 ];
@@ -418,12 +420,26 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
         boxSizing: "border-box",
       }}
     >
-      <div style={{ padding: isCollapsed ? "0 10px 20px" : "0 20px 20px", borderBottom: "1px solid var(--border)" }}>
+      <div
+        style={{
+          padding: isCollapsed ? "4px 10px 10px" : "4px 20px 10px",
+          borderBottom: "1px solid var(--border)",
+        }}
+      >
         <div style={{ display: "flex", justifyContent: isCollapsed ? "center" : "space-between", alignItems: "center" }}>
           {!isCollapsed && (
-            <h2 style={{ fontSize: "20px", fontWeight: "bold", margin: 0, color: "var(--text-primary)" }}>
-              Sistem Apotik
-            </h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <img
+                src="/logo_simatik.png.png"
+                alt="Simatik App"
+                style={{
+                  display: "block",
+                  maxWidth: "160px",
+                  height: "auto",
+                  objectFit: "contain",
+                }}
+              />
+            </div>
           )}
           <button
             onClick={onToggle}
@@ -444,7 +460,15 @@ export default function Sidebar({ isCollapsed = false, onToggle, userRole = null
           </button>
         </div>
       </div>
-      <nav style={{ marginTop: "20px", display: "flex", flexDirection: "column", alignItems: isCollapsed ? "center" : "stretch", overflow: "visible" }}>
+      <nav
+        style={{
+          marginTop: "8px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: isCollapsed ? "center" : "stretch",
+          overflow: "visible",
+        }}
+      >
         {filteredMenuItems.map((item: MenuItem, index: number) => (
           <div 
             key={index} 

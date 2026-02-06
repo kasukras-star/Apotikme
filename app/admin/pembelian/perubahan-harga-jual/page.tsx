@@ -902,13 +902,13 @@ export default function PerubahanHargaJualPage() {
                       <button
                         type="button"
                         onClick={handleSimpanSetujui}
-                        style={{
+                    style={{
                           padding: "8px 16px",
                           backgroundColor: "var(--primary)",
                           color: "#fff",
                           border: "none",
-                          borderRadius: "6px",
-                          fontSize: "13px",
+                      borderRadius: "6px",
+                      fontSize: "13px",
                           fontWeight: 500,
                           cursor: "pointer",
                         }}
@@ -991,12 +991,12 @@ export default function PerubahanHargaJualPage() {
 
         {/* Modal Ajukan Perubahan - seperti Penyesuaian stok */}
         {isPengajuanModalOpen && (
-          <div
-            style={{
+                    <div
+                      style={{
               position: "fixed",
               top: 0,
-              left: 0,
-              right: 0,
+                        left: 0,
+                        right: 0,
               bottom: 0,
               backgroundColor: "rgba(0, 0, 0, 0.5)",
               display: "flex",
@@ -1005,8 +1005,8 @@ export default function PerubahanHargaJualPage() {
               zIndex: 1002,
             }}
           >
-            <div
-              style={{
+                        <div
+                          style={{
                 backgroundColor: "var(--surface)",
                 borderRadius: "8px",
                 padding: "24px",
@@ -1033,15 +1033,15 @@ export default function PerubahanHargaJualPage() {
                       padding: "8px 10px",
                       border: "1px solid var(--input-border)",
                       borderRadius: "6px",
-                      fontSize: "13px",
+                            fontSize: "13px",
                       boxSizing: "border-box",
-                    }}
-                  >
+                          }}
+                        >
                     <option value="">Pilih Jenis Pengajuan</option>
                     <option value="Edit Data">Edit Data</option>
                     <option value="Hapus Data">Hapus Data</option>
                   </select>
-                </div>
+                        </div>
                 <div style={{ marginBottom: "20px" }}>
                   <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                     Alasan <span style={{ color: "#ef4444" }}>*</span>
@@ -1064,17 +1064,17 @@ export default function PerubahanHargaJualPage() {
                   />
                 </div>
                 <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-                  <button
-                    type="button"
+                          <button
+                            type="button"
                     onClick={handleClosePengajuanModal}
-                    style={{
+                            style={{
                       padding: "8px 16px",
                       backgroundColor: "#f1f5f9",
                       color: "#475569",
                       border: "1px solid var(--border)",
                       borderRadius: "6px",
                       fontSize: "13px",
-                      cursor: "pointer",
+                              cursor: "pointer",
                     }}
                   >
                     Batal
@@ -1087,24 +1087,24 @@ export default function PerubahanHargaJualPage() {
                       color: "#fff",
                       border: "none",
                       borderRadius: "6px",
-                      fontSize: "13px",
+                              fontSize: "13px",
                       fontWeight: 500,
                       cursor: "pointer",
-                    }}
-                  >
+                            }}
+                          >
                     Kirim Pengajuan
-                  </button>
+                          </button>
                 </div>
               </form>
             </div>
-          </div>
-        )}
-        </div>
-        </div>
+                    </div>
+                  )}
+                </div>
+                </div>
 
         {isModalOpen && (
           <div
-            style={{
+                      style={{
               position: "fixed",
               top: 0,
               right: 0,
@@ -1420,38 +1420,38 @@ export default function PerubahanHargaJualPage() {
 
               <div style={{ borderTop: "1px solid var(--border)", padding: "12px 24px", flexShrink: 0, backgroundColor: "var(--surface-hover)" }}>
                 <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor: "#f1f5f9",
-                      color: "#475569",
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#f1f5f9",
+                    color: "#475569",
                       border: "1px solid var(--border)",
-                      borderRadius: "6px",
-                      fontSize: "13px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor: loading ? "#94a3b8" : "#3b82f6",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "6px",
-                      fontSize: "13px",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: loading ? "#94a3b8" : "#3b82f6",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontSize: "13px",
                       fontWeight: 500,
-                      cursor: loading ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    {loading ? "Menyimpan..." : "Simpan"}
-                  </button>
+                    cursor: loading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {loading ? "Menyimpan..." : "Simpan"}
+                </button>
                 </div>
               </div>
             </div>
@@ -1497,7 +1497,7 @@ export default function PerubahanHargaJualPage() {
                     <div>
                       <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>Pilih Produk</h3>
                       <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>Pilih produk dari daftar di bawah ini</p>
-          </div>
+      </div>
                     <button
                       type="button"
                       onClick={() => {

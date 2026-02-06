@@ -976,6 +976,10 @@ export default function DataProductPage() {
             overflow: "hidden",
           }}
         >
+          <style dangerouslySetInnerHTML={{ __html: `
+            .data-produk-table th,
+            .data-produk-table td { padding: 8px 10px; white-space: nowrap; font-size: 13px; }
+          ` }} />
           {isLoadingData ? (
             <div style={{ padding: "24px", textAlign: "center" }}>
               <p style={{ color: "#64748b", margin: 0 }}>Memuat data...</p>
@@ -987,10 +991,13 @@ export default function DataProductPage() {
               </p>
             </div>
           ) : (
+            <div style={{ overflowX: "auto" }}>
             <table
+              className="data-produk-table"
               style={{
                 width: "100%",
                 borderCollapse: "collapse",
+                minWidth: "max-content",
               }}
             >
               <thead>
@@ -999,8 +1006,6 @@ export default function DataProductPage() {
                     style={{
                       textAlign: "left",
                       borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
                       fontWeight: "600",
                       color: "#475569",
                     }}
@@ -1011,8 +1016,6 @@ export default function DataProductPage() {
                     style={{
                       textAlign: "left",
                       borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
                       fontWeight: "600",
                       color: "#475569",
                       minWidth: "200px",
@@ -1021,127 +1024,16 @@ export default function DataProductPage() {
                   >
                     Nama Produk
                   </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#475569",
-                    }}
-                  >
-                    Kategori
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#475569",
-                    }}
-                  >
-                    Type
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#475569",
-                    }}
-                  >
-                    Jenis
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#475569",
-                    }}
-                  >
-                    Satuan
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#475569",
-                    }}
-                  >
-                    Harga Beli
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#475569",
-                    }}
-                  >
-                    Harga Jual
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#475569",
-                    }}
-                  >
-                    Stok
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#475569",
-                    }}
-                  >
-                    Operator
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#475569",
-                    }}
-                  >
-                    Last Update
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      borderBottom: "1px solid #e2e8f0",
-                      padding: "12px 16px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#475569",
-                      width: "150px",
-                    }}
-                  >
-                    Aksi
-                  </th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #e2e8f0", fontWeight: "600", color: "#475569" }}>Kategori</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #e2e8f0", fontWeight: "600", color: "#475569" }}>Type</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #e2e8f0", fontWeight: "600", color: "#475569" }}>Jenis</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #e2e8f0", fontWeight: "600", color: "#475569" }}>Satuan</th>
+                  <th style={{ textAlign: "right", borderBottom: "1px solid #e2e8f0", fontWeight: "600", color: "#475569" }}>Harga Beli</th>
+                  <th style={{ textAlign: "right", borderBottom: "1px solid #e2e8f0", fontWeight: "600", color: "#475569" }}>Harga Jual</th>
+                  <th style={{ textAlign: "right", borderBottom: "1px solid #e2e8f0", fontWeight: "600", color: "#475569" }}>Stok</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #e2e8f0", fontWeight: "600", color: "#475569" }}>Operator</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #e2e8f0", fontWeight: "600", color: "#475569" }}>Last Update</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #e2e8f0", fontWeight: "600", color: "#475569", width: "150px" }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -1152,109 +1044,17 @@ export default function DataProductPage() {
                       borderBottom: "1px solid #f1f5f9",
                     }}
                   >
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                        color: "#1e293b",
-                        fontWeight: "500",
-                      }}
-                    >
-                      {product.kodeProduk}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                        color: "#1e293b",
-                      }}
-                    >
-                      {product.namaProduk}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                        color: "#64748b",
-                      }}
-                    >
-                      {product.kategori}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                        color: "#64748b",
-                      }}
-                    >
-                      {product.type || "-"}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                        color: "#64748b",
-                      }}
-                    >
-                      {product.jenis || "-"}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                        color: "#64748b",
-                      }}
-                    >
-                      {product.satuan}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                        color: "#64748b",
-                        textAlign: "right",
-                      }}
-                    >
-                      {formatCurrency(product.hargaBeli)}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                        color: "#1e293b",
-                        textAlign: "right",
-                        fontWeight: "500",
-                      }}
-                    >
-                      {formatCurrency(product.hargaJual)}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                        color: product.stokAwal <= product.stokMinimum ? "#ef4444" : "#1e293b",
-                        textAlign: "right",
-                        fontWeight: "500",
-                      }}
-                    >
-                      {formatStock(product)}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                        color: "#64748b",
-                      }}
-                    >
-                      {product.operator || "-"}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                        color: "#64748b",
-                      }}
-                    >
+                    <td style={{ color: "#1e293b", fontWeight: "500" }}>{product.kodeProduk}</td>
+                    <td style={{ color: "#1e293b" }}>{product.namaProduk}</td>
+                    <td style={{ color: "#64748b" }}>{product.kategori}</td>
+                    <td style={{ color: "#64748b" }}>{product.type || "-"}</td>
+                    <td style={{ color: "#64748b" }}>{product.jenis || "-"}</td>
+                    <td style={{ color: "#64748b" }}>{product.satuan}</td>
+                    <td style={{ color: "#64748b", textAlign: "right" }}>{formatCurrency(product.hargaBeli)}</td>
+                    <td style={{ color: "#1e293b", textAlign: "right", fontWeight: "500" }}>{formatCurrency(product.hargaJual)}</td>
+                    <td style={{ color: product.stokAwal <= product.stokMinimum ? "#ef4444" : "#1e293b", textAlign: "right", fontWeight: "500" }}>{formatStock(product)}</td>
+                    <td style={{ color: "#64748b" }}>{product.operator || "-"}</td>
+                    <td style={{ color: "#64748b" }}>
                       {product.updatedAt 
                         ? new Date(product.updatedAt).toLocaleDateString("id-ID", {
                             day: "2-digit",
@@ -1273,12 +1073,7 @@ export default function DataProductPage() {
                           })
                         : "-"}
                     </td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "14px",
-                      }}
-                    >
+                    <td>
                       <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                         <button
                           onClick={() => handleViewProduct(product)}
@@ -1322,6 +1117,7 @@ export default function DataProductPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 

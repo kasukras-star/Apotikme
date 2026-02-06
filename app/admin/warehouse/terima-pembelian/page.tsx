@@ -68,6 +68,9 @@ interface Supplier {
   id: string;
   kodeSupplier: string;
   namaSupplier: string;
+  alamat?: string;
+  kota?: string;
+  provinsi?: string;
 }
 
 interface Product {
@@ -132,6 +135,7 @@ export default function TerimaPembelianPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [pengajuanSubmittedForCurrent, setPengajuanSubmittedForCurrent] = useState(false);
 
   // Load current user email
   useEffect(() => {
@@ -350,6 +354,7 @@ export default function TerimaPembelianPage() {
     setIsModalOpen(false);
     setSelectedPesanan(null);
     setEditingPenerimaan(null);
+    setPengajuanSubmittedForCurrent(false);
     setError(null);
     setFormData({
       nomorPenerimaan: "",
@@ -366,6 +371,7 @@ export default function TerimaPembelianPage() {
 
     setEditingPenerimaan(penerimaan);
     setSelectedPesanan(pesanan);
+    setPengajuanSubmittedForCurrent(false);
     setFormData({
       nomorPenerimaan: penerimaan.nomorPenerimaan,
       nomorSuratJalan: penerimaan.nomorSuratJalan,
@@ -435,6 +441,7 @@ export default function TerimaPembelianPage() {
     localStorage.setItem("pengajuanPenerimaanPembelian", JSON.stringify(updatedPengajuanList));
     setPengajuanList(updatedPengajuanList);
 
+    setPengajuanSubmittedForCurrent(true);
     handleClosePengajuanModal();
     alert("Pengajuan perubahan berhasil dikirim!");
   };
@@ -511,6 +518,22 @@ export default function TerimaPembelianPage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleRefreshAfterPengajuan = () => {
+    const savedPenerimaan = localStorage.getItem("penerimaanPembelian");
+    const savedPengajuan = localStorage.getItem("pengajuanPenerimaanPembelian");
+    if (savedPenerimaan) {
+      try {
+        setPenerimaanList(JSON.parse(savedPenerimaan));
+      } catch (_) {}
+    }
+    if (savedPengajuan) {
+      try {
+        setPengajuanList(JSON.parse(savedPengajuan));
+      } catch (_) {}
+    }
+    setPengajuanSubmittedForCurrent(false);
   };
 
   const handleDetailChange = (
@@ -600,7 +623,14 @@ export default function TerimaPembelianPage() {
 
       const userEmail = currentUserEmail || "System";
       const now = new Date().toISOString();
-      
+
+      // Default: stok masuk ke apotik gudang pusat (tipeApotik === "Pusat"); fallback ke tujuan PO
+      const apotikPusat = apotiks.find((a: { tipeApotik?: string }) => a.tipeApotik === "Pusat");
+      const apotikId = apotikPusat?.id ?? selectedPesanan.tujuanPengirimanId;
+      if (!apotikId) {
+        throw new Error("Tidak ada apotik Gudang Pusat (Pusat) dan PO tidak memiliki tujuan pengiriman. Setidaknya satu apotik harus ditandai sebagai Pusat di Data Apotik.");
+      }
+
       const newPenerimaan: PenerimaanPembelian = {
         id: editingPenerimaan ? editingPenerimaan.id : Date.now().toString(),
         nomorPenerimaan: formData.nomorPenerimaan,
@@ -611,7 +641,7 @@ export default function TerimaPembelianPage() {
         supplierId: selectedPesanan.supplierId,
         deskripsi: selectedPesanan.deskripsi,
         detailBarang: formData.detailBarang,
-        tujuanPengirimanId: selectedPesanan.tujuanPengirimanId,
+        tujuanPengirimanId: apotikId,
         createdAt: editingPenerimaan ? editingPenerimaan.createdAt : now,
         operator: editingPenerimaan ? (editingPenerimaan.operator || userEmail) : userEmail,
         updatedAt: now,
@@ -645,8 +675,8 @@ export default function TerimaPembelianPage() {
           return product;
         });
 
-        // Apply new stock (to new apotik)
-        const newApotikId = selectedPesanan.tujuanPengirimanId;
+        // Apply new stock (to gudang pusat / apotikId)
+        const newApotikId = apotikId;
         const updatedProducts = oldProducts.map((product) => {
           const detailTerima = formData.detailBarang.find((d) => d.produkId === product.id);
           if (detailTerima && newApotikId) {
@@ -673,6 +703,20 @@ export default function TerimaPembelianPage() {
         localStorage.setItem("products", JSON.stringify(updatedProducts));
         setProducts(updatedProducts);
 
+        // Sync products to API
+        getSupabaseClient().auth.getSession().then(({ data }) => {
+          if (data.session?.access_token) {
+            fetch("/api/data/products", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${data.session.access_token}`,
+              },
+              body: JSON.stringify({ value: updatedProducts }),
+            }).catch(() => {});
+          }
+        });
+
         // Update penerimaan
         const updatedPenerimaanList = penerimaanList.map((p) =>
           p.id === editingPenerimaan.id ? newPenerimaan : p
@@ -693,18 +737,12 @@ export default function TerimaPembelianPage() {
 
         alert("Penerimaan pembelian berhasil diupdate!");
       } else {
-        // Save new penerimaan
+        // Save new penerimaan (stok masuk ke gudang pusat / apotikId)
         const updatedPenerimaanList = [...penerimaanList, newPenerimaan];
         localStorage.setItem("penerimaanPembelian", JSON.stringify(updatedPenerimaanList));
         setPenerimaanList(updatedPenerimaanList);
 
-        // Update stock produk per apotik
-        const apotikId = selectedPesanan.tujuanPengirimanId;
-        
-        if (!apotikId) {
-          throw new Error("Tujuan pengiriman tidak ditemukan pada PO. Pastikan PO memiliki tujuan pengiriman yang valid.");
-        }
-        
+        // Update stock produk per apotik (apotikId = gudang pusat)
         const updatedProducts = products.map((product) => {
           const detailTerima = formData.detailBarang.find((d) => d.produkId === product.id);
           if (detailTerima && apotikId) {
@@ -736,11 +774,23 @@ export default function TerimaPembelianPage() {
         });
         localStorage.setItem("products", JSON.stringify(updatedProducts));
         setProducts(updatedProducts);
-        
-        // Log untuk debugging
-        console.log(`Stok berhasil ditambahkan ke apotik ID: ${apotikId} untuk penerimaan ${formData.nomorPenerimaan}`);
 
-        handleCloseModal();
+        // Sync products to API
+        getSupabaseClient().auth.getSession().then(({ data }) => {
+          if (data.session?.access_token) {
+            fetch("/api/data/products", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${data.session.access_token}`,
+              },
+              body: JSON.stringify({ value: updatedProducts }),
+            }).catch(() => {});
+          }
+        });
+        
+        // Tetap buka modal, ubah ke mode "sudah disimpan" -> tombol berubah jadi Ajukan Perubahan & Print
+        setEditingPenerimaan(newPenerimaan);
         alert("Penerimaan pembelian berhasil dibuat!");
       }
     } catch (err) {
@@ -827,6 +877,7 @@ export default function TerimaPembelianPage() {
                 <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
                   <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Nomor PO</th>
                   <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Tanggal PO</th>
+                  <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Estimasi (Tgl. Dibutuhkan)</th>
                   <th style={{ padding: "12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Supplier</th>
                   <th style={{ padding: "12px", textAlign: "center", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Qty</th>
                   <th style={{ padding: "12px", textAlign: "center", fontSize: "13px", fontWeight: "600", color: "#475569", width: "120px" }}>Aksi</th>
@@ -849,6 +900,9 @@ export default function TerimaPembelianPage() {
                   >
                     <td style={{ padding: "12px", fontSize: "13px", color: "#1e293b" }}>{pesanan.nomorPesanan}</td>
                     <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>{pesanan.tanggalPesanan}</td>
+                    <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>
+                      {pesanan.tanggalDibutuhkan ? formatDate(pesanan.tanggalDibutuhkan) : "-"}
+                    </td>
                     <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>
                       {suppliers.find(s => s.id === pesanan.supplierId)?.namaSupplier || pesanan.supplierId}
                     </td>
@@ -992,42 +1046,6 @@ export default function TerimaPembelianPage() {
                           </td>
                           <td rowSpan={penerimaan.detailBarang.length} style={{ padding: "12px", fontSize: "13px", verticalAlign: "top" }}>
                           <div style={{ display: "flex", gap: "8px", justifyContent: "center", alignItems: "center" }}>
-                            <button
-                              onClick={() => handleViewPenerimaan(penerimaan)}
-                              title="View"
-                              style={{
-                                padding: "4px",
-                                backgroundColor: "transparent",
-                                border: "none",
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                transition: "opacity 0.2s",
-                                width: "24px",
-                                height: "24px",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.opacity = "0.7";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.opacity = "1";
-                              }}
-                            >
-                              <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#475569"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                <circle cx="12" cy="12" r="3" />
-                              </svg>
-                            </button>
                             <button
                               onClick={() => handleEditPenerimaan(penerimaan)}
                               title="Edit"
@@ -1221,162 +1239,145 @@ export default function TerimaPembelianPage() {
                       Informasi Penerimaan
                     </h4>
 
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 1fr)",
-                        gap: "16px",
-                      }}
-                    >
-                      <div>
-                        <label
-                          htmlFor="nomorPenerimaan"
-                          style={{
-                            display: "block",
-                            marginBottom: "6px",
-                            fontSize: "13px",
-                            fontWeight: "500",
-                            color: "#374151",
-                          }}
-                        >
-                          Nomor Penerimaan
-                        </label>
-                        <input
-                          type="text"
-                          id="nomorPenerimaan"
-                          name="nomorPenerimaan"
-                          value={formData.nomorPenerimaan}
-                          readOnly
-                          style={{
-                            width: "100%",
-                            padding: "10px 12px",
-                            border: "1px solid #d1d5db",
-                            borderRadius: "6px",
-                            fontSize: "14px",
-                            boxSizing: "border-box",
-                            backgroundColor: "#f3f4f6",
-                            color: "#64748b",
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="tanggalPenerimaan"
-                          style={{
-                            display: "block",
-                            marginBottom: "6px",
-                            fontSize: "13px",
-                            fontWeight: "500",
-                            color: "#374151",
-                          }}
-                        >
-                          Tanggal Penerimaan <span style={{ color: "#ef4444" }}>*</span>
-                        </label>
-                        <input
-                          type="date"
-                          id="tanggalPenerimaan"
-                          name="tanggalPenerimaan"
-                          value={formData.tanggalPenerimaan}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              tanggalPenerimaan: e.target.value,
-                            }))
-                          }
-                          required
-                          style={{
-                            width: "100%",
-                            padding: "10px 12px",
-                            border: "1px solid #d1d5db",
-                            borderRadius: "6px",
-                            fontSize: "14px",
-                            boxSizing: "border-box",
-                            transition: "border-color 0.2s",
-                          }}
-                          onFocus={(e) => {
-                            e.currentTarget.style.borderColor = "#3b82f6";
-                            e.currentTarget.style.outline = "none";
-                          }}
-                          onBlur={(e) => {
-                            e.currentTarget.style.borderColor = "#d1d5db";
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          style={{
-                            display: "block",
-                            marginBottom: "6px",
-                            fontSize: "13px",
-                            fontWeight: "500",
-                            color: "#374151",
-                          }}
-                        >
-                          Nomor PO
-                        </label>
-                        <input
-                          type="text"
-                          value={selectedPesanan.nomorPesanan}
-                          readOnly
-                          style={{
-                            width: "100%",
-                            padding: "10px 12px",
-                            border: "1px solid #d1d5db",
-                            borderRadius: "6px",
-                            fontSize: "14px",
-                            boxSizing: "border-box",
-                            backgroundColor: "#f3f4f6",
-                            color: "#64748b",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ marginTop: "16px" }}>
-                      <label
-                        htmlFor="nomorSuratJalan"
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", alignItems: "stretch" }}>
+                      {/* Outline group 1: Penerimaan */}
+                      <div
                         style={{
-                          display: "block",
-                          marginBottom: "6px",
-                          fontSize: "13px",
-                          fontWeight: "500",
-                          color: "#374151",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          padding: "6px 8px 8px",
+                          paddingTop: "10px",
+                          position: "relative",
+                          backgroundColor: "#f8fafc",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                          minHeight: "100%",
                         }}
                       >
-                        Nomor Surat Jalan <span style={{ color: "#ef4444" }}>*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="nomorSuratJalan"
-                        name="nomorSuratJalan"
-                        value={formData.nomorSuratJalan}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            nomorSuratJalan: e.target.value,
-                          }))
-                        }
-                        required
-                        placeholder="Masukkan nomor surat jalan"
+                        <span
+                          style={{
+                            position: "absolute",
+                            top: "-8px",
+                            left: "10px",
+                            background: "#ffffff",
+                            padding: "0 4px",
+                            fontSize: "11px",
+                            fontWeight: "600",
+                            color: "#64748b",
+                          }}
+                        >
+                          Penerimaan
+                        </span>
+                        <div>
+                          <label htmlFor="nomorPenerimaan" style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "#374151" }}>Nomor Penerimaan</label>
+                          <input
+                            type="text"
+                            id="nomorPenerimaan"
+                            name="nomorPenerimaan"
+                            value={formData.nomorPenerimaan}
+                            readOnly
+                            style={{ width: "100%", padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", backgroundColor: "#f3f4f6", color: "#64748b" }}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="tanggalPenerimaan" style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "#374151" }}>Tanggal <span style={{ color: "#ef4444" }}>*</span></label>
+                          <input
+                            type="date"
+                            id="tanggalPenerimaan"
+                            name="tanggalPenerimaan"
+                            value={formData.tanggalPenerimaan}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, tanggalPenerimaan: e.target.value }))}
+                            required
+                            style={{ width: "100%", padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", transition: "border-color 0.2s" }}
+                            onFocus={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.outline = "none"; }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = "#d1d5db"; }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Outline group 2: Supplier */}
+                      <div
                         style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          border: "1px solid #d1d5db",
-                          borderRadius: "6px",
-                          fontSize: "14px",
-                          boxSizing: "border-box",
-                          transition: "border-color 0.2s",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          padding: "6px 8px 8px",
+                          paddingTop: "10px",
+                          position: "relative",
+                          backgroundColor: "#f8fafc",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                          minHeight: "100%",
                         }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.borderColor = "#3b82f6";
-                          e.currentTarget.style.outline = "none";
+                      >
+                        <span style={{ position: "absolute", top: "-8px", left: "10px", background: "#ffffff", padding: "0 4px", fontSize: "11px", fontWeight: "600", color: "#64748b" }}>Supplier</span>
+                        <div>
+                          <label style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "#374151" }}>Nama Supplier</label>
+                          <input
+                            type="text"
+                            value={suppliers.find((s) => s.id === selectedPesanan.supplierId)?.namaSupplier ?? ""}
+                            readOnly
+                            style={{ width: "100%", padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", backgroundColor: "#f3f4f6", color: "#64748b" }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "#374151" }}>Alamat</label>
+                          <input
+                            type="text"
+                            value={(() => {
+                              const s = suppliers.find((x) => x.id === selectedPesanan.supplierId);
+                              if (!s) return "-";
+                              const parts = [s.alamat, s.kota, s.provinsi].filter(Boolean);
+                              return parts.length > 0 ? parts.join(", ") : "-";
+                            })()}
+                            readOnly
+                            style={{ width: "100%", padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", backgroundColor: "#f3f4f6", color: "#64748b" }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Outline group 3: Dokumen */}
+                      <div
+                        style={{
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          padding: "6px 8px 8px",
+                          paddingTop: "10px",
+                          position: "relative",
+                          backgroundColor: "#f8fafc",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                          minHeight: "100%",
                         }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.borderColor = "#d1d5db";
-                        }}
-                      />
+                      >
+                        <span style={{ position: "absolute", top: "-8px", left: "10px", background: "#ffffff", padding: "0 4px", fontSize: "11px", fontWeight: "600", color: "#64748b" }}>Dokumen</span>
+                        <div>
+                          <label style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "#374151" }}>No. PO</label>
+                          <input
+                            type="text"
+                            value={selectedPesanan.nomorPesanan}
+                            readOnly
+                            style={{ width: "100%", padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", backgroundColor: "#f3f4f6", color: "#64748b" }}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="nomorSuratJalan" style={{ display: "block", marginBottom: "2px", fontSize: "12px", fontWeight: "500", color: "#374151" }}>No. Surat Jalan <span style={{ color: "#ef4444" }}>*</span></label>
+                          <input
+                            type="text"
+                            id="nomorSuratJalan"
+                            name="nomorSuratJalan"
+                            value={formData.nomorSuratJalan}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, nomorSuratJalan: e.target.value }))}
+                            required
+                            placeholder="Masukkan nomor surat jalan"
+                            style={{ width: "100%", padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", transition: "border-color 0.2s" }}
+                            onFocus={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.outline = "none"; }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = "#d1d5db"; }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1425,10 +1426,18 @@ export default function TerimaPembelianPage() {
                               <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>UNIT</th>
                               <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>QTY PESAN</th>
                               <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>QTY TERIMA</th>
+                              <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>QTY PCS</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {formData.detailBarang.map((detail) => (
+                            {formData.detailBarang.map((detail) => {
+                              const product = products.find((p: Product) => p.id === detail.produkId);
+                              let qtyPcs = detail.qtyTerima;
+                              if (product?.units?.length && detail.unitId) {
+                                const unit = product.units.find((u: ProductUnit) => u.id === detail.unitId);
+                                if (unit) qtyPcs = detail.qtyTerima * unit.konversi;
+                              }
+                              return (
                               <tr key={detail.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
                                 <td style={{ padding: "12px", fontSize: "13px", color: "#1e293b" }}>
                                   {detail.namaProduk}
@@ -1442,7 +1451,7 @@ export default function TerimaPembelianPage() {
                                 <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "#64748b" }}>
                                   {detail.qtyPesan}
                                 </td>
-                                <td style={{ padding: "12px" }}>
+                                <td style={{ padding: "12px", textAlign: "center", verticalAlign: "middle" }}>
                                   <input
                                     type="number"
                                     min="0"
@@ -1467,8 +1476,11 @@ export default function TerimaPembelianPage() {
                                     }}
                                   />
                                 </td>
+                                <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "#475569", fontWeight: "500" }}>
+                                  {qtyPcs} pcs
+                                </td>
                               </tr>
-                            ))}
+                            );})}
                           </tbody>
                         </table>
                       </div>
@@ -1547,33 +1559,182 @@ export default function TerimaPembelianPage() {
                   >
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    style={{
-                      padding: "10px 20px",
-                      backgroundColor: loading ? "#9ca3af" : "#10b981",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: loading ? "not-allowed" : "pointer",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      transition: "background-color 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!loading) {
-                        e.currentTarget.style.backgroundColor = "#059669";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!loading) {
-                        e.currentTarget.style.backgroundColor = "#10b981";
-                      }
-                    }}
-                  >
-                    {loading ? "Saving..." : "Simpan Penerimaan"}
-                  </button>
+                  {editingPenerimaan ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handlePrint}
+                        style={{
+                          padding: "10px 20px",
+                          backgroundColor: "#6b7280",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontSize: "14px",
+                          fontWeight: "500",
+                          transition: "background-color 0.2s",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#4b5563"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#6b7280"; }}
+                      >
+                        Print
+                      </button>
+                      {approvedPengajuan ? (
+                        approvedPengajuan.jenisPengajuan === "Edit Transaksi" ? (
+                          <>
+                            <button
+                              type="submit"
+                              disabled={loading}
+                              style={{
+                                padding: "10px 20px",
+                                backgroundColor: loading ? "#9ca3af" : "#10b981",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "6px",
+                                cursor: loading ? "not-allowed" : "pointer",
+                                fontSize: "14px",
+                                fontWeight: "500",
+                                transition: "background-color 0.2s",
+                              }}
+                              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = "#059669"; }}
+                              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = "#10b981"; }}
+                            >
+                              {loading ? "Menyimpan..." : "Simpan"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleBatalPengajuan}
+                              style={{
+                                padding: "10px 20px",
+                                backgroundColor: "#f59e0b",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                fontSize: "14px",
+                                fontWeight: "500",
+                                transition: "background-color 0.2s",
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#d97706"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f59e0b"; }}
+                            >
+                              Batal Ajukan
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={handleHapusPenerimaan}
+                              style={{
+                                padding: "10px 20px",
+                                backgroundColor: "#ef4444",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                fontSize: "14px",
+                                fontWeight: "500",
+                                transition: "background-color 0.2s",
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#ef4444"; }}
+                            >
+                              Hapus
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleBatalPengajuan}
+                              style={{
+                                padding: "10px 20px",
+                                backgroundColor: "#f59e0b",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                fontSize: "14px",
+                                fontWeight: "500",
+                                transition: "background-color 0.2s",
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#d97706"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f59e0b"; }}
+                            >
+                              Batal Ajukan
+                            </button>
+                          </>
+                        )
+                      ) : pengajuanSubmittedForCurrent ? (
+                        <button
+                          type="button"
+                          onClick={handleRefreshAfterPengajuan}
+                          style={{
+                            padding: "10px 20px",
+                            backgroundColor: "#3b82f6",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                            transition: "background-color 0.2s",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#2563eb"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#3b82f6"; }}
+                        >
+                          Refresh
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleOpenPengajuanModal}
+                          style={{
+                            padding: "10px 20px",
+                            backgroundColor: "#3b82f6",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                            transition: "background-color 0.2s",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#2563eb"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#3b82f6"; }}
+                        >
+                          Ajukan Perubahan
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      style={{
+                        padding: "10px 20px",
+                        backgroundColor: loading ? "#9ca3af" : "#10b981",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: loading ? "not-allowed" : "pointer",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!loading) {
+                          e.currentTarget.style.backgroundColor = "#059669";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!loading) {
+                          e.currentTarget.style.backgroundColor = "#10b981";
+                        }
+                      }}
+                    >
+                      {loading ? "Saving..." : "Simpan Penerimaan"}
+                    </button>
+                  )}
                 </div>
               </form>
             </div>
@@ -1762,18 +1923,27 @@ export default function TerimaPembelianPage() {
                             <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>UNIT</th>
                             <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>QTY PESAN</th>
                             <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>QTY TERIMA</th>
+                            <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>QTY PCS</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {viewingPenerimaan.detailBarang.map((detail: DetailBarangTerima, index: number) => (
+                          {viewingPenerimaan.detailBarang.map((detail: DetailBarangTerima, index: number) => {
+                            const product = products.find((p: Product) => p.id === detail.produkId);
+                            let qtyPcs = detail.qtyTerima;
+                            if (product?.units?.length && detail.unitId) {
+                              const unit = product.units.find((u: ProductUnit) => u.id === detail.unitId);
+                              if (unit) qtyPcs = detail.qtyTerima * unit.konversi;
+                            }
+                            return (
                             <tr key={detail.id || index} style={{ borderBottom: "1px solid #e2e8f0" }}>
                               <td style={{ padding: "12px", fontSize: "13px", color: "#1e293b" }}>{detail.namaProduk}</td>
                               <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>{detail.kodeProduk || "-"}</td>
                               <td style={{ padding: "12px", fontSize: "13px", color: "#64748b" }}>{detail.namaUnit || detail.satuan || "-"}</td>
                               <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "#64748b" }}>{detail.qtyPesan}</td>
                               <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "#1e293b", fontWeight: "500" }}>{detail.qtyTerima}</td>
+                              <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "#475569", fontWeight: "500" }}>{qtyPcs} pcs</td>
                             </tr>
-                          ))}
+                          );})}
                         </tbody>
                       </table>
                     </div>

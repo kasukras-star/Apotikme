@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "../../../../components/DashboardLayout";
 import Link from "next/link";
 import { getSupabaseClient } from "../../../../lib/supabaseClient";
@@ -103,6 +103,14 @@ export default function PersetujuanPengajuanPage() {
   const [filterType, setFilterType] = useState<string>("Pesanan Pembelian"); // "Pesanan Pembelian" | "Penerimaan Pembelian" | "Data Apotik"
   const [activeTab, setActiveTab] = useState<string>("Semua"); // "Semua" | "Data Master" | "Merchandise" | "Warehouse" | dll
   const [newPengajuanCount, setNewPengajuanCount] = useState<number>(0);
+  const lastPolledRaw = useRef<Record<string, string>>({});
+
+  // Helper to set localStorage and sync ref to prevent polling from triggering re-render
+  const setPolledItem = (key: string, value: any) => {
+    const json = JSON.stringify(value);
+    localStorage.setItem(key, json);
+    lastPolledRaw.current[key] = json;
+  };
 
   useEffect(() => {
     // Load pengajuan pesanan list
@@ -435,7 +443,44 @@ export default function PersetujuanPengajuanPage() {
             return;
           }
           if (!Array.isArray(value) || value.length === 0) return;
-          localStorage.setItem(key, JSON.stringify(value));
+          
+          // Merge strategy: preserve local changes (approved/rejected) over API data
+          const isPengajuanKey = key.startsWith("pengajuan");
+          if (isPengajuanKey) {
+            try {
+              const localRaw = localStorage.getItem(key);
+              if (localRaw) {
+                const localData = JSON.parse(localRaw);
+                if (Array.isArray(localData)) {
+                  // Create map of API data by id
+                  const apiMap = new Map(value.map((p: any) => [p.id, p]));
+                  // For each local item, if it's approved/rejected, keep local version; otherwise use API version
+                  localData.forEach((localItem: any) => {
+                    if (localItem.status === "Disetujui" || localItem.status === "Ditolak") {
+                      // Keep local approved/rejected status
+                      apiMap.set(localItem.id, localItem);
+                    } else if (apiMap.has(localItem.id)) {
+                      // If local has newer timestamp or isNew flag, prefer local
+                      const apiItem = apiMap.get(localItem.id);
+                      if (localItem.isNew || (localItem.createdAt && apiItem.createdAt && new Date(localItem.createdAt) > new Date(apiItem.createdAt))) {
+                        apiMap.set(localItem.id, localItem);
+                      }
+                    }
+                  });
+                  // Merge: local approved/rejected items + API items (for new ones not in local)
+                  const merged = Array.from(apiMap.values());
+                  localStorage.setItem(key, JSON.stringify(merged));
+                  lastPolledRaw.current[key] = JSON.stringify(merged);
+                  value = merged;
+                }
+              }
+            } catch (err) {
+              console.error(`Error merging ${key}:`, err);
+            }
+          } else {
+            localStorage.setItem(key, JSON.stringify(value));
+          }
+          
           const withMenu = (arr: any[], menu: string) => arr.map((p: any) => ({ ...p, menuSystem: p.menuSystem || menu }));
           switch (key) {
             case "pengajuanPembelian": setPengajuanList(value); break;
@@ -536,318 +581,187 @@ export default function PersetujuanPengajuanPage() {
     return () => window.removeEventListener("focus", onFocus);
   }, []);
 
-  // Poll for new pengajuan data from localStorage
+  // Poll for new pengajuan data from localStorage (only setState when raw string changed to avoid re-renders after approve)
   useEffect(() => {
+    const ref = lastPolledRaw.current;
     const interval = setInterval(() => {
-      // Reload pengajuan pesanan list
-      const savedPengajuan = localStorage.getItem("pengajuanPembelian");
-      if (savedPengajuan) {
+      let raw = localStorage.getItem("pengajuanPembelian");
+      if (raw !== null && raw !== ref["pengajuanPembelian"]) {
+        ref["pengajuanPembelian"] = raw;
         try {
-          const parsed = JSON.parse(savedPengajuan);
-          setPengajuanList((prevList) => {
-            if (JSON.stringify(parsed) !== JSON.stringify(prevList)) {
-              return parsed;
-            }
-            return prevList;
-          });
+          setPengajuanList(JSON.parse(raw));
         } catch (err) {
           console.error("Error loading pengajuan:", err);
         }
       }
 
-      // Reload pengajuan penerimaan list
-      const savedPengajuanPenerimaan = localStorage.getItem("pengajuanPenerimaanPembelian");
-      if (savedPengajuanPenerimaan) {
+      raw = localStorage.getItem("pengajuanPenerimaanPembelian");
+      if (raw !== null && raw !== ref["pengajuanPenerimaanPembelian"]) {
+        ref["pengajuanPenerimaanPembelian"] = raw;
         try {
-          const parsed = JSON.parse(savedPengajuanPenerimaan);
-          setPengajuanPenerimaanList((prevList) => {
-            if (JSON.stringify(parsed) !== JSON.stringify(prevList)) {
-              return parsed;
-            }
-            return prevList;
-          });
+          setPengajuanPenerimaanList(JSON.parse(raw));
         } catch (err) {
           console.error("Error loading pengajuan penerimaan:", err);
         }
       }
 
-      // Reload pengajuan apotik list
-      const savedPengajuanApotik = localStorage.getItem("pengajuanApotik");
-      if (savedPengajuanApotik) {
+      raw = localStorage.getItem("pengajuanApotik");
+      if (raw !== null && raw !== ref["pengajuanApotik"]) {
+        ref["pengajuanApotik"] = raw;
         try {
-          const apotikPengajuan = JSON.parse(savedPengajuanApotik);
-          const apotikPengajuanWithMenu = apotikPengajuan.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Data Master",
-          }));
-          setPengajuanApotikList((prevList) => {
-            if (JSON.stringify(apotikPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return apotikPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          const apotikPengajuan = JSON.parse(raw);
+          setPengajuanApotikList(apotikPengajuan.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Data Master" })));
         } catch (err) {
           console.error("Error loading pengajuan apotik:", err);
         }
       }
 
-      // Reload pengajuan unit list
-      const savedPengajuanUnit = localStorage.getItem("pengajuanUnit");
-      if (savedPengajuanUnit) {
+      raw = localStorage.getItem("pengajuanUnit");
+      if (raw !== null && raw !== ref["pengajuanUnit"]) {
+        ref["pengajuanUnit"] = raw;
         try {
-          const unitPengajuan = JSON.parse(savedPengajuanUnit);
-          const unitPengajuanWithMenu = unitPengajuan.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Data Master",
-          }));
-          setPengajuanUnitList((prevList) => {
-            if (JSON.stringify(unitPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return unitPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          const unitPengajuan = JSON.parse(raw);
+          setPengajuanUnitList(unitPengajuan.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Data Master" })));
         } catch (err) {
           console.error("Error loading pengajuan unit:", err);
         }
       }
 
-      // Reload pengajuan supplier list
-      const savedPengajuanSupplier = localStorage.getItem("pengajuanSupplier");
-      if (savedPengajuanSupplier) {
+      raw = localStorage.getItem("pengajuanSupplier");
+      if (raw !== null && raw !== ref["pengajuanSupplier"]) {
+        ref["pengajuanSupplier"] = raw;
         try {
-          const supplierPengajuan = JSON.parse(savedPengajuanSupplier);
-          const supplierPengajuanWithMenu = supplierPengajuan.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Data Master",
-          }));
-          setPengajuanSupplierList((prevList) => {
-            if (JSON.stringify(supplierPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return supplierPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          const supplierPengajuan = JSON.parse(raw);
+          setPengajuanSupplierList(supplierPengajuan.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Data Master" })));
         } catch (err) {
           console.error("Error loading pengajuan supplier:", err);
         }
       }
 
-      // Reload pengajuan customer list
-      const savedPengajuanCustomer = localStorage.getItem("pengajuanCustomer");
-      if (savedPengajuanCustomer) {
+      raw = localStorage.getItem("pengajuanCustomer");
+      if (raw !== null && raw !== ref["pengajuanCustomer"]) {
+        ref["pengajuanCustomer"] = raw;
         try {
-          const customerPengajuan = JSON.parse(savedPengajuanCustomer);
-          const customerPengajuanWithMenu = customerPengajuan.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Data Master",
-          }));
-          setPengajuanCustomerList((prevList) => {
-            if (JSON.stringify(customerPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return customerPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          const customerPengajuan = JSON.parse(raw);
+          setPengajuanCustomerList(customerPengajuan.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Data Master" })));
         } catch (err) {
           console.error("Error loading pengajuan customer:", err);
         }
       }
 
-      // Reload pengajuan kategori list
-      const savedPengajuanKategori = localStorage.getItem("pengajuanKategori");
-      if (savedPengajuanKategori) {
+      raw = localStorage.getItem("pengajuanKategori");
+      if (raw !== null && raw !== ref["pengajuanKategori"]) {
+        ref["pengajuanKategori"] = raw;
         try {
-          const kategoriPengajuan = JSON.parse(savedPengajuanKategori);
-          const kategoriPengajuanWithMenu = kategoriPengajuan.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Data Master",
-          }));
-          setPengajuanKategoriList((prevList) => {
-            if (JSON.stringify(kategoriPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return kategoriPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          const kategoriPengajuan = JSON.parse(raw);
+          setPengajuanKategoriList(kategoriPengajuan.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Data Master" })));
         } catch (err) {
           console.error("Error loading pengajuan kategori:", err);
         }
       }
 
-      // Reload pengajuan produk list
-      const savedPengajuanProduk = localStorage.getItem("pengajuanProduk");
-      if (savedPengajuanProduk) {
+      raw = localStorage.getItem("pengajuanProduk");
+      if (raw !== null && raw !== ref["pengajuanProduk"]) {
+        ref["pengajuanProduk"] = raw;
         try {
-          const produkPengajuan = JSON.parse(savedPengajuanProduk);
-          const produkPengajuanWithMenu = produkPengajuan.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Data Master",
-          }));
-          setPengajuanProdukList((prevList) => {
-            if (JSON.stringify(produkPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return produkPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          const produkPengajuan = JSON.parse(raw);
+          setPengajuanProdukList(produkPengajuan.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Data Master" })));
         } catch (err) {
           console.error("Error loading pengajuan produk:", err);
         }
       }
 
-      // Reload pengajuan type list
-      const savedPengajuanType = localStorage.getItem("pengajuanType");
-      if (savedPengajuanType) {
+      raw = localStorage.getItem("pengajuanType");
+      if (raw !== null && raw !== ref["pengajuanType"]) {
+        ref["pengajuanType"] = raw;
         try {
-          const typePengajuan = JSON.parse(savedPengajuanType);
-          const typePengajuanWithMenu = typePengajuan.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Data Master",
-          }));
-          setPengajuanTypeList((prevList) => {
-            if (JSON.stringify(typePengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return typePengajuanWithMenu;
-            }
-            return prevList;
-          });
+          const typePengajuan = JSON.parse(raw);
+          setPengajuanTypeList(typePengajuan.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Data Master" })));
         } catch (err) {
           console.error("Error loading pengajuan type:", err);
         }
       }
 
-      // Reload pengajuan jenis list
-      const savedPengajuanJenis = localStorage.getItem("pengajuanJenis");
-      if (savedPengajuanJenis) {
+      raw = localStorage.getItem("pengajuanJenis");
+      if (raw !== null && raw !== ref["pengajuanJenis"]) {
+        ref["pengajuanJenis"] = raw;
         try {
-          const jenisPengajuan = JSON.parse(savedPengajuanJenis);
-          const jenisPengajuanWithMenu = jenisPengajuan.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Data Master",
-          }));
-          setPengajuanJenisList((prevList) => {
-            if (JSON.stringify(jenisPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return jenisPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          const jenisPengajuan = JSON.parse(raw);
+          setPengajuanJenisList(jenisPengajuan.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Data Master" })));
         } catch (err) {
           console.error("Error loading pengajuan jenis:", err);
         }
       }
 
-      // Reload pengajuan margin list
-      const savedPengajuanMargin = localStorage.getItem("pengajuanMargin");
-      if (savedPengajuanMargin) {
+      raw = localStorage.getItem("pengajuanMargin");
+      if (raw !== null && raw !== ref["pengajuanMargin"]) {
+        ref["pengajuanMargin"] = raw;
         try {
-          const marginPengajuan = JSON.parse(savedPengajuanMargin);
-          const marginPengajuanWithMenu = marginPengajuan.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Data Master",
-          }));
-          setPengajuanMarginList((prevList) => {
-            if (JSON.stringify(marginPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return marginPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          const marginPengajuan = JSON.parse(raw);
+          setPengajuanMarginList(marginPengajuan.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Data Master" })));
         } catch (err) {
           console.error("Error loading pengajuan margin:", err);
         }
       }
 
-      // Reload pengajuan racikan list
-      const savedPengajuanRacikan = localStorage.getItem("pengajuanRacikan");
-      if (savedPengajuanRacikan) {
+      raw = localStorage.getItem("pengajuanRacikan");
+      if (raw !== null && raw !== ref["pengajuanRacikan"]) {
+        ref["pengajuanRacikan"] = raw;
         try {
-          const racikanPengajuan = JSON.parse(savedPengajuanRacikan);
-          const racikanPengajuanWithMenu = racikanPengajuan.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Data Master",
-          }));
-          setPengajuanRacikanList((prevList) => {
-            if (JSON.stringify(racikanPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return racikanPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          const racikanPengajuan = JSON.parse(raw);
+          setPengajuanRacikanList(racikanPengajuan.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Data Master" })));
         } catch (err) {
           console.error("Error loading pengajuan racikan:", err);
         }
       }
 
-      // Reload pengajuan penyesuaian stok list (support array or single object)
-      const savedPengajuanPenyesuaianStok = localStorage.getItem("pengajuanPenyesuaianStok");
-      if (savedPengajuanPenyesuaianStok) {
+      raw = localStorage.getItem("pengajuanPenyesuaianStok");
+      if (raw !== null && raw !== ref["pengajuanPenyesuaianStok"]) {
+        ref["pengajuanPenyesuaianStok"] = raw;
         try {
-          const parsed = JSON.parse(savedPengajuanPenyesuaianStok);
+          const parsed = JSON.parse(raw);
           const arr = Array.isArray(parsed) ? parsed : [parsed];
-          const penyesuaianStokPengajuanWithMenu = arr.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Merchandise",
-          }));
-          setPengajuanPenyesuaianStokList((prevList) => {
-            if (JSON.stringify(penyesuaianStokPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return penyesuaianStokPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          setPengajuanPenyesuaianStokList(arr.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Merchandise" })));
         } catch (err) {
           console.error("Error loading pengajuan penyesuaian stok:", err);
         }
       }
 
-      // Reload pengajuan transfer barang list
-      const savedPengajuanTransferBarang = localStorage.getItem("pengajuanTransferBarang");
-      if (savedPengajuanTransferBarang) {
+      raw = localStorage.getItem("pengajuanTransferBarang");
+      if (raw !== null && raw !== ref["pengajuanTransferBarang"]) {
+        ref["pengajuanTransferBarang"] = raw;
         try {
-          const parsed = JSON.parse(savedPengajuanTransferBarang);
+          const parsed = JSON.parse(raw);
           const arr = Array.isArray(parsed) ? parsed : [];
-          const transferBarangPengajuanWithMenu = arr.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Warehouse",
-          }));
-          setPengajuanTransferBarangList((prevList) => {
-            if (JSON.stringify(transferBarangPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return transferBarangPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          setPengajuanTransferBarangList(arr.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Warehouse" })));
         } catch (err) {
           console.error("Error loading pengajuan transfer barang:", err);
         }
       }
 
-      // Reload pengajuan terima transfer list
-      const savedPengajuanTerimaTransfer = localStorage.getItem("pengajuanTerimaTransfer");
-      if (savedPengajuanTerimaTransfer) {
+      raw = localStorage.getItem("pengajuanTerimaTransfer");
+      if (raw !== null && raw !== ref["pengajuanTerimaTransfer"]) {
+        ref["pengajuanTerimaTransfer"] = raw;
         try {
-          const parsed = JSON.parse(savedPengajuanTerimaTransfer);
+          const parsed = JSON.parse(raw);
           const arr = Array.isArray(parsed) ? parsed : [];
-          const terimaTransferPengajuanWithMenu = arr.map((p: any) => ({
-            ...p,
-            menuSystem: p.menuSystem || "Warehouse",
-          }));
-          setPengajuanTerimaTransferList((prevList) => {
-            if (JSON.stringify(terimaTransferPengajuanWithMenu) !== JSON.stringify(prevList)) {
-              return terimaTransferPengajuanWithMenu;
-            }
-            return prevList;
-          });
+          setPengajuanTerimaTransferList(arr.map((p: any) => ({ ...p, menuSystem: p.menuSystem || "Warehouse" })));
         } catch (err) {
           console.error("Error loading pengajuan terima transfer:", err);
         }
       }
 
-      const savedRencanaTransfer = localStorage.getItem("rencanaTransferBarang");
-      if (savedRencanaTransfer) {
+      raw = localStorage.getItem("rencanaTransferBarang");
+      if (raw !== null && raw !== ref["rencanaTransferBarang"]) {
+        ref["rencanaTransferBarang"] = raw;
         try {
-          const parsed = JSON.parse(savedRencanaTransfer);
-          const arr = Array.isArray(parsed) ? parsed : [];
-          setRencanaTransferList((prevList) => {
-            if (JSON.stringify(arr) !== JSON.stringify(prevList)) return arr;
-            return prevList;
-          });
+          const parsed = JSON.parse(raw);
+          setRencanaTransferList(Array.isArray(parsed) ? parsed : []);
         } catch (err) {
           console.error("Error loading rencana transfer:", err);
         }
       }
-    }, 1000); // Check every second
+    }, 5000); // Check every 5 seconds to avoid excessive re-renders
 
     return () => clearInterval(interval);
   }, []);
@@ -975,132 +889,8 @@ export default function PersetujuanPengajuanPage() {
       }
     });
     
-    setNewPengajuanCount(count);
+    setNewPengajuanCount((prev) => (count === prev ? prev : count));
   }, [pengajuanList, pengajuanPenerimaanList, pengajuanApotikList, pengajuanUnitList, pengajuanSupplierList, pengajuanCustomerList, pengajuanKategoriList, pengajuanProdukList, pengajuanTypeList, pengajuanJenisList, pengajuanMarginList, pengajuanRacikanList, pengajuanPenyesuaianStokList, pengajuanTransferBarangList, pengajuanTerimaTransferList, rencanaTransferList]);
-
-  // Check for new pengajuan periodically
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Count new pengajuan (status Menunggu Persetujuan with isNew flag or recent)
-      let count = 0;
-      
-      const isRecentPengajuan = (createdAt: string): boolean => {
-        const created = new Date(createdAt);
-        const now = new Date();
-        const diffMinutes = (now.getTime() - created.getTime()) / (1000 * 60);
-        return diffMinutes < 5; // Consider new if created within last 5 minutes
-      };
-      
-      // Check pesanan pembelian
-      pengajuanList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      // Check penerimaan pembelian
-      pengajuanPenerimaanList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      // Check apotik
-      pengajuanApotikList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      // Check unit
-      pengajuanUnitList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      // Check supplier
-      pengajuanSupplierList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      // Check customer
-      pengajuanCustomerList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      // Check kategori
-      pengajuanKategoriList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      // Check produk
-      pengajuanProdukList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      // Check type
-      pengajuanTypeList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      // Check jenis
-      pengajuanJenisList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      // Check margin
-      pengajuanMarginList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      // Check racikan
-      pengajuanRacikanList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-
-      // Check penyesuaian stok
-      pengajuanPenyesuaianStokList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-
-      // Check pengajuan transfer barang
-      pengajuanTransferBarangList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-
-      // Check pengajuan terima transfer
-      pengajuanTerimaTransferList.forEach((p) => {
-        if (p.status === "Menunggu Persetujuan" && (p.isNew || isRecentPengajuan(p.createdAt))) {
-          count++;
-        }
-      });
-      
-      setNewPengajuanCount(count);
-    }, 3000); // Check every 3 seconds
-
-    return () => clearInterval(interval);
-  }, [pengajuanList, pengajuanPenerimaanList, pengajuanApotikList, pengajuanUnitList, pengajuanSupplierList, pengajuanCustomerList, pengajuanKategoriList, pengajuanProdukList, pengajuanTypeList, pengajuanJenisList, pengajuanMarginList, pengajuanRacikanList, pengajuanPenyesuaianStokList, pengajuanTransferBarangList, pengajuanTerimaTransferList]);
 
   const handleSetujui = (pengajuan: Pengajuan) => {
     if (pengajuan.sourceRencanaTransfer && pengajuan.rencanaId) {
@@ -1110,7 +900,7 @@ export default function PersetujuanPengajuanPage() {
       const updated = { ...rencana, pengajuanDisetujuiAt: new Date().toISOString() };
       const nextList = rencanaTransferList.map((r: any) => (r.id === pengajuan.rencanaId ? updated : r));
       setRencanaTransferList(nextList);
-      localStorage.setItem("rencanaTransferBarang", JSON.stringify(nextList));
+      setPolledItem("rencanaTransferBarang", nextList);
       getSupabaseClient().auth.getSession().then(({ data }) => {
         if (data.session?.access_token) {
           fetch("/api/data/rencanaTransferBarang", {
@@ -1130,7 +920,7 @@ export default function PersetujuanPengajuanPage() {
         p.id === pengajuan.id ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false } : p
       );
       setPengajuanTerimaTransferList(updatedList);
-      localStorage.setItem("pengajuanTerimaTransfer", JSON.stringify(updatedList));
+      setPolledItem("pengajuanTerimaTransfer", updatedList);
       getSupabaseClient().auth.getSession().then(({ data }) => {
         if (data.session?.access_token) {
           fetch("/api/data/pengajuanTerimaTransfer", {
@@ -1150,7 +940,7 @@ export default function PersetujuanPengajuanPage() {
         p.id === pengajuan.id ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false } : p
       );
       setPengajuanTransferBarangList(updatedList);
-      localStorage.setItem("pengajuanTransferBarang", JSON.stringify(updatedList));
+      setPolledItem("pengajuanTransferBarang", updatedList);
       getSupabaseClient().auth.getSession().then(({ data }) => {
         if (data.session?.access_token) {
           fetch("/api/data/pengajuanTransferBarang", {
@@ -1222,7 +1012,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanApotik", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanApotik", updatedPengajuanList);
       setPengajuanApotikList(updatedPengajuanList);
 
       // Jika jenis pengajuan adalah "Hapus Data", hapus apotik
@@ -1250,7 +1040,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanUnit", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanUnit", updatedPengajuanList);
       setPengajuanUnitList(updatedPengajuanList);
 
       if (pengajuan.jenisPengajuan === "Hapus Data") {
@@ -1276,7 +1066,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanSupplier", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanSupplier", updatedPengajuanList);
       setPengajuanSupplierList(updatedPengajuanList);
 
       if (pengajuan.jenisPengajuan === "Hapus Data") {
@@ -1302,7 +1092,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanCustomer", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanCustomer", updatedPengajuanList);
       setPengajuanCustomerList(updatedPengajuanList);
 
       if (pengajuan.jenisPengajuan === "Hapus Data") {
@@ -1328,7 +1118,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanKategori", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanKategori", updatedPengajuanList);
       setPengajuanKategoriList(updatedPengajuanList);
 
       if (pengajuan.jenisPengajuan === "Hapus Data") {
@@ -1354,7 +1144,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanType", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanType", updatedPengajuanList);
       setPengajuanTypeList(updatedPengajuanList);
 
       // Load types from localStorage
@@ -1384,7 +1174,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanJenis", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanJenis", updatedPengajuanList);
       setPengajuanJenisList(updatedPengajuanList);
 
       // Load jenis from localStorage
@@ -1414,7 +1204,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanMargin", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanMargin", updatedPengajuanList);
       setPengajuanMarginList(updatedPengajuanList);
 
       // Load margins from localStorage
@@ -1444,7 +1234,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanRacikan", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanRacikan", updatedPengajuanList);
       setPengajuanRacikanList(updatedPengajuanList);
 
       // Load racikans from localStorage
@@ -1489,7 +1279,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanProduk", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanProduk", updatedPengajuanList);
       setPengajuanProdukList(updatedPengajuanList);
 
       if (pengajuan.jenisPengajuan === "Hapus Data") {
@@ -1518,8 +1308,19 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanPenerimaanPembelian", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanPenerimaanPembelian", updatedPengajuanList);
       setPengajuanPenerimaanList(updatedPengajuanList);
+      
+      // Sync to API
+      getSupabaseClient().auth.getSession().then(({ data }) => {
+        if (data.session?.access_token) {
+          fetch("/api/data/pengajuanPenerimaanPembelian", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+            body: JSON.stringify({ value: updatedPengajuanList }),
+          }).catch(() => {});
+        }
+      });
 
       if (pengajuan.jenisPengajuan === "Hapus Transaksi") {
         const updatedPenerimaanList = penerimaanList.filter((p) => p.id !== pengajuan.penerimaanId);
@@ -1533,7 +1334,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanPenyesuaianStok", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanPenyesuaianStok", updatedPengajuanList);
       setPengajuanPenyesuaianStokList(updatedPengajuanList);
 
       const riwayatArr = pengajuan.riwayatData as any[];
@@ -1609,7 +1410,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanPenyesuaianStok", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanPenyesuaianStok", updatedPengajuanList);
       setPengajuanPenyesuaianStokList(updatedPengajuanList);
     } else {
       // Handle pengajuan pesanan
@@ -1618,7 +1419,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Disetujui", disetujuiPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanPembelian", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanPembelian", updatedPengajuanList);
       setPengajuanList(updatedPengajuanList);
 
       // Jika jenis pengajuan adalah "Hapus Transaksi", hapus PO
@@ -1648,7 +1449,7 @@ export default function PersetujuanPengajuanPage() {
       };
       const nextList = rencanaTransferList.map((r: any) => (r.id === pengajuan.rencanaId ? updated : r));
       setRencanaTransferList(nextList);
-      localStorage.setItem("rencanaTransferBarang", JSON.stringify(nextList));
+      setPolledItem("rencanaTransferBarang", nextList);
       getSupabaseClient().auth.getSession().then(({ data }) => {
         if (data.session?.access_token) {
           fetch("/api/data/rencanaTransferBarang", {
@@ -1667,7 +1468,7 @@ export default function PersetujuanPengajuanPage() {
         p.id === pengajuan.id ? { ...p, status: "Ditolak", ditolakPada: new Date().toISOString(), alasanTolak, isNew: false } : p
       );
       setPengajuanTerimaTransferList(updatedList);
-      localStorage.setItem("pengajuanTerimaTransfer", JSON.stringify(updatedList));
+      setPolledItem("pengajuanTerimaTransfer", updatedList);
       getSupabaseClient().auth.getSession().then(({ data }) => {
         if (data.session?.access_token) {
           fetch("/api/data/pengajuanTerimaTransfer", {
@@ -1686,7 +1487,7 @@ export default function PersetujuanPengajuanPage() {
         p.id === pengajuan.id ? { ...p, status: "Ditolak", ditolakPada: new Date().toISOString(), alasanTolak, isNew: false } : p
       );
       setPengajuanTransferBarangList(updatedList);
-      localStorage.setItem("pengajuanTransferBarang", JSON.stringify(updatedList));
+      setPolledItem("pengajuanTransferBarang", updatedList);
       getSupabaseClient().auth.getSession().then(({ data }) => {
         if (data.session?.access_token) {
           fetch("/api/data/pengajuanTransferBarang", {
@@ -1720,7 +1521,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanApotik", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanApotik", updatedPengajuanList);
       setPengajuanApotikList(updatedPengajuanList);
     } else if (isUnit) {
       const updatedPengajuanList = pengajuanUnitList.map((p) =>
@@ -1728,7 +1529,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanUnit", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanUnit", updatedPengajuanList);
       setPengajuanUnitList(updatedPengajuanList);
     } else if (isSupplier) {
       const updatedPengajuanList = pengajuanSupplierList.map((p) =>
@@ -1736,7 +1537,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanSupplier", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanSupplier", updatedPengajuanList);
       setPengajuanSupplierList(updatedPengajuanList);
     } else if (isCustomer) {
       const updatedPengajuanList = pengajuanCustomerList.map((p) =>
@@ -1744,7 +1545,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanCustomer", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanCustomer", updatedPengajuanList);
       setPengajuanCustomerList(updatedPengajuanList);
     } else if (isKategori) {
       const updatedPengajuanList = pengajuanKategoriList.map((p) =>
@@ -1752,7 +1553,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanKategori", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanKategori", updatedPengajuanList);
       setPengajuanKategoriList(updatedPengajuanList);
     } else if (isType) {
       const updatedPengajuanList = pengajuanTypeList.map((p) =>
@@ -1760,7 +1561,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanType", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanType", updatedPengajuanList);
       setPengajuanTypeList(updatedPengajuanList);
     } else if (isJenis) {
       const updatedPengajuanList = pengajuanJenisList.map((p) =>
@@ -1768,7 +1569,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanJenis", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanJenis", updatedPengajuanList);
       setPengajuanJenisList(updatedPengajuanList);
     } else if (isMargin) {
       const updatedPengajuanList = pengajuanMarginList.map((p) =>
@@ -1776,7 +1577,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanMargin", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanMargin", updatedPengajuanList);
       setPengajuanMarginList(updatedPengajuanList);
     } else if (isRacikan) {
       const updatedPengajuanList = pengajuanRacikanList.map((p) =>
@@ -1784,7 +1585,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanRacikan", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanRacikan", updatedPengajuanList);
       setPengajuanRacikanList(updatedPengajuanList);
     } else if (isProduk) {
       const updatedPengajuanList = pengajuanProdukList.map((p) =>
@@ -1792,7 +1593,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanProduk", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanProduk", updatedPengajuanList);
       setPengajuanProdukList(updatedPengajuanList);
     } else if (isPenerimaan) {
       const updatedPengajuanList = pengajuanPenerimaanList.map((p) =>
@@ -1800,7 +1601,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanPenerimaanPembelian", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanPenerimaanPembelian", updatedPengajuanList);
       setPengajuanPenerimaanList(updatedPengajuanList);
     } else if (isPenyesuaianStokGlobal || isPenyesuaianStok) {
       const updatedPengajuanList = pengajuanPenyesuaianStokList.map((p) =>
@@ -1808,7 +1609,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanPenyesuaianStok", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanPenyesuaianStok", updatedPengajuanList);
       setPengajuanPenyesuaianStokList(updatedPengajuanList);
     } else {
       const updatedPengajuanList = pengajuanList.map((p) =>
@@ -1816,7 +1617,7 @@ export default function PersetujuanPengajuanPage() {
           ? { ...p, status: "Ditolak", alasanTolak, ditolakPada: new Date().toISOString(), isNew: false }
           : p
       );
-      localStorage.setItem("pengajuanPembelian", JSON.stringify(updatedPengajuanList));
+      setPolledItem("pengajuanPembelian", updatedPengajuanList);
       setPengajuanList(updatedPengajuanList);
     }
   };
@@ -2075,19 +1876,19 @@ export default function PersetujuanPengajuanPage() {
                 const updatedProduk = pengajuanProdukList.map((p) => ({ ...p, isNew: false }));
                 const updatedPenyesuaianStok = pengajuanPenyesuaianStokList.map((p) => ({ ...p, isNew: false }));
                 
-                localStorage.setItem("pengajuanPembelian", JSON.stringify(updatedPesanan));
-                localStorage.setItem("pengajuanPenerimaanPembelian", JSON.stringify(updatedPenerimaan));
-                localStorage.setItem("pengajuanApotik", JSON.stringify(updatedApotik));
-                localStorage.setItem("pengajuanUnit", JSON.stringify(updatedUnit));
-                localStorage.setItem("pengajuanSupplier", JSON.stringify(updatedSupplier));
-                localStorage.setItem("pengajuanCustomer", JSON.stringify(updatedCustomer));
-                localStorage.setItem("pengajuanKategori", JSON.stringify(updatedKategori));
-                localStorage.setItem("pengajuanType", JSON.stringify(updatedType));
-                localStorage.setItem("pengajuanJenis", JSON.stringify(updatedJenis));
-                localStorage.setItem("pengajuanMargin", JSON.stringify(updatedMargin));
-                localStorage.setItem("pengajuanRacikan", JSON.stringify(updatedRacikan));
-                localStorage.setItem("pengajuanProduk", JSON.stringify(updatedProduk));
-                localStorage.setItem("pengajuanPenyesuaianStok", JSON.stringify(updatedPenyesuaianStok));
+                setPolledItem("pengajuanPembelian", updatedPesanan);
+                setPolledItem("pengajuanPenerimaanPembelian", updatedPenerimaan);
+                setPolledItem("pengajuanApotik", updatedApotik);
+                setPolledItem("pengajuanUnit", updatedUnit);
+                setPolledItem("pengajuanSupplier", updatedSupplier);
+                setPolledItem("pengajuanCustomer", updatedCustomer);
+                setPolledItem("pengajuanKategori", updatedKategori);
+                setPolledItem("pengajuanType", updatedType);
+                setPolledItem("pengajuanJenis", updatedJenis);
+                setPolledItem("pengajuanMargin", updatedMargin);
+                setPolledItem("pengajuanRacikan", updatedRacikan);
+                setPolledItem("pengajuanProduk", updatedProduk);
+                setPolledItem("pengajuanPenyesuaianStok", updatedPenyesuaianStok);
                 
                 setPengajuanList(updatedPesanan);
                 setPengajuanPenerimaanList(updatedPenerimaan);

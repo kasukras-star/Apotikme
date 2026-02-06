@@ -164,6 +164,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       "/admin/warehouse/transfer-barang": "Transfer Barang",
       "/admin/warehouse/terima-transfer": "Terima Transfer",
       "/admin/warehouse/stok-opname": "Stok Opname",
+      "/admin/warehouse/retur-pembelian": "Retur Pembelian",
       "/inventory": "Informasi Inventory",
       "/admin/penjualan": "Penjualan",
       "/admin/penjualan/history": "History Penjualan",

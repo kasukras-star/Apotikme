@@ -14,8 +14,8 @@ interface ApotikFormData {
   email: string;
   picApotik: string;
   statusAktif: boolean;
-  defaultPO: boolean;
-  defaultTerimaBarang: boolean;
+  /** Pusat = gudang utama (penerimaan barang langsung diakui ke apotik ini), Cabang = cabang */
+  tipeApotik: "Pusat" | "Cabang";
 }
 
 interface Apotik {
@@ -29,6 +29,8 @@ interface Apotik {
   email: string;
   picApotik: string;
   statusAktif: boolean;
+  /** Pusat = gudang utama, Cabang = cabang. Backward compat: defaultPO/defaultTerimaBarang true → Pusat */
+  tipeApotik?: "Pusat" | "Cabang";
   defaultPO?: boolean;
   defaultTerimaBarang?: boolean;
   createdAt: Date;
@@ -49,8 +51,7 @@ export default function DataApotikPage() {
     email: "",
     picApotik: "",
     statusAktif: true,
-    defaultPO: false,
-    defaultTerimaBarang: false,
+    tipeApotik: "Cabang",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -156,11 +157,7 @@ export default function DataApotikPage() {
       if (editId) {
         const apotikToEdit = apotiks.find((a) => a.id === editId);
         if (apotikToEdit) {
-          // Jika salah satu true, set keduanya true (untuk checkbox gabungan)
-          const defaultPOValue = apotikToEdit.defaultPO || false;
-          const defaultTerimaBarangValue = apotikToEdit.defaultTerimaBarang || false;
-          const bothChecked = defaultPOValue || defaultTerimaBarangValue;
-          
+          const tipe = apotikToEdit.tipeApotik ?? (apotikToEdit.defaultPO || apotikToEdit.defaultTerimaBarang ? "Pusat" : "Cabang");
           setFormData({
             kodeApotik: apotikToEdit.kodeApotik,
             namaApotik: apotikToEdit.namaApotik,
@@ -171,8 +168,7 @@ export default function DataApotikPage() {
             email: apotikToEdit.email,
             picApotik: apotikToEdit.picApotik,
             statusAktif: apotikToEdit.statusAktif,
-            defaultPO: bothChecked,
-            defaultTerimaBarang: bothChecked,
+            tipeApotik: tipe,
           });
           setEditingApotik(apotikToEdit);
           setIsModalOpen(true);
@@ -427,8 +423,7 @@ export default function DataApotikPage() {
       email: "",
       picApotik: "",
       statusAktif: true,
-      defaultPO: false,
-      defaultTerimaBarang: false,
+      tipeApotik: "Cabang",
     });
     setError(null);
     setIsSaved(false);
@@ -445,13 +440,8 @@ export default function DataApotikPage() {
     setHasRefreshed(false);
     setShowNotification(false);
     
-    // Jika salah satu true, set keduanya true (untuk checkbox gabungan)
-    const defaultPOValue = apotik.defaultPO || false;
-    const defaultTerimaBarangValue = apotik.defaultTerimaBarang || false;
-    const bothChecked = defaultPOValue || defaultTerimaBarangValue;
-    
-    // Set formData dengan data apotik terlebih dahulu
-    let initialFormData = {
+    const tipe = apotik.tipeApotik ?? (apotik.defaultPO || apotik.defaultTerimaBarang ? "Pusat" : "Cabang");
+    let initialFormData: ApotikFormData = {
       kodeApotik: apotik.kodeApotik,
       namaApotik: apotik.namaApotik,
       alamat: apotik.alamat,
@@ -461,8 +451,7 @@ export default function DataApotikPage() {
       email: apotik.email,
       picApotik: apotik.picApotik,
       statusAktif: apotik.statusAktif,
-      defaultPO: bothChecked,
-      defaultTerimaBarang: bothChecked,
+      tipeApotik: tipe,
     };
     
     // Check if there's an approved pengajuan for this apotik
@@ -509,12 +498,8 @@ export default function DataApotikPage() {
     setHasRefreshed(false);
     setShowNotification(false);
     
-    // Handle defaultPO dan defaultTerimaBarang logic
-    const defaultPOValue = apotik.defaultPO || false;
-    const defaultTerimaBarangValue = apotik.defaultTerimaBarang || false;
-    const bothChecked = defaultPOValue || defaultTerimaBarangValue;
-    
-    let initialFormData = {
+    const tipe = apotik.tipeApotik ?? (apotik.defaultPO || apotik.defaultTerimaBarang ? "Pusat" : "Cabang");
+    let initialFormData: ApotikFormData = {
       kodeApotik: apotik.kodeApotik,
       namaApotik: apotik.namaApotik,
       alamat: apotik.alamat,
@@ -524,11 +509,9 @@ export default function DataApotikPage() {
       email: apotik.email,
       picApotik: apotik.picApotik,
       statusAktif: apotik.statusAktif,
-      defaultPO: bothChecked,
-      defaultTerimaBarang: bothChecked,
+      tipeApotik: tipe,
     };
     
-    // Check pengajuan status
     const savedPengajuan = localStorage.getItem("pengajuanApotik");
     if (savedPengajuan) {
       try {
@@ -565,11 +548,7 @@ export default function DataApotikPage() {
   const handleAjukanPerubahanFromView = () => {
     if (!viewingApotik) return;
     
-    // Set editing apotik and form data
-    const defaultPOValue = viewingApotik.defaultPO || false;
-    const defaultTerimaBarangValue = viewingApotik.defaultTerimaBarang || false;
-    const bothChecked = defaultPOValue || defaultTerimaBarangValue;
-    
+    const tipe = viewingApotik.tipeApotik ?? (viewingApotik.defaultPO || viewingApotik.defaultTerimaBarang ? "Pusat" : "Cabang");
     setFormData({
       kodeApotik: viewingApotik.kodeApotik,
       namaApotik: viewingApotik.namaApotik,
@@ -580,8 +559,7 @@ export default function DataApotikPage() {
       email: viewingApotik.email,
       picApotik: viewingApotik.picApotik,
       statusAktif: viewingApotik.statusAktif,
-      defaultPO: bothChecked,
-      defaultTerimaBarang: bothChecked,
+      tipeApotik: tipe,
     });
     setEditingApotik(viewingApotik);
     setIsSaved(true);
@@ -614,19 +592,10 @@ export default function DataApotikPage() {
       setIsSaved(false);
     }
     
-    // Jika checkbox "Default PO & Terima Barang" dicentang, set kedua nilai sama
-    if (name === "defaultPOAndTerimaBarang") {
-      setFormData((prev) => ({
-        ...prev,
-        defaultPO: checked,
-        defaultTerimaBarang: checked,
-      }));
-    } else {
-      setFormData((prev) => ({
+    setFormData((prev) => ({
         ...prev,
         [name]: type === "checkbox" ? checked : value,
       }));
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1565,31 +1534,58 @@ export default function DataApotikPage() {
                     />
                     <span>Status Aktif</span>
                   </label>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#374151",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      id="defaultPOAndTerimaBarang"
-                      name="defaultPOAndTerimaBarang"
-                      checked={formData.defaultPO && formData.defaultTerimaBarang}
-                      onChange={handleChange}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label
                       style={{
-                        width: "18px",
-                        height: "18px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: "#374151",
                         cursor: "pointer",
                       }}
-                    />
-                    <span>Default PO & Terima Barang Supplier</span>
-                  </label>
+                    >
+                      <input
+                        type="checkbox"
+                        id="tipeApotikCabang"
+                        name="tipeApotikCabang"
+                        checked={formData.tipeApotik === "Cabang"}
+                        onChange={(e) => {
+                          const checked = (e.target as HTMLInputElement).checked;
+                          setFormData((prev) => ({ ...prev, tipeApotik: checked ? "Cabang" : "Pusat" }));
+                          if (isSaved && editingApotik) setIsSaved(false);
+                        }}
+                        style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                      />
+                      <span>Cabang</span>
+                    </label>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: "#374151",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        id="tipeApotikPusat"
+                        name="tipeApotikPusat"
+                        checked={formData.tipeApotik === "Pusat"}
+                        onChange={(e) => {
+                          const checked = (e.target as HTMLInputElement).checked;
+                          setFormData((prev) => ({ ...prev, tipeApotik: checked ? "Pusat" : "Cabang" }));
+                          if (isSaved && editingApotik) setIsSaved(false);
+                        }}
+                        style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                      />
+                      <span>Pusat (Gudang Utama)</span>
+                    </label>
+                  </div>
                 </div>
 
                 {error && (

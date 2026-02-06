@@ -74,6 +74,7 @@ const allMenus = [
   { label: "Warehouse - Transfer Barang", path: "/admin/warehouse/transfer-barang" },
   { label: "Warehouse - Terima Transfer", path: "/admin/warehouse/terima-transfer" },
   { label: "Warehouse - Stok Opname", path: "/admin/warehouse/stok-opname" },
+  { label: "Warehouse - Retur Pembelian", path: "/admin/warehouse/retur-pembelian" },
   { label: "Informasi - Inventory", path: "/inventory" },
   { label: "POS - Penjualan", path: "/admin/penjualan" },
   { label: "POS - History Penjualan", path: "/admin/penjualan/history" },

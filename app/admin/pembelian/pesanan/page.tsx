@@ -64,6 +64,8 @@ interface Apotik {
   email: string;
   picApotik: string;
   statusAktif: boolean;
+  /** Pusat = gudang utama (penerimaan langsung diakui ke apotik ini) */
+  tipeApotik?: "Pusat" | "Cabang";
   defaultPO?: boolean;
   defaultTerimaBarang?: boolean;
 }
@@ -275,8 +277,8 @@ export default function PesananPembelianPage() {
     setEditingPesanan(null);
     setError(null);
     
-    // Find apotik with defaultPO checked, or fallback to "Apotik Maju Lancar"
-    const defaultApotik = apotiks.find((a) => a.defaultPO) || apotiks.find((a) => a.namaApotik === "Apotik Maju Lancar");
+    // Gudang utama = apotik Pusat (penerimaan barang langsung diakui ke apotik ini); fallback ke defaultPO lama atau nama
+    const defaultApotik = apotiks.find((a) => a.tipeApotik === "Pusat") || apotiks.find((a) => a.defaultPO) || apotiks.find((a) => a.namaApotik === "Apotik Maju Lancar");
     
     setFormData({
       nomorPesanan: "",
@@ -1748,8 +1750,20 @@ export default function PesananPembelianPage() {
                             width: "100%",
                             borderCollapse: "collapse",
                             minWidth: "1000px",
+                            tableLayout: "fixed",
                           }}
                         >
+                          <colgroup>
+                            <col style={{ width: "56px" }} />
+                            <col style={{ width: "20%" }} />
+                            <col style={{ width: "110px" }} />
+                            <col style={{ width: "160px" }} />
+                            <col style={{ width: "100px" }} />
+                            <col style={{ width: "100px" }} />
+                            <col style={{ width: "80px" }} />
+                            <col style={{ width: "90px" }} />
+                            <col style={{ width: "64px" }} />
+                          </colgroup>
                           <thead>
                             <tr style={{ backgroundColor: "var(--hover-bg)" }}>
                               <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>ACTION</th>
@@ -1759,37 +1773,38 @@ export default function PesananPembelianPage() {
                               <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>MASTER PRICE</th>
                               <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>PRICE</th>
                               <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>QTY</th>
+                              <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>QTY PCS</th>
                               <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>%</th>
                             </tr>
                           </thead>
                           <tbody>
                             {formData.detailBarang.map((detail) => (
                               <tr key={detail.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                                <td style={{ padding: "12px", textAlign: "center" }}>
+                                <td style={{ padding: "12px", textAlign: "center", verticalAlign: "middle" }}>
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveDetail(detail.id)}
                                     title="Hapus"
                                     style={{
-                                      padding: "6px 8px",
-                                      backgroundColor: "#ef4444",
-                                      color: "white",
+                                      padding: "4px",
+                                      backgroundColor: "transparent",
+                                      color: "#ef4444",
                                       border: "none",
                                       borderRadius: "4px",
                                       cursor: "pointer",
                                       display: "inline-flex",
                                       alignItems: "center",
                                       justifyContent: "center",
-                                      transition: "background-color 0.2s",
+                                      transition: "opacity 0.2s",
                                     }}
                                     onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor = "#dc2626";
+                                      e.currentTarget.style.opacity = "0.7";
                                     }}
                                     onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor = "#ef4444";
+                                      e.currentTarget.style.opacity = "1";
                                     }}
                                   >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                       <polyline points="3 6 5 6 21 6" />
                                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                                       <line x1="10" y1="11" x2="10" y2="17" />
@@ -1797,7 +1812,7 @@ export default function PesananPembelianPage() {
                                     </svg>
                                   </button>
                                 </td>
-                                <td style={{ padding: "12px" }}>
+                                <td style={{ padding: "12px", verticalAlign: "middle" }}>
                                   <div
                                     role="button"
                                     tabIndex={0}
@@ -1833,10 +1848,10 @@ export default function PesananPembelianPage() {
                                     <span style={{ marginLeft: "8px", flexShrink: 0, fontSize: "12px", color: "var(--text-secondary)" }}>▼</span>
                                   </div>
                                 </td>
-                                <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)" }}>
+                                <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)", verticalAlign: "middle" }}>
                                   {detail.kodeProduk || "-"}
                                 </td>
-                                <td style={{ padding: "12px" }}>
+                                <td style={{ padding: "12px", verticalAlign: "middle" }}>
                                   {(() => {
                                     const product = products.find((p) => p.id === detail.produkId);
                                     if (product && product.units && product.units.length > 0) {
@@ -1869,10 +1884,10 @@ export default function PesananPembelianPage() {
                                     return <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>{detail.satuan || "-"}</span>;
                                   })()}
                                 </td>
-                                <td style={{ padding: "12px", textAlign: "right", fontSize: "13px", color: "var(--text-secondary)" }}>
+                                <td style={{ padding: "12px", textAlign: "right", fontSize: "13px", color: "var(--text-secondary)", verticalAlign: "middle" }}>
                                   {formatCurrency(detail.hargaSatuan || 0)}
                                 </td>
-                                <td style={{ padding: "12px" }}>
+                                <td style={{ padding: "12px", textAlign: "right", verticalAlign: "middle" }}>
                                   <input
                                     type="number"
                                     min="0"
@@ -1883,7 +1898,7 @@ export default function PesananPembelianPage() {
                                     }
                                     required
                                     style={{
-                                      width: "120px",
+                                      width: "100%",
                                       padding: "8px",
                                       border: "1px solid var(--input-border)",
                                       borderRadius: "4px",
@@ -1893,7 +1908,7 @@ export default function PesananPembelianPage() {
                                     }}
                                   />
                                 </td>
-                                <td style={{ padding: "12px" }}>
+                                <td style={{ padding: "12px", textAlign: "center", verticalAlign: "middle" }}>
                                   <input
                                     type="number"
                                     min="1"
@@ -1903,7 +1918,7 @@ export default function PesananPembelianPage() {
                                     }
                                     required
                                     style={{
-                                      width: "80px",
+                                      width: "100%",
                                       padding: "8px",
                                       border: "1px solid var(--input-border)",
                                       borderRadius: "4px",
@@ -1913,7 +1928,37 @@ export default function PesananPembelianPage() {
                                     }}
                                   />
                                 </td>
-                                <td style={{ padding: "12px" }}>
+                                <td style={{ padding: "12px", textAlign: "center", fontSize: "13px", color: "var(--text-secondary)", fontWeight: "500", verticalAlign: "middle" }}>
+                                  {(() => {
+                                    const product = products.find((p) => p.id === detail.produkId);
+                                    if (product && product.units) {
+                                      let selectedUnit: ProductUnit | undefined;
+                                      
+                                      // Try to find unit by unitId first
+                                      if (detail.unitId) {
+                                        selectedUnit = product.units.find((u) => u.id === detail.unitId);
+                                      }
+                                      
+                                      // If not found, try to find by namaUnit or satuan
+                                      if (!selectedUnit && (detail.namaUnit || detail.satuan)) {
+                                        selectedUnit = product.units.find((u) => 
+                                          u.namaUnit === detail.namaUnit || u.namaUnit === detail.satuan
+                                        );
+                                      }
+                                      
+                                      if (selectedUnit) {
+                                        const qtyInPcs = detail.qty * selectedUnit.konversi;
+                                        // Find base unit name
+                                        const baseUnit = product.units.find((u) => u.isBaseUnit);
+                                        const baseUnitName = baseUnit ? baseUnit.namaUnit : "Pcs";
+                                        return `${qtyInPcs} ${baseUnitName}`;
+                                      }
+                                    }
+                                    // Fallback: jika tidak ada unit atau unit tidak ditemukan
+                                    return `${detail.qty} ${detail.satuan || "Pcs"}`;
+                                  })()}
+                                </td>
+                                <td style={{ padding: "12px", textAlign: "center", verticalAlign: "middle" }}>
                                   <input
                                     type="number"
                                     min="0"
@@ -1924,7 +1969,7 @@ export default function PesananPembelianPage() {
                                       handleDetailChange(detail.id, "diskon", parseFloat(e.target.value) || 0)
                                     }
                                     style={{
-                                      width: "70px",
+                                      width: "100%",
                                       padding: "8px",
                                       border: "1px solid var(--input-border)",
                                       borderRadius: "4px",
@@ -1969,23 +2014,25 @@ export default function PesananPembelianPage() {
                       style={{
                         fontSize: "16px",
                         fontWeight: "600",
-                        margin: "0 0 20px 0",
+                        margin: "0 0 12px 0",
                         color: "var(--text-primary)",
                         borderBottom: "2px solid var(--primary)",
-                        paddingBottom: "8px",
+                        paddingBottom: "6px",
                       }}
                     >
                       Summary
                     </h4>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "10% 10%", gap: "16px", marginBottom: "20px" }}>
-                      <div style={{ minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "16px", marginBottom: "12px" }}>
+                      <div style={{ width: "150px" }}>
                         <label
                           htmlFor="diskonGlobal"
                           style={{
                             display: "block",
-                            marginBottom: "8px",
-                            fontSize: "10px",
+                            marginBottom: "6px",
+                            fontSize: "12px",
+                            lineHeight: "20px",
+                            minHeight: "20px",
                             fontWeight: "500",
                             color: "var(--text-primary)",
                             width: "100%",
@@ -2004,6 +2051,7 @@ export default function PesananPembelianPage() {
                           onChange={handleChange}
                           style={{
                             width: "100%",
+                            height: "38px",
                             padding: "8px 10px",
                             border: "1px solid var(--input-border)",
                             borderRadius: "6px",
@@ -2012,13 +2060,15 @@ export default function PesananPembelianPage() {
                           }}
                         />
                       </div>
-                      <div style={{ minWidth: 0 }}>
+                      <div style={{ width: "150px" }}>
                         <label
                           htmlFor="ppn"
                           style={{
                             display: "block",
-                            marginBottom: "8px",
-                            fontSize: "10px",
+                            marginBottom: "6px",
+                            fontSize: "12px",
+                            lineHeight: "20px",
+                            minHeight: "20px",
                             fontWeight: "500",
                             color: "var(--text-primary)",
                             width: "100%",
@@ -2034,6 +2084,7 @@ export default function PesananPembelianPage() {
                           required
                           style={{
                             width: "100%",
+                            height: "38px",
                             padding: "8px 10px",
                             border: "1px solid var(--input-border)",
                             borderRadius: "6px",
@@ -2058,16 +2109,16 @@ export default function PesananPembelianPage() {
 
                     <div
                       style={{
-                        paddingTop: "16px",
+                        paddingTop: "8px",
                         borderTop: "2px solid var(--border)",
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--text-secondary)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", fontSize: "14px", color: "var(--text-secondary)" }}>
                         <span>Subtotal:</span>
                         <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{formatCurrency(totals.subtotal)}</span>
                       </div>
                       {totals.diskonAmount > 0 && (
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--text-secondary)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", fontSize: "14px", color: "var(--text-secondary)" }}>
                           <span>Discount:</span>
                           <span style={{ fontWeight: "500", color: "#10b981" }}>-{formatCurrency(totals.diskonAmount)}</span>
                         </div>
@@ -2076,7 +2127,7 @@ export default function PesananPembelianPage() {
                         <span>PPN ({formData.ppn}%):</span>
                         <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{formatCurrency(totals.ppnAmount)}</span>
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px", paddingTop: "12px", borderTop: "2px solid var(--border)", fontSize: "18px", fontWeight: "600", color: "var(--text-primary)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px", paddingTop: "8px", borderTop: "2px solid var(--border)", fontSize: "18px", fontWeight: "600", color: "var(--text-primary)" }}>
                         <span>Total:</span>
                         <span>{formatCurrency(totals.total)}</span>
                       </div>
@@ -2708,6 +2759,7 @@ export default function PesananPembelianPage() {
                             <th style={{ padding: "12px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>UNIT</th>
                             <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>PRICE</th>
                             <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>QTY</th>
+                            <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>QTY PCS</th>
                             <th style={{ padding: "12px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>DISKON (%)</th>
                             <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>SUBTOTAL</th>
                           </tr>
@@ -2720,6 +2772,36 @@ export default function PesananPembelianPage() {
                               <td style={{ padding: "12px", fontSize: "13px", color: "var(--text-secondary)" }}>{detail.namaUnit || detail.satuan || "-"}</td>
                               <td style={{ padding: "12px", fontSize: "13px", textAlign: "right", color: "var(--text-primary)" }}>{formatCurrency(detail.hargaSatuan || 0)}</td>
                               <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "var(--text-primary)" }}>{detail.qty}</td>
+                              <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "var(--text-secondary)", fontWeight: "500" }}>
+                                {(() => {
+                                  const product = products.find((p) => p.id === detail.produkId);
+                                  if (product && product.units) {
+                                    let selectedUnit: ProductUnit | undefined;
+                                    
+                                    // Try to find unit by unitId first
+                                    if (detail.unitId) {
+                                      selectedUnit = product.units.find((u) => u.id === detail.unitId);
+                                    }
+                                    
+                                    // If not found, try to find by namaUnit or satuan
+                                    if (!selectedUnit && (detail.namaUnit || detail.satuan)) {
+                                      selectedUnit = product.units.find((u) => 
+                                        u.namaUnit === detail.namaUnit || u.namaUnit === detail.satuan
+                                      );
+                                    }
+                                    
+                                    if (selectedUnit) {
+                                      const qtyInPcs = detail.qty * selectedUnit.konversi;
+                                      // Find base unit name
+                                      const baseUnit = product.units.find((u) => u.isBaseUnit);
+                                      const baseUnitName = baseUnit ? baseUnit.namaUnit : "Pcs";
+                                      return `${qtyInPcs} ${baseUnitName}`;
+                                    }
+                                  }
+                                  // Fallback: jika tidak ada unit atau unit tidak ditemukan
+                                  return `${detail.qty} ${detail.satuan || "Pcs"}`;
+                                })()}
+                              </td>
                               <td style={{ padding: "12px", fontSize: "13px", textAlign: "center", color: "var(--text-primary)" }}>{detail.diskon || 0}%</td>
                               <td style={{ padding: "12px", fontSize: "13px", textAlign: "right", fontWeight: "500", color: "var(--text-primary)" }}>{formatCurrency(detail.subtotal || 0)}</td>
                             </tr>
@@ -2747,22 +2829,22 @@ export default function PesananPembelianPage() {
                     style={{
                       fontSize: "16px",
                       fontWeight: "600",
-                      margin: "0 0 20px 0",
+                      margin: "0 0 12px 0",
                       color: "var(--text-primary)",
                       borderBottom: "2px solid var(--primary)",
-                      paddingBottom: "8px",
+                      paddingBottom: "6px",
                     }}
                   >
                     Summary
                   </h4>
 
-                  <div style={{ paddingTop: "16px", borderTop: "2px solid var(--border)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--text-secondary)" }}>
+                  <div style={{ paddingTop: "8px", borderTop: "2px solid var(--border)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", fontSize: "14px", color: "var(--text-secondary)" }}>
                       <span>Subtotal:</span>
                       <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{formatCurrency(viewingPesanan.subtotal || 0)}</span>
                     </div>
                     {viewingPesanan.diskonAmount > 0 && (
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "var(--text-secondary)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", fontSize: "14px", color: "var(--text-secondary)" }}>
                         <span>Discount:</span>
                         <span style={{ fontWeight: "500", color: "#10b981" }}>-{formatCurrency(viewingPesanan.diskonAmount || 0)}</span>
                       </div>
@@ -2771,7 +2853,7 @@ export default function PesananPembelianPage() {
                       <span>PPN ({viewingPesanan.ppn || 11}%):</span>
                       <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{formatCurrency(viewingPesanan.ppnAmount || 0)}</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px", paddingTop: "12px", borderTop: "2px solid var(--border)", fontSize: "18px", fontWeight: "600", color: "var(--text-primary)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px", paddingTop: "8px", borderTop: "2px solid var(--border)", fontSize: "18px", fontWeight: "600", color: "var(--text-primary)" }}>
                       <span>Total:</span>
                       <span>{formatCurrency(viewingPesanan.total || 0)}</span>
                     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import DashboardLayout from "../../components/DashboardLayout";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 
 interface ProductUnit {
   id: string;
@@ -204,64 +205,149 @@ export default function InventoryPage() {
     };
   };
 
-  // Load data dari localStorage (sumber sama dengan master & transaksi) — muat ulang setiap kali halaman ini dibuka
+  // Load data dari localStorage dan API (sumber sama dengan master & transaksi) — muat ulang setiap kali halaman ini dibuka
   useEffect(() => {
     if (pathname !== "/inventory") return;
     setLoading(true);
 
-    const savedProducts = localStorage.getItem("products");
-    if (savedProducts) {
-      try {
-        const parsed = JSON.parse(savedProducts);
-        const productsWithDate = parsed.map((p: any) => ({
-          ...p,
-          stokMinimum: p.stokMinimum ?? 0,
-          stokMaksimum: p.stokMaksimum ?? 0,
-          stokAwal: p.stokAwal ?? 0,
-          supplier: p.supplier ?? "",
-          keterangan: p.keterangan ?? "",
-          statusAktif: p.statusAktif !== false,
-          createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
-        }));
-        setProducts(productsWithDate);
-        setFilteredProducts(productsWithDate);
+    // Load from localStorage first (for immediate display)
+    const loadFromLocalStorage = () => {
+      const savedProducts = localStorage.getItem("products");
+      if (savedProducts) {
+        try {
+          const parsed = JSON.parse(savedProducts);
+          const productsWithDate = parsed.map((p: any) => ({
+            ...p,
+            stokMinimum: p.stokMinimum ?? 0,
+            stokMaksimum: p.stokMaksimum ?? 0,
+            stokAwal: p.stokAwal ?? 0,
+            supplier: p.supplier ?? "",
+            keterangan: p.keterangan ?? "",
+            statusAktif: p.statusAktif !== false,
+            createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+          }));
+          setProducts(productsWithDate);
+          setFilteredProducts(productsWithDate);
 
-        const uniqueCategories = Array.from(new Set(productsWithDate.map((p: Product) => p.kategori).filter(Boolean)));
-        setCategories(uniqueCategories as string[]);
-      } catch (err) {
-        console.error("Error loading products:", err);
+          const uniqueCategories = Array.from(new Set(productsWithDate.map((p: Product) => p.kategori).filter(Boolean)));
+          setCategories(uniqueCategories as string[]);
+        } catch (err) {
+          console.error("Error loading products:", err);
+        }
+      } else {
+        setProducts([]);
+        setFilteredProducts([]);
+        setCategories([]);
       }
-    } else {
-      setProducts([]);
-      setFilteredProducts([]);
-      setCategories([]);
-    }
 
-    const savedSuppliers = localStorage.getItem("suppliers");
-    if (savedSuppliers) {
-      try {
-        setSuppliers(JSON.parse(savedSuppliers));
-      } catch (err) {
-        console.error("Error loading suppliers:", err);
+      const savedSuppliers = localStorage.getItem("suppliers");
+      if (savedSuppliers) {
+        try {
+          setSuppliers(JSON.parse(savedSuppliers));
+        } catch (err) {
+          console.error("Error loading suppliers:", err);
+        }
+      } else {
+        setSuppliers([]);
       }
-    } else {
-      setSuppliers([]);
-    }
 
-    const savedApotiks = localStorage.getItem("apotiks");
-    if (savedApotiks) {
-      try {
-        const parsed = JSON.parse(savedApotiks);
-        const activeApotiks = parsed.filter((a: Apotik) => a.statusAktif !== false);
-        setApotiks(activeApotiks);
-      } catch (err) {
-        console.error("Error loading apotiks:", err);
+      const savedApotiks = localStorage.getItem("apotiks");
+      if (savedApotiks) {
+        try {
+          const parsed = JSON.parse(savedApotiks);
+          const activeApotiks = parsed.filter((a: Apotik) => a.statusAktif !== false);
+          setApotiks(activeApotiks);
+        } catch (err) {
+          console.error("Error loading apotiks:", err);
+        }
+      } else {
+        setApotiks([]);
       }
-    } else {
-      setApotiks([]);
-    }
+    };
 
-    setLoading(false);
+    loadFromLocalStorage();
+
+    // Load from API and merge with localStorage (prioritize stokPerApotik from localStorage)
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token) {
+        setLoading(false);
+        return;
+      }
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/products", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/suppliers", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/apotiks", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([productsData, suppliersData, apotiksData]) => {
+        // Merge products: prioritize stokPerApotik from localStorage if different
+        if (Array.isArray(productsData) && productsData.length > 0) {
+          let mergedProducts = productsData;
+          try {
+            const sp = localStorage.getItem("products");
+            if (sp) {
+              const fromStorage = JSON.parse(sp);
+              const arr = Array.isArray(fromStorage) ? fromStorage : [];
+              const byId = new Map(arr.map((p: any) => [p.id, p]));
+              mergedProducts = productsData.map((p: any) => {
+                const local = byId.get(p.id);
+                if (local) {
+                  // Merge stokPerApotik: prioritaskan data lokal karena lebih baru setelah update stok
+                  // Jika data API memiliki apotik yang tidak ada di lokal, tambahkan juga
+                  const mergedStokPerApotik = local.stokPerApotik 
+                    ? { ...(p.stokPerApotik || {}), ...local.stokPerApotik }
+                    : (p.stokPerApotik || {});
+                  // Merge semua field dari local untuk memastikan data terbaru
+                  return { ...p, ...local, stokPerApotik: mergedStokPerApotik };
+                }
+                return p;
+              });
+              
+              // Tambahkan produk yang ada di localStorage tapi tidak ada di API (produk baru)
+              const apiProductIds = new Set(productsData.map((p: any) => p.id));
+              const localOnlyProducts = arr.filter((p: any) => !apiProductIds.has(p.id));
+              if (localOnlyProducts.length > 0) {
+                mergedProducts = [...mergedProducts, ...localOnlyProducts];
+              }
+            }
+          } catch (_) {}
+          
+          const productsWithDate = mergedProducts.map((p: any) => ({
+            ...p,
+            stokMinimum: p.stokMinimum ?? 0,
+            stokMaksimum: p.stokMaksimum ?? 0,
+            stokAwal: p.stokAwal ?? 0,
+            supplier: p.supplier ?? "",
+            keterangan: p.keterangan ?? "",
+            statusAktif: p.statusAktif !== false,
+            createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+          }));
+          setProducts(productsWithDate);
+          setFilteredProducts(productsWithDate);
+          const uniqueCategories = Array.from(new Set(productsWithDate.map((p: Product) => p.kategori).filter(Boolean)));
+          setCategories(uniqueCategories as string[]);
+          localStorage.setItem("products", JSON.stringify(mergedProducts));
+        } else {
+          loadFromLocalStorage();
+        }
+
+        if (Array.isArray(suppliersData) && suppliersData.length > 0) {
+          setSuppliers(suppliersData);
+          localStorage.setItem("suppliers", JSON.stringify(suppliersData));
+        }
+
+        if (Array.isArray(apotiksData) && apotiksData.length > 0) {
+          const activeApotiks = apotiksData.filter((a: Apotik) => a.statusAktif !== false);
+          setApotiks(activeApotiks);
+          localStorage.setItem("apotiks", JSON.stringify(apotiksData));
+        }
+
+        setLoading(false);
+      }).catch(() => {
+        setLoading(false);
+      });
+    }).catch(() => {
+      setLoading(false);
+    });
   }, [pathname]);
 
   // Filter products
@@ -339,38 +425,153 @@ export default function InventoryPage() {
 
   const handleRefreshData = () => {
     setLoading(true);
-    const savedProducts = localStorage.getItem("products");
-    if (savedProducts) {
-      try {
-        const parsed = JSON.parse(savedProducts);
-        const productsWithDate = parsed.map((p: any) => ({
-          ...p,
-          stokMinimum: p.stokMinimum ?? 0,
-          stokMaksimum: p.stokMaksimum ?? 0,
-          stokAwal: p.stokAwal ?? 0,
-          supplier: p.supplier ?? "",
-          keterangan: p.keterangan ?? "",
-          statusAktif: p.statusAktif !== false,
-          createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
-        }));
-        setProducts(productsWithDate);
-        setFilteredProducts(productsWithDate);
-        const uniqueCategories = Array.from(new Set(productsWithDate.map((p: Product) => p.kategori).filter(Boolean)));
-        setCategories(uniqueCategories as string[]);
-      } catch (err) {
-        console.error("Error loading products:", err);
+    
+    // Load from API and merge with localStorage
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session?.access_token) {
+        // Fallback to localStorage if no auth
+        const savedProducts = localStorage.getItem("products");
+        if (savedProducts) {
+          try {
+            const parsed = JSON.parse(savedProducts);
+            const productsWithDate = parsed.map((p: any) => ({
+              ...p,
+              stokMinimum: p.stokMinimum ?? 0,
+              stokMaksimum: p.stokMaksimum ?? 0,
+              stokAwal: p.stokAwal ?? 0,
+              supplier: p.supplier ?? "",
+              keterangan: p.keterangan ?? "",
+              statusAktif: p.statusAktif !== false,
+              createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+            }));
+            setProducts(productsWithDate);
+            setFilteredProducts(productsWithDate);
+            const uniqueCategories = Array.from(new Set(productsWithDate.map((p: Product) => p.kategori).filter(Boolean)));
+            setCategories(uniqueCategories as string[]);
+          } catch (err) {
+            console.error("Error loading products:", err);
+          }
+        }
+        const savedSuppliers = localStorage.getItem("suppliers");
+        if (savedSuppliers) try { setSuppliers(JSON.parse(savedSuppliers)); } catch (_) {}
+        const savedApotiks = localStorage.getItem("apotiks");
+        if (savedApotiks) {
+          try {
+            const parsed = JSON.parse(savedApotiks);
+            setApotiks(parsed.filter((a: Apotik) => a.statusAktif !== false));
+          } catch (_) {}
+        }
+        setLoading(false);
+        return;
       }
-    }
-    const savedSuppliers = localStorage.getItem("suppliers");
-    if (savedSuppliers) try { setSuppliers(JSON.parse(savedSuppliers)); } catch (_) {}
-    const savedApotiks = localStorage.getItem("apotiks");
-    if (savedApotiks) {
-      try {
-        const parsed = JSON.parse(savedApotiks);
-        setApotiks(parsed.filter((a: Apotik) => a.statusAktif !== false));
-      } catch (_) {}
-    }
-    setLoading(false);
+      const token = data.session.access_token;
+      Promise.all([
+        fetch("/api/data/products", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/suppliers", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+        fetch("/api/data/apotiks", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.ok ? r.json() : []),
+      ]).then(([productsData, suppliersData, apotiksData]) => {
+        // Merge products: prioritize stokPerApotik from localStorage if different
+        if (Array.isArray(productsData) && productsData.length > 0) {
+          let mergedProducts = productsData;
+          try {
+            const sp = localStorage.getItem("products");
+            if (sp) {
+              const fromStorage = JSON.parse(sp);
+              const arr = Array.isArray(fromStorage) ? fromStorage : [];
+              const byId = new Map(arr.map((p: any) => [p.id, p]));
+              mergedProducts = productsData.map((p: any) => {
+                const local = byId.get(p.id);
+                if (local) {
+                  // Merge stokPerApotik: prioritaskan data lokal karena lebih baru setelah update stok
+                  // Jika data API memiliki apotik yang tidak ada di lokal, tambahkan juga
+                  const mergedStokPerApotik = local.stokPerApotik 
+                    ? { ...(p.stokPerApotik || {}), ...local.stokPerApotik }
+                    : (p.stokPerApotik || {});
+                  // Merge semua field dari local untuk memastikan data terbaru
+                  return { ...p, ...local, stokPerApotik: mergedStokPerApotik };
+                }
+                return p;
+              });
+              
+              // Tambahkan produk yang ada di localStorage tapi tidak ada di API (produk baru)
+              const apiProductIds = new Set(productsData.map((p: any) => p.id));
+              const localOnlyProducts = arr.filter((p: any) => !apiProductIds.has(p.id));
+              if (localOnlyProducts.length > 0) {
+                mergedProducts = [...mergedProducts, ...localOnlyProducts];
+              }
+            }
+          } catch (_) {}
+          
+          const productsWithDate = mergedProducts.map((p: any) => ({
+            ...p,
+            stokMinimum: p.stokMinimum ?? 0,
+            stokMaksimum: p.stokMaksimum ?? 0,
+            stokAwal: p.stokAwal ?? 0,
+            supplier: p.supplier ?? "",
+            keterangan: p.keterangan ?? "",
+            statusAktif: p.statusAktif !== false,
+            createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+          }));
+          setProducts(productsWithDate);
+          setFilteredProducts(productsWithDate);
+          const uniqueCategories = Array.from(new Set(productsWithDate.map((p: Product) => p.kategori).filter(Boolean)));
+          setCategories(uniqueCategories as string[]);
+          localStorage.setItem("products", JSON.stringify(mergedProducts));
+        } else {
+          // Fallback to localStorage
+          const savedProducts = localStorage.getItem("products");
+          if (savedProducts) {
+            try {
+              const parsed = JSON.parse(savedProducts);
+              const productsWithDate = parsed.map((p: any) => ({
+                ...p,
+                stokMinimum: p.stokMinimum ?? 0,
+                stokMaksimum: p.stokMaksimum ?? 0,
+                stokAwal: p.stokAwal ?? 0,
+                supplier: p.supplier ?? "",
+                keterangan: p.keterangan ?? "",
+                statusAktif: p.statusAktif !== false,
+                createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+              }));
+              setProducts(productsWithDate);
+              setFilteredProducts(productsWithDate);
+              const uniqueCategories = Array.from(new Set(productsWithDate.map((p: Product) => p.kategori).filter(Boolean)));
+              setCategories(uniqueCategories as string[]);
+            } catch (err) {
+              console.error("Error loading products:", err);
+            }
+          }
+        }
+
+        if (Array.isArray(suppliersData) && suppliersData.length > 0) {
+          setSuppliers(suppliersData);
+          localStorage.setItem("suppliers", JSON.stringify(suppliersData));
+        } else {
+          const savedSuppliers = localStorage.getItem("suppliers");
+          if (savedSuppliers) try { setSuppliers(JSON.parse(savedSuppliers)); } catch (_) {}
+        }
+
+        if (Array.isArray(apotiksData) && apotiksData.length > 0) {
+          const activeApotiks = apotiksData.filter((a: Apotik) => a.statusAktif !== false);
+          setApotiks(activeApotiks);
+          localStorage.setItem("apotiks", JSON.stringify(apotiksData));
+        } else {
+          const savedApotiks = localStorage.getItem("apotiks");
+          if (savedApotiks) {
+            try {
+              const parsed = JSON.parse(savedApotiks);
+              setApotiks(parsed.filter((a: Apotik) => a.statusAktif !== false));
+            } catch (_) {}
+          }
+        }
+
+        setLoading(false);
+      }).catch(() => {
+        setLoading(false);
+      });
+    }).catch(() => {
+      setLoading(false);
+    });
   };
 
   return (
@@ -617,18 +818,18 @@ export default function InventoryPage() {
                   >
                       Apotik
                   </th>
-                  <th
-                    style={{
-                        textAlign: "left",
+                    <th
+                      style={{
+                        textAlign: "center",
                         borderBottom: "2px solid #e2e8f0",
-                      padding: "12px 16px",
+                        padding: "12px 16px",
                         fontSize: "13px",
-                      fontWeight: "600",
-                      color: "#475569",
-                    }}
-                  >
-                    Stok
-                  </th>
+                        fontWeight: "600",
+                        color: "#475569",
+                      }}
+                    >
+                      Qty Stok
+                    </th>
                     <th
                       style={{
                         textAlign: "left",
@@ -669,15 +870,19 @@ export default function InventoryPage() {
                         return null;
                       }
                     } else {
-                      // If no filter, show all apotiks that have stock
+                      // If no filter, show all apotiks that have stock OR show at least one row for the product
                       if (product.stokPerApotik && Object.keys(product.stokPerApotik).length > 0) {
                         apotikIdsToShow = Object.keys(product.stokPerApotik).filter(
-                          (id) => product.stokPerApotik![id] > 0
+                          (id) => (product.stokPerApotik![id] ?? 0) > 0
                         );
+                        // If all stocks are 0 but product exists, show at least one apotik (prefer the one with stokPerApotik entry)
+                        if (apotikIdsToShow.length === 0 && Object.keys(product.stokPerApotik).length > 0) {
+                          apotikIdsToShow = [Object.keys(product.stokPerApotik)[0]];
+                        }
                       }
-                      // If no stokPerApotik, show all apotiks
+                      // If no stokPerApotik at all, show all apotiks (product should still be visible)
                       if (apotikIdsToShow.length === 0) {
-                        apotikIdsToShow = apotiks.map(a => a.id);
+                        apotikIdsToShow = apotiks.length > 0 ? [apotiks[0].id] : [];
                       }
                     }
                     
@@ -733,41 +938,12 @@ export default function InventoryPage() {
                             style={{
                               padding: "12px 16px",
                               fontSize: "14px",
+                              textAlign: "center",
                               color: "#1e293b",
                               fontWeight: "500",
                             }}
                           >
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <button
-                                type="button"
-                                onClick={() => handleViewStock(product)}
-                                title="Lihat Detail Stok"
-                                style={{
-                                  padding: "4px",
-                                  backgroundColor: "transparent",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  transition: "opacity 0.2s",
-                                  width: "20px",
-                                  height: "20px",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.opacity = "0.7";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.opacity = "1";
-                                }}
-                              >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
-                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                  <circle cx="12" cy="12" r="3" />
-                                </svg>
-                              </button>
-                              <span>{formatStock(product)}</span>
-                            </div>
+                            {formatStock(product, apotiks.length > 0 ? apotiks[0].id : undefined)}
                           </td>
                           <td
                       style={{
@@ -854,41 +1030,12 @@ export default function InventoryPage() {
                             style={{
                               padding: "12px 16px",
                               fontSize: "14px",
+                              textAlign: "center",
                               color: "#1e293b",
                               fontWeight: "500",
                             }}
                           >
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <button
-                                type="button"
-                                onClick={() => handleViewStock(product, apotikId)}
-                                title="Lihat Detail Stok"
-                                style={{
-                                  padding: "4px",
-                                  backgroundColor: "transparent",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  transition: "opacity 0.2s",
-                                  width: "20px",
-                                  height: "20px",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.opacity = "0.7";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.opacity = "1";
-                                }}
-                              >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
-                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                  <circle cx="12" cy="12" r="3" />
-                                </svg>
-                              </button>
-                              <span>{formatStock(product, apotikId)}</span>
-                            </div>
+                            {formatStock(product, apotikId)}
                           </td>
                           {index === 0 && (
                             <>
