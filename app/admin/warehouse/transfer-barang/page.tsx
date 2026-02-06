@@ -2066,17 +2066,17 @@ export default function TransferBarangPage() {
                     <button
                       type="button"
                       onClick={handleCloseModal}
-                      disabled={loading || (editingTransfer && editingTransfer.status === "Dikirim" && !approvedPengajuan)}
+                      disabled={!!(loading || (editingTransfer?.status === "Dikirim" && !approvedPengajuan))}
                       style={{
                         padding: "8px 16px",
                         backgroundColor: "var(--surface)",
                         color: "var(--text-primary)",
                         border: "1px solid var(--border)",
                         borderRadius: "6px",
-                        cursor: (loading || (editingTransfer && editingTransfer.status === "Dikirim" && !approvedPengajuan)) ? "not-allowed" : "pointer",
+                        cursor: (loading || (editingTransfer?.status === "Dikirim" && !approvedPengajuan)) ? "not-allowed" : "pointer",
                         fontSize: "13px",
                         fontWeight: "500",
-                        opacity: (editingTransfer && editingTransfer.status === "Dikirim" && !approvedPengajuan) ? 0.5 : 1,
+                        opacity: (editingTransfer?.status === "Dikirim" && !approvedPengajuan) ? 0.5 : 1,
                       }}
                     >
                       Batal
